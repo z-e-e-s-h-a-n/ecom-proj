@@ -1,30 +1,28 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
+import "@workspace/ui/globals.css";
+import Provider from "@/providers";
 
-import "@workspace/ui/globals.css"
-import { Providers } from "@/components/providers"
-
-const fontSans = Geist({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-sans",
-})
+  variable: "--font-poppins",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+});
 
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
+export const metadata: Metadata = {
+  title: "Krist - the Ecom Platform",
+  description:
+    "Krist is an ecommerce platform that empowers businesses to create and sell digital products.",
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}
-      >
-        <Providers>{children}</Providers>
+    <html lang="en">
+      <body className={`${poppins.variable} antialiased`}>
+        <Provider>{children}</Provider>
       </body>
     </html>
-  )
+  );
 }
+
+export default Layout;

@@ -1,0 +1,6 @@
+{"error":"Refresh token is either invalid, blacklisted, or expired","level":"error","message":"Error authenticating token","service":"user-service","timestamp":"2024-12-29 11:38:05"}
+{"error":{"expiredAt":"1970-01-11T10:00:00.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2024-12-29 22:51:00"}
+{"error":{"expiredAt":"1989-03-02T00:00:00.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2024-12-29 22:51:00"}
+{"error":"Invalid or expired refresh token","level":"error","message":"Error authenticating token","service":"user-service","timestamp":"2024-12-29 22:51:00"}
+{"error":{},"level":"error","message":"Error resetting password:","service":"user-service","timestamp":"2024-12-30 13:37:10"}
+{"error":{},"level":"error","message":"Error resetting password:","service":"user-service","timestamp":"2024-12-30 13:40:08"}
