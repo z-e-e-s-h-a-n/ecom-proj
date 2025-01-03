@@ -153,7 +153,7 @@ export const socialLinks = [
 ];
 
 export const heroImages = Array.from({ length: 7 }, (_, index) => ({
-  src: `/assets/images/hero-image-${index + 1}.png`,
+  src: `/assets/images/hero-banner-${index + 1}.png`,
   alt: `Hero Image ${index + 1}`,
 }));
 

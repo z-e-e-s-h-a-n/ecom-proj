@@ -1,6 +1,6 @@
 import { ButtonProps } from "@workspace/ui/components/button";
 import { LucideIcon } from "lucide-react";
- import React from "react";
+import React from "react";
 
 declare global {
   interface SegmentParams {
@@ -42,22 +42,7 @@ declare global {
   }
 
   interface HeaderProps {
-    currentUser: DefaultSession["user"];
-  }
-
-  interface ProductCardProps {
-    id?: number;
-    name?: string;
-    price?: {
-      original: number;
-      sale: number;
-    };
-    imageUrl: string;
-    category?: string;
-    rating?: number;
-    reviews?: number;
-    inStock?: boolean;
-    className?: string;
+    currentUser: IUser | null;
   }
 
   interface CategoryCardProps {
@@ -65,15 +50,6 @@ declare global {
     Icon: LucideIcon;
     url: string;
     className?: string;
-  }
-
-  interface FeatureCardProps {
-    className?: string;
-    index?: number;
-    title: string;
-    desc: string;
-    url: string;
-    imageUrl: string;
   }
 
   interface ShowcaseSectionProps {
@@ -107,10 +83,6 @@ declare global {
 
   interface CategorySectionProps extends ShowcaseSectionProps {
     items: CategoryCardProps[];
-  }
-
-  interface FeatureSectionProps extends ShowcaseSectionProps {
-    items: FeatureCardProps[];
   }
 }
 

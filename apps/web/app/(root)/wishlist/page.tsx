@@ -1,17 +1,24 @@
+"use client";
 import ProductSection from "@/components/showcase/ProductSection";
+import { productList } from "@/constants/product";
+import { useUserSelector } from "@/store/features/user/userSelector";
 import React from "react";
 
 function Wishlist() {
-  const wishlistProducts = Array.from({ length: 5 }).map((_, index) => ({
-    id: index + 1,
-    name: `Product ${index + 1}`,
-    price: { original: 19.99, sale: 15.99 },
-    imageUrl: `/assets/images/product-${index + 1}.png`,
-    category: "Electronics",
-    rating: 4.5,
-    reviews: 100,
-    inStock: true,
-  }));
+  const { wishlist, cart } = useUserSelector();
+
+  const wishlistProducts = productList.filter((product) =>
+    wishlist.includes(product.id)
+  );
+
+  const justForYouProducts = productList
+    .filter(
+      (product) =>
+        !wishlist.includes(product.id) &&
+        !cart.find((item) => item.id === product.id) &&
+        product.inStock
+    )
+    .slice(0, 5);
 
   return (
     <div>
@@ -30,7 +37,7 @@ function Wishlist() {
         }}
       />
       <ProductSection
-        items={wishlistProducts}
+        items={justForYouProducts}
         headerProps={{
           subtitle: { text: `Just For You` },
           linkButtonProps: {

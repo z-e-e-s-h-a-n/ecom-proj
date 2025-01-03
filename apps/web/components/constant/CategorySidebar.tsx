@@ -1,5 +1,5 @@
-import { categories } from "@/constants";
-import { cn } from "@workspace/ui/lib/utils"; 
+import { categories } from "@/constants/site";
+import { cn } from "@workspace/ui/lib/utils";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -40,7 +40,7 @@ function CategorySidebar({ className }: { className?: string }) {
     <div
       className={cn(
         "body-2 relative max-h-fit w-64 rounded-md border bg-background py-1 shadow-light hover:[&_a]:text-primary",
-        className,
+        className
       )}
     >
       <ul>
@@ -53,7 +53,7 @@ function CategorySidebar({ className }: { className?: string }) {
                   "flex-center-between px-5 py-2.5 group-hover/category-item:bg-secondary group-hover/category-item:text-primary [&_svg]:!size-5",
                   {
                     "border-b": index < categories.length - 1,
-                  },
+                  }
                 )}
               >
                 <div className="flex-items-center max-w-[calc(100%-28px)] gap-2">

@@ -7,14 +7,15 @@ import {
 } from "@workspace/ui/components/form";
 import { Input } from "@workspace/ui/components/input";
 import { Checkbox } from "@workspace/ui/components/checkbox";
-import { cn } from "@workspace/ui/lib/utils";  
+import { cn } from "@workspace/ui/lib/utils";
 
 function CustomInput({
   name,
   label,
-  type,
+  type = "text",
   placeholder,
   control,
+  className,
 }: CustomInputProps) {
   return (
     <FormField
@@ -23,11 +24,13 @@ function CustomInput({
       render={({ field }) => (
         <FormItem className="w-full">
           <div
-            className={cn("grid gap-2", {
+            className={cn("grid gap-2", className, {
               "flex-items-center flex-row-reverse gap-2": type === "checkbox",
             })}
           >
-            <FormLabel className="shad-form-label">{label}</FormLabel>
+            {label && (
+              <FormLabel className="shad-form-label">{label}</FormLabel>
+            )}
             <FormControl>
               {type === "checkbox" ? (
                 <Checkbox

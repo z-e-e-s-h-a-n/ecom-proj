@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { sortTypes } from "@/constants";
+import { sortTypes } from "@/constants/site";
 import { usePathname, useRouter } from "next/navigation";
 
 function Sort() {

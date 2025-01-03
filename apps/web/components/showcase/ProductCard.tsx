@@ -5,25 +5,29 @@ import Link from "next/link";
 import { cn } from "@workspace/ui/lib/utils";
 import ProductCardButtons from "@/components/showcase/ProductCardButtons";
 
-function ProductCard({ imageUrl, id = 1, className }: ProductCardProps) {
+export interface ProductCardProps extends IProduct {
+  className?: string;
+}
+
+function ProductCard(product: ProductCardProps) {
   return (
     <Link
-      href={`/products/${id}`}
+      href={`/products/${product.id}`}
       className={cn(
         "group/product-card overflow-hidden rounded-md bg-background shadow-light",
-        className,
+        product.className
       )}
     >
       <div className="flex-center relative h-[220px] w-full bg-secondary px-10 py-8">
         <Image
-          src={imageUrl}
+          src={product.imageUrl}
           alt="Product 1"
           width={190}
           height={180}
           loading="eager"
           className="h-full !object-contain transition-all duration-300 group-hover/product-card:scale-110"
         />
-        <ProductCardButtons />
+        <ProductCardButtons {...product} />
       </div>
       <div className="flex flex-col gap-1 px-2 py-4">
         <h3 className="h5 truncate">HAVIT HV-G92 Gamepad</h3>

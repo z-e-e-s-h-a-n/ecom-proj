@@ -6,12 +6,12 @@ import {
   CarouselDots,
   CarouselItem,
 } from "@workspace/ui/components/carousel";
-import { heroImages } from "@/constants";
+import { heroImages } from "@/constants/site";
 import { Button } from "@workspace/ui/components/button";
 
 function HeroSection() {
   return (
-    <div className="flex gap-6 rounded-md pt-8">
+    <div className="flex gap-6">
       <CategorySidebar />
       <Carousel className="flex-1 overflow-hidden rounded-md border shadow-light">
         <CarouselContent>

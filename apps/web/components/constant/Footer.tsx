@@ -3,9 +3,9 @@ import { Separator } from "@workspace/ui/components/separator";
 import { ArrowRight, MailOpen } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { footerContent, paymentMethods, socialLinks } from "@/constants";
+import { footerContent, paymentMethods, socialLinks } from "@/constants/site";
 import { Input } from "@workspace/ui/components/input";
-import { cn } from "@workspace/ui/lib/utils"; 
+import { cn } from "@workspace/ui/lib/utils";
 import { Logo } from "./IconSet";
 
 function Footer() {
@@ -19,7 +19,7 @@ function Footer() {
               "flex-1 basis-full md:basis-[calc(50%-48px)] lg:order-none",
               {
                 "md:order-2": index > 0 && index < 3,
-              },
+              }
             )}
           >
             {title === "Logo" ? (

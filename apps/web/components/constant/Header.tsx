@@ -18,24 +18,46 @@ import {
   SheetTrigger,
 } from "@workspace/ui/components/sheet";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
 import { ChevronDown, Heart, LogOut, Search, ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { headerContent } from "@/constants";
+import { headerContent } from "@/constants/site";
 import TopHeader from "@/components/constant/TopHeader";
 import { usePathname } from "next/navigation";
-import { cn } from "@workspace/ui/lib/utils";  
+import { cn } from "@workspace/ui/lib/utils";
 import { Logo } from "@/components/constant/IconSet";
 import CountBadge from "./CountBadge";
 import { ThemeSwitch } from "./ThemeSwitch";
+import { useUserSelector } from "@/store/features/user/userSelector";
+import { logoutUser } from "@/lib/actions/user";
+import { clearUser } from "@/store/features/auth/authSlice";
+import { useToast } from "@workspace/ui/hooks/use-toast";
+import { useAppDispatch } from "@/hooks/useStore";
 
 function Header({ currentUser }: HeaderProps) {
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
+  const { cart, wishlist } = useUserSelector();
+  const { toast } = useToast();
 
-  const isRouteActive = (route: string) => pathname.startsWith(route);
+  const handleLogout = async () => {
+    const response = await logoutUser();
+    if (response.success) {
+      toast({
+        title: "Success",
+        description: "Logged out successfully.",
+      });
+      dispatch(clearUser());
+    }
+  };
+  const isRouteActive = (route: string) => pathname.endsWith(route);
 
   return (
-    <header className="flex flex-col gap-5">
+    <header className="flex flex-col gap-5 border-b pb-2">
       <TopHeader />
       <div className="flex-center-between container">
         <Logo />
@@ -76,11 +98,11 @@ function Header({ currentUser }: HeaderProps) {
 
           <Link href="/wishlist" className="relative">
             <Heart />
-            <CountBadge count={2} />
+            <CountBadge count={wishlist.length} />
           </Link>
           <Link href="/cart" className="relative">
             <ShoppingCart />
-            <CountBadge count={5} />
+            <CountBadge count={cart.length} />
           </Link>
           <ThemeSwitch />
           {currentUser ? (
@@ -111,7 +133,7 @@ function Header({ currentUser }: HeaderProps) {
                             "flex-items-center cursor-pointer gap-2",
                             {
                               "bg-accent text-accent-foreground": isActive,
-                            },
+                            }
                           )}
                         >
                           <Icon />
@@ -124,7 +146,7 @@ function Header({ currentUser }: HeaderProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex-items-center cursor-pointer gap-2"
-                  onClick={() => {}}
+                  onClick={handleLogout}
                 >
                   <LogOut className="size-4" />
                   Sign Out
