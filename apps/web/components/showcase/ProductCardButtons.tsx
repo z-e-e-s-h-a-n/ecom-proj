@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button, ButtonVariant } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
-import useStorage from "@/hooks/useStorage";
+import { useAuth, useCart, useWishlist } from "@/hooks/useStorage";
 import { toast } from "sonner";
 
 interface IProductActions {
@@ -22,18 +22,20 @@ interface ProductButtonsProps extends IProduct {
   className?: string;
 }
 
-function ProductCardButtons({ className, id, name }: ProductButtonsProps) {
-  const { addItem, removeItem, isInStorage } = useStorage();
+function ProductCardButtons({ className, _id, name }: ProductButtonsProps) {
+  const { currentUser } = useAuth();
+  const { addToCart, removeFromCart } = useCart(currentUser);
+  const { addToWishlist, removeFromWishlist } = useWishlist(currentUser);
 
-  const isInCart = isInStorage("cart", id);
-  const isInWishlist = isInStorage("wishlist", id);
+  const isInCart = false; // here defien the method
+  const isInWishlist = false; // here defien the method
 
   const toggleCart = () => {
     if (isInCart) {
-      removeItem("cart", id);
+      removeFromCart(_id);
       toast(`Removed from your cart`, { description: name });
     } else {
-      addItem("cart", id);
+      addToCart(_id);
       toast(`Added to your cart`, { description: name });
     }
   };
@@ -41,10 +43,10 @@ function ProductCardButtons({ className, id, name }: ProductButtonsProps) {
   // Function to toggle wishlist item
   const toggleWishlist = () => {
     if (isInWishlist) {
-      removeItem("wishlist", id);
+      removeFromWishlist(_id);
       toast(`Removed from your wishlist`, { description: name });
     } else {
-      addItem("wishlist", id);
+      addToWishlist(_id);
       toast(`Added to your wishlist`, { description: name });
     }
   };

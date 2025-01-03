@@ -7,7 +7,7 @@ import {
   loginWithApple,
   loginWithGoogle,
   loginWithFacebook,
-} from "@/lib/actions/user";
+} from "@/lib/actions/auth";
 
 export const RenderAuthInputs = ({ type, control }: RenderAuthInputs) => {
   return (

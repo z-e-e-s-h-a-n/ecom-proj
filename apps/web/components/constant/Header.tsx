@@ -33,7 +33,7 @@ import { Logo } from "@/components/constant/IconSet";
 import CountBadge from "./CountBadge";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { useUserSelector } from "@/store/features/user/userSelector";
-import { logoutUser } from "@/lib/actions/user";
+import { logoutUser } from "@/lib/actions/auth";
 import { clearUser } from "@/store/features/auth/authSlice";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 import { useAppDispatch } from "@/hooks/useStore";

@@ -1,71 +1,129 @@
-// hooks/useStorage.ts
-import { useEffect } from "react";
-import { useAppDispatch } from "@/hooks/useStore";
-import { useUserSelector } from "@/store/features/user/userSelector";
 import {
-  updateList,
-  setCartItemQuantity,
-  ListType,
-  ItemId,
-  CartItem,
-  UserState,
-} from "@/store/features/user/userSlice";
+  fetchUserCart,
+  fetchUserWishlist,
+  getCurrentUser,
+  syncCartToServer,
+  syncWishlistToServer,
+} from "@/lib/actions/user";
 
-function useStorage() {
-  const dispatch = useAppDispatch();
-  const { cart, wishlist } = useUserSelector();
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
-  useEffect(() => {
-    const syncedState: Partial<UserState> = { cart, wishlist };
-    Object.keys(syncedState).forEach((list) => {
-      localStorage.setItem(list, JSON.stringify(syncedState[list as ListType]));
-    });
-  }, [cart, wishlist]);
+export const getLocalStorage = <T>(key: string, fallback: T): T => {
+  if (typeof window === "undefined") return fallback;
+  const storedValue = localStorage.getItem(key);
+  return storedValue ? (JSON.parse(storedValue) as T) : fallback;
+};
 
-  const updateItem = (
-    listType: ListType,
-    itemId: ItemId,
-    operation: "add" | "remove"
-  ) => {
-    dispatch(updateList({ listType, itemId, operation }));
-  };
+export const updateLocalStorage = <T>(key: string, data: T): void => {
+  localStorage.setItem(key, JSON.stringify(data));
+};
 
-  const updateCartQuantity = (itemId: ItemId, quantity: number) => {
-    dispatch(setCartItemQuantity({ itemId, quantity }));
-  };
+// --- Hook: Auth ---
+export const useAuth = () => {
+  const { data, isLoading } = useQuery<IUser | null>({
+    queryKey: ["currentUser"],
+    queryFn: getCurrentUser,
+  });
 
-  const isInStorage = (listType: ListType, id: ItemId) => {
-    if (listType === "cart") {
-      return cart.some((item) => item.id === id);
-    } else if (listType === "wishlist") {
-      return wishlist.includes(id);
-    } else {
-      throw new Error(`Unsupported listType: ${listType}`);
-    }
-  };
+  return { currentUser: data, isLoading };
+};
 
-  function getItem(
-    listType: ListType,
-    id: ItemId
-  ): CartItem | ItemId | undefined {
-    if (listType === "cart") {
-      return cart.find((item) => item.id === id);
-    } else if (listType === "wishlist") {
-      return wishlist.find((itemId) => itemId === id);
-    } else {
-      throw new Error(`Unsupported listType: ${listType}`);
-    }
-  }
+// --- Cart Hook ---
+export const useCart = (currentUser: TCurrentUser) => {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, refetch } = useQuery<ICart | null>({
+    queryKey: ["cart"],
+    queryFn: fetchUserCart,
+    enabled: !!currentUser,
+    initialData: getLocalStorage<ICart>("cart", { userId: "", items: [] }),
+  });
+
+  const addToCartMutation = useMutation({
+    mutationFn: ({
+      productId,
+      quantity,
+    }: {
+      productId: string;
+      quantity: number;
+    }) => syncCartToServer({ productId, quantity }),
+    onSuccess: (updatedCart) => {
+      queryClient.setQueryData(["cart"], updatedCart);
+      updateLocalStorage("cart", updatedCart);
+    },
+  });
+
+  const removeFromCartMutation = useMutation({
+    mutationFn: (productId: string) =>
+      syncCartToServer({ productId, quantity: 0 }),
+    onSuccess: (updatedCart) => {
+      queryClient.setQueryData(["cart"], updatedCart);
+      updateLocalStorage("cart", updatedCart);
+    },
+  });
 
   return {
-    addItem: (listType: ListType, itemId: ItemId) =>
-      updateItem(listType, itemId, "add"),
-    removeItem: (listType: ListType, itemId: ItemId) =>
-      updateItem(listType, itemId, "remove"),
-    updateCartQuantity,
-    isInStorage,
-    getItem,
+    cart: data,
+    isLoading,
+    refetch,
+    addToCart: (productId: string, quantity: number) =>
+      addToCartMutation.mutate({ productId, quantity }),
+    removeFromCart: (productId: string) =>
+      removeFromCartMutation.mutate(productId),
   };
-}
+};
 
-export default useStorage;
+// --- Wishlist Hook ---
+export const useWishlist = (currentUser: TCurrentUser) => {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, refetch } = useQuery<IWishlist | null>({
+    queryKey: ["wishlist"],
+    queryFn: fetchUserWishlist,
+    enabled: !!currentUser,
+    initialData: getLocalStorage<IWishlist>("wishlist", {
+      userId: "",
+      items: [],
+    }),
+  });
+
+  const addToWishlistMutation = useMutation({
+    mutationFn: (productId: string) => syncWishlistToServer({ productId }),
+    onSuccess: (updatedWishlist) => {
+      queryClient.setQueryData(["wishlist"], updatedWishlist);
+      updateLocalStorage("wishlist", updatedWishlist);
+    },
+  });
+
+  const removeFromWishlistMutation = useMutation({
+    mutationFn: (productId: string) =>
+      syncWishlistToServer({ productId, remove: true }),
+    onSuccess: (updatedWishlist) => {
+      queryClient.setQueryData(["wishlist"], updatedWishlist);
+      updateLocalStorage("wishlist", updatedWishlist);
+    },
+  });
+
+  return {
+    wishlist: data,
+    isLoading,
+    refetch,
+    addToWishlist: (productId: string) =>
+      addToWishlistMutation.mutate(productId),
+    removeFromWishlist: (productId: string) =>
+      removeFromWishlistMutation.mutate(productId),
+  };
+};
+
+// --- Synchronization on Load ---
+export const useStorageSync = () => {
+  const { currentUser } = useAuth();
+  const { cart } = useCart(currentUser);
+  const { wishlist } = useWishlist(currentUser);
+
+  useEffect(() => {
+    if (cart) updateLocalStorage("cart", cart);
+    if (wishlist) updateLocalStorage("wishlist", wishlist);
+  }, [cart, wishlist]);
+};

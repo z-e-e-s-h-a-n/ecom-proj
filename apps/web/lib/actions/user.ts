@@ -1,66 +1,15 @@
 import { apiRequest } from "@/config/axios";
-import envConfig from "@/config/envConfig";
 
-export interface ILoginData {
-  email: string;
-  password: string;
+type ActionType = "add" | "remove";
+interface syncDBPayload {
+  items?: AddToCartPayload[];
+  productIds?: string[];
 }
 
-export interface IRegisterData {
-  name: string;
-  email: string;
-  password: string;
+export interface AddToCartPayload {
+  productId: string;
+  quantity: number;
 }
-
-export interface IRequestOtpData {
-  email: string;
-  purpose: "email_verification" | "password_reset";
-}
-
-export interface IVerifyOtpData extends IRequestOtpData {
-  otp: string;
-}
-
-export interface IResetPasswordData {
-  token: string;
-  newPassword: string;
-}
-
-export const loginUser = async (credentials: ILoginData) => {
-  return apiRequest("POST", "/auth/login", credentials);
-};
-
-export const registerUser = async (userData: IRegisterData) => {
-  return apiRequest("POST", "/auth/signup", userData);
-};
-
-export const logoutUser = async () => {
-  return apiRequest("POST", "/auth/logout");
-};
-
-export const requestOtp = async (data: IRequestOtpData) => {
-  return apiRequest("POST", "/auth/request-otp", data);
-};
-
-export const validateOtp = async (data: IVerifyOtpData) => {
-  return apiRequest("POST", "/auth/validate-otp", data);
-};
-
-export const resetPassword = async (data: IResetPasswordData) => {
-  return apiRequest("POST", "/auth/reset-password", data);
-};
-
-export const loginWithGoogle = () => {
-  window.location.href = `${envConfig.server.endpoint}/auth/google`;
-};
-
-export const loginWithFacebook = () => {
-  window.location.href = `${envConfig.server.endpoint}/auth/facebook`;
-};
-
-export const loginWithApple = () => {
-  alert("Apple login is not yet implemented");
-};
 
 export const getCurrentUser = async () => {
   try {
@@ -73,4 +22,38 @@ export const getCurrentUser = async () => {
     console.error("Error fetching user:", error);
     return null;
   }
+};
+
+export const fetchUserCart = async () => {
+  const response = await apiRequest("GET", `/users/cart`);
+  return response.data.cart;
+};
+
+export const fetchUserWishlist = async () => {
+  const response = await apiRequest("GET", `/users/wishlist`);
+  return response.data.wishlist;
+};
+
+export const syncCartToServer = async (
+  action: ActionType,
+  payload: syncDBPayload
+) => {
+  const response = await apiRequest(
+    action === "add" ? "POST" : "DELETE",
+    "/users/cart",
+    payload
+  );
+  return response.data.cart;
+};
+
+export const syncWishlistToServer = async (
+  action: ActionType,
+  payload: syncDBPayload
+) => {
+  const response = await apiRequest(
+    action === "add" ? "POST" : "DELETE",
+    "/users/wishlist",
+    payload
+  );
+  return response.data.wishlist;
 };

@@ -12,7 +12,7 @@ import {
 } from "@/components/form/AuthFormUtils";
 import { Button } from "@workspace/ui/components/button";
 import { Form } from "@workspace/ui/components/form";
-import { registerUser } from "@/lib/actions/user";
+import { registerUser } from "@/lib/actions/auth";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 import OTPModal from "@/components/form/OTPModal";
 

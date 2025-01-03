@@ -15,7 +15,7 @@ import {
 } from "@/components/form/AuthFormUtils";
 import { Button } from "@workspace/ui/components/button";
 import { Form } from "@workspace/ui/components/form";
-import { requestOtp, resetPassword } from "@/lib/actions/user";
+import { requestOtp, resetPassword } from "@/lib/actions/auth";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 import OTPModal from "@/components/form/OTPModal";
 import CustomInput from "@/components/form/CustomInput";

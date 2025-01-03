@@ -42,7 +42,7 @@ declare global {
   }
 
   interface HeaderProps {
-    currentUser: IUser | null;
+    currentUser?: TCurrentUser;
   }
 
   interface CategoryCardProps {

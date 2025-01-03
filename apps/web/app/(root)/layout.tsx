@@ -1,22 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import Footer from "@/components/constant/Footer";
 import Header from "@/components/constant/Header";
-import { useAppDispatch } from "@/hooks/useStore";
-import { useAuthSelector } from "@/store/features/auth/authSelector";
-import { fetchCurrentUser } from "@/store/features/auth/authSlice";
-import { Separator } from "@workspace/ui/components/separator";
-import React, { useEffect } from "react";
+import { useAuth } from "@/hooks/useStorage";
 
 function RootLayout({ children }: { children: React.ReactNode }) {
-  const dispatch = useAppDispatch();
-  const { currentUser, isLoading } = useAuthSelector();
-
-  useEffect(() => {
-    if (!currentUser && !isLoading) {
-      dispatch(fetchCurrentUser());
-    }
-  }, [currentUser]);
+  const { currentUser } = useAuth();
 
   return (
     <div className="space-y-12">

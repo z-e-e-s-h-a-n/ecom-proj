@@ -1,3 +1,4 @@
+// --- Types ---
 declare global {
   interface IUser {
     _id: string;
@@ -8,12 +9,14 @@ declare global {
     role: "user" | "admin";
   }
 
+  type TCurrentUser = IUser | null | undefined;
+
   interface IProduct {
-    id: string;
+    _id: string;
     name: string;
     desc: string;
     images: string[];
-    category: mongoose.Types.ObjectId;
+    category: string;
     pricing: {
       [countryCode: string]: { original: number; sale?: number };
     };
@@ -27,7 +30,7 @@ declare global {
       attributes: Record<string, string | number>;
     };
     rating: number;
-    reviews: mongoose.Types.ObjectId[];
+    reviews: string[];
     isActive: boolean;
     tags: string[];
     specs: Record<string, string | number>;
@@ -41,8 +44,26 @@ declare global {
       width: number;
       height: number;
     };
-    createdAt: Date;
-    updatedAt: Date;
+  }
+
+  interface ICartItem {
+    productId: IProduct;
+    quantity: number;
+  }
+
+  interface ICart {
+    userId: string;
+    items: ICartItem[];
+  }
+
+  interface IWishlistItem {
+    productId: IProduct;
+  }
+
+  interface IWishlist {
+    userId: string;
+    items: IWishlistItem[];
   }
 }
+
 export {};

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import AddressForm from "@/components/form/AddressForm";
 import CartSummary from "@/components/user/CartSummary";

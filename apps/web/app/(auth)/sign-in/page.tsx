@@ -12,7 +12,7 @@ import {
 } from "@/components/form/AuthFormUtils";
 import { Button } from "@workspace/ui/components/button";
 import { Form } from "@workspace/ui/components/form";
-import { loginUser } from "@/lib/actions/user";
+import { loginUser } from "@/lib/actions/auth";
 import CustomInput from "@/components/form/CustomInput";
 import Link from "next/link";
 import OTPModal from "@/components/form/OTPModal";

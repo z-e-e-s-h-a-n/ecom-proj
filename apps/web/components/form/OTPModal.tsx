@@ -17,7 +17,7 @@ import {
   InputOTPSlot,
 } from "@workspace/ui/components/input-otp";
 import { Button } from "@workspace/ui/components/button";
-import { IRequestOtpData, requestOtp, validateOtp } from "@/lib/actions/user";
+import { IRequestOtpData, requestOtp, validateOtp } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 import Image from "next/image";
