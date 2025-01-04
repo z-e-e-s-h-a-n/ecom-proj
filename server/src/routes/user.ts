@@ -10,9 +10,9 @@ router.get("/me", authGuard(), controller.getUser);
 // Cart routes
 router.get("/cart", authGuard(), controller.getCart);
 router.post("/cart", authGuard(), controller.addToCart);
+router.put("/cart", authGuard(), controller.updateCart);
 router.delete("/cart/:productId", authGuard(), controller.removeFromCart);
 
-// Wishlist routes
 router.get("/wishlist", authGuard(), controller.getWishlist);
 router.post("/wishlist", authGuard(), controller.addToWishlist);
 router.delete(

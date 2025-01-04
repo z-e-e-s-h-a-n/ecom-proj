@@ -1,11 +1,11 @@
 import { apiRequest } from "@/config/axios";
 
-export interface AddToCartPayload {
+export interface ICartPayloadServer {
   productId: string;
   quantity: number;
 }
 
-export interface RemoveFromCartPayload {
+export interface IWishlistPayloadServer {
   productId: string;
 }
 
@@ -31,15 +31,19 @@ export const getUserWishlist = async (): Promise<IWishlistItems[]> => {
   return response.data?.wishlist?.items || [];
 };
 
-export const addToCartServer = async (items: AddToCartPayload[]) => {
+export const addToCartServer = async (items: ICartPayloadServer[]) => {
   await apiRequest("POST", "/users/cart", { items });
+};
+
+export const updateCartItemServer = async (item: ICartPayloadServer) => {
+  await apiRequest("PUT", `/users/cart`, { ...item });
 };
 
 export const removeFromCartServer = async (productId: string) => {
   await apiRequest("DELETE", `/users/cart/${productId}`);
 };
 
-export const addToWishlistServer = async (items: RemoveFromCartPayload[]) => {
+export const addToWishlistServer = async (items: IWishlistPayloadServer[]) => {
   await apiRequest("POST", "/users/wishlist", { items });
 };
 

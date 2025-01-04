@@ -4,10 +4,11 @@ import {
   getUserWishlist,
   addToCartServer,
   removeFromCartServer,
+  updateCartItemServer,
   addToWishlistServer,
   removeFromWishlistServer,
-  AddToCartPayload,
-  RemoveFromCartPayload,
+  ICartPayloadServer,
+  IWishlistPayloadServer,
 } from "@/lib/actions/user";
 import {
   calculateCartPrice,
@@ -31,7 +32,7 @@ export const useCart = () => {
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: (items: AddToCartPayload[]) => addToCartServer(items),
+    mutationFn: (items: ICartPayloadServer[]) => addToCartServer(items),
     onSuccess: () => {
       if (currentUser) {
         queryClient.invalidateQueries({ queryKey: ["cart"] });
@@ -48,6 +49,15 @@ export const useCart = () => {
     },
   });
 
+  const updateCartItemMutation = useMutation({
+    mutationFn: (item: ICartPayloadServer) => updateCartItemServer(item),
+    onSuccess: () => {
+      if (currentUser) {
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+      }
+    },
+  });
+
   const addToCart = (product: IProduct, quantity: number) => {
     const localCart = getLocalStorage<ICartItems[]>("cart", []);
     const updatedCart = [...localCart, { productId: product, quantity }];
@@ -55,7 +65,7 @@ export const useCart = () => {
     updateLocalStorage("cart", updatedCart);
     queryClient.setQueryData(["cart"], updatedCart);
 
-    if (currentUser) {
+    if (currentUser?._id) {
       addToCartMutation.mutate([{ productId: product._id, quantity }]);
     }
   };
@@ -69,7 +79,7 @@ export const useCart = () => {
     updateLocalStorage("cart", updatedCart);
     queryClient.setQueryData(["cart"], updatedCart);
 
-    if (currentUser) {
+    if (currentUser?._id) {
       removeFromCartMutation.mutate(productId);
     }
   };
@@ -83,8 +93,8 @@ export const useCart = () => {
     updateLocalStorage("cart", updatedCart);
     queryClient.setQueryData(["cart"], updatedCart);
 
-    if (currentUser) {
-      addToCartMutation.mutate([{ productId, quantity }]);
+    if (currentUser?._id) {
+      updateCartItemMutation.mutate({ productId, quantity });
     }
   };
 
@@ -124,7 +134,7 @@ export const useWishlist = () => {
   });
 
   const addToWishlistMutation = useMutation({
-    mutationFn: (items: RemoveFromCartPayload[]) => addToWishlistServer(items),
+    mutationFn: (items: IWishlistPayloadServer[]) => addToWishlistServer(items),
     onSuccess: () => {
       if (currentUser) {
         queryClient.invalidateQueries({ queryKey: ["wishlist"] });
@@ -162,7 +172,7 @@ export const useWishlist = () => {
     updateLocalStorage("wishlist", updatedWishlist);
     queryClient.setQueryData(["wishlist"], updatedWishlist);
 
-    if (currentUser) {
+    if (currentUser?._id) {
       removeFromWishlistMutation.mutate(productId);
     }
   };
@@ -208,7 +218,6 @@ export const syncLocalToServer = async (currentUser: TCurrentUser) => {
   const localCart = getLocalStorage<ICartItems[]>("cart", []);
   const localWishlist = getLocalStorage<IWishlistItems[]>("wishlist", []);
 
-  // Sync only if local data exists
   if (localCart.length > 0) {
     const cartPayload = localCart.map(({ productId, quantity }) => ({
       productId: productId._id,

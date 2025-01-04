@@ -7,7 +7,7 @@ const envConfig = {
     endpoint: getEnv("APP_ENDPOINT", "http://localhost:3000"),
   },
   server: {
-    endpoint: getEnv("SERVER_ENDPOINT", "http://localhost:3002"),
+    endpoint: getEnv("SERVER_ENDPOINT", "http://localhost:4000"),
   },
 };
 

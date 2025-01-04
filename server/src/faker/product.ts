@@ -32,7 +32,7 @@ export const createFakeProducts = async (count = 10) => {
     return {
       name: faker.commerce.productName(),
       desc: faker.commerce.productDescription(),
-      images: Array.from({ length: 3 }, () => faker.image.url()),
+      images: Array.from({ length: 3 }, () => faker.image.urlPicsumPhotos()),
       category: randomCategory._id,
       pricing: {
         US: {

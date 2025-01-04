@@ -44,30 +44,40 @@ const Cart = () => {
                         alt={productId.name || "Product"}
                         width={48}
                         height={48}
-                        className="rounded object-contain"
+                        className="rounded object-contain aspect-square"
                       />
                       <span>{productId.name}</span>
                     </td>
                     <td className="px-6 py-4">${price}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center border rounded-lg">
-                        <Minus
-                          className="cursor-pointer"
+                      <div className="flex-center  [&_>button]:size-6  [&_>button]:rounded-full  relative max-w-24 [&_>button]:absolute border rounded-lg">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="left-2"
+                          disabled={quantity === 1}
                           onClick={() =>
                             updateCartQuantity(productId._id, quantity - 1)
                           }
-                        />
+                        >
+                          <Minus />
+                        </Button>
                         <Input
                           value={quantity}
                           readOnly
-                          className="w-12 text-center"
+                          className="w-full text-center shad-input "
                         />
-                        <Plus
-                          className="cursor-pointer"
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="right-2"
+                          disabled={quantity === productId.stock}
                           onClick={() =>
                             updateCartQuantity(productId._id, quantity + 1)
                           }
-                        />
+                        >
+                          <Plus />
+                        </Button>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -78,6 +88,7 @@ const Cart = () => {
                         variant="destructive"
                         size="icon"
                         onClick={() => removeFromCart(productId._id)}
+                        className="rounded-full"
                       >
                         <Trash2 />
                       </Button>

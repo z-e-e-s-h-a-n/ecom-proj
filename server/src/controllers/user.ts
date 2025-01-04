@@ -5,6 +5,7 @@ import UserModel from "@/models/user";
 import WishlistModel from "@/models/wishlist";
 import { sendResponse } from "@/utils/helper";
 import logger from "@/utils/logger";
+import { findAndPopulate } from "@/utils/mongoose";
 import { formatUserResponse } from "@/utils/user";
 import { Request, Response } from "express";
 
@@ -26,10 +27,9 @@ export const getUser = async (req: Request, res: Response) => {
 
 export const getCart = async (req: Request, res: Response) => {
   const userId = req.user._id;
+
   try {
-    const cart = await CartModel.findOne({ userId }).populate(
-      "items.productId"
-    );
+    const cart = await findAndPopulate(CartModel, userId);
     sendResponse(res, 200, true, "Cart fetched successfully", {
       cart: cart || { userId, items: [] },
     });
@@ -40,23 +40,52 @@ export const getCart = async (req: Request, res: Response) => {
 
 export const addToCart = async (req: Request, res: Response) => {
   const userId = req.user._id;
-  const items = req.body.items;
+  const { items } = req.body;
 
   try {
-    const cart = await CartModel.findOneAndUpdate(
-      { userId },
-      { $push: { items: { $each: items } } },
-      { new: true, upsert: true }
+    const addOps = items.map((item: any) =>
+      CartModel.updateOne(
+        {
+          userId,
+          "items.productId": { $ne: item.productId },
+        },
+        { $push: { items: item } },
+        { upsert: true }
+      )
     );
-    sendResponse(res, 200, true, "Items added to your cart", { cart });
+    await Promise.all(addOps);
+
+    const cart = await findAndPopulate(CartModel, userId);
+    sendResponse(res, 200, true, "Unique items added to your cart", { cart });
   } catch (error) {
     sendResponse(res, 500, false, "Failed to add items to cart");
   }
 };
 
+export const updateCart = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const { productId, quantity } = req.body;
+
+  try {
+    const cart = await CartModel.findOneAndUpdate(
+      { userId, "items.productId": productId },
+      { $set: { "items.$.quantity": quantity } },
+      { new: true }
+    );
+
+    if (!cart) {
+      return sendResponse(res, 404, false, "Item not found in cart");
+    }
+
+    sendResponse(res, 200, true, "Item updated in cart", { cart });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to update cart item");
+  }
+};
+
 export const removeFromCart = async (req: Request, res: Response) => {
   const userId = req.user._id;
-  const productId = req.params.productId;
+  const { productId } = req.params;
 
   try {
     const cart = await CartModel.findOneAndUpdate(
@@ -72,10 +101,9 @@ export const removeFromCart = async (req: Request, res: Response) => {
 
 export const getWishlist = async (req: Request, res: Response) => {
   const userId = req.user._id;
+
   try {
-    const wishlist = await WishlistModel.findOne({ userId }).populate(
-      "items.productId"
-    );
+    const wishlist = await findAndPopulate(WishlistModel, userId);
     sendResponse(res, 200, true, "Wishlist fetched successfully", {
       wishlist: wishlist || { userId, items: [] },
     });
@@ -86,15 +114,25 @@ export const getWishlist = async (req: Request, res: Response) => {
 
 export const addToWishlist = async (req: Request, res: Response) => {
   const userId = req.user._id;
-  const items = req.body.items;
+  const { items } = req.body;
 
   try {
-    const wishlist = await WishlistModel.findOneAndUpdate(
-      { userId },
-      { $push: { items: { $each: items } } },
-      { new: true, upsert: true }
+    const addOps = items.map((item: any) =>
+      WishlistModel.updateOne(
+        {
+          userId,
+          "items.productId": { $ne: item.productId },
+        },
+        { $push: { items: item } },
+        { upsert: true }
+      )
     );
-    sendResponse(res, 200, true, "Items added to your wishlist", { wishlist });
+    await Promise.all(addOps);
+
+    const wishlist = await findAndPopulate(WishlistModel, userId);
+    sendResponse(res, 200, true, "Unique items added to your wishlist", {
+      wishlist,
+    });
   } catch (error) {
     sendResponse(res, 500, false, "Failed to add items to wishlist");
   }
@@ -102,7 +140,7 @@ export const addToWishlist = async (req: Request, res: Response) => {
 
 export const removeFromWishlist = async (req: Request, res: Response) => {
   const userId = req.user._id;
-  const productId = req.params.productId;
+  const { productId } = req.params;
 
   try {
     const wishlist = await WishlistModel.findOneAndUpdate(

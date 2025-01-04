@@ -1,10 +1,23 @@
 "use client";
+
 import Footer from "@/components/constant/Footer";
 import Header from "@/components/constant/Header";
 import useAuth from "@/hooks/useAuth";
+import { syncLocalToServer } from "@/hooks/useStorage";
+import { useEffect } from "react";
 
 function RootLayout({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();
+
+  useEffect(() => {
+    const hasSynced = sessionStorage.getItem("synced");
+
+    if (currentUser && !hasSynced) {
+      syncLocalToServer(currentUser).then(() => {
+        sessionStorage.setItem("synced", "true");
+      });
+    }
+  }, [currentUser]);
 
   return (
     <div className="space-y-12">

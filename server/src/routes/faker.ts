@@ -5,11 +5,10 @@ import logger from "@/utils/logger";
 
 const router: Router = Router();
 
-router.post("/create-categories", async (req, res) => {
+router.post("/create-categories", async (_, res) => {
   try {
-    const { count = 10 } = req.body;
-    const categories = await createFakeCategories(count);
-    logger.info(`${count} categories created successfully!`);
+    const categories = await createFakeCategories();
+    logger.info("categories created successfully!");
     sendResponse(res, 200, true, "Categories created successfully.", {
       categories,
     });
