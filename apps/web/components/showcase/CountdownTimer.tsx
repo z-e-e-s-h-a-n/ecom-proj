@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useCountdown } from "@/hooks/useCountdown";
+import useCountdown from "@/hooks/useCountdown";
 import { Semicolon } from "@/components/constant/IconSet";
 
 const CountdownTimer = ({ startDate, endDate }: CountdownTimerProps) => {

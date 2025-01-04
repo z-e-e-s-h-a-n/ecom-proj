@@ -4,33 +4,14 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useCart, useAuth } from "@/hooks/useStorage";
+import { useCart } from "@/hooks/useStorage";
 import { DELIVERY_CHARGE } from "@/constants/user";
 import CartSummary from "@/components/user/CartSummary";
+import { calculateCartPrice } from "@/lib/utils";
 
 const Cart = () => {
-  const { currentUser } = useAuth();
-  const { cart, updateCartItemQuantity, removeFromCart, isLoading } =
-    useCart(currentUser);
-
-  if (isLoading || !cart) {
-    return <p>Loading your cart...</p>;
-  }
-
-  const cartProducts = cart.items || [];
-  const calculatePrice = (price: number, quantity: number) => price * quantity;
-
-  const total = cartProducts.reduce(
-    (sum, item) =>
-      sum +
-      calculatePrice(
-        item.productId.pricing["US"]?.original || 0,
-        item.quantity
-      ),
-    0
-  );
-
-  const grandTotal = total + DELIVERY_CHARGE;
+  const { cart, removeFromCart, cartSubTotal, updateCartQuantity } = useCart();
+  const grandTotal = cartSubTotal + DELIVERY_CHARGE;
 
   return (
     <div className="flex flex-col gap-8 pb-8 pt-16">
@@ -49,7 +30,7 @@ const Cart = () => {
               </tr>
             </thead>
             <tbody>
-              {cartProducts.map(({ productId, quantity }) => {
+              {cart.map(({ productId, quantity }) => {
                 const price = productId.pricing["US"]?.original || 0;
 
                 return (
@@ -73,7 +54,7 @@ const Cart = () => {
                         <Minus
                           className="cursor-pointer"
                           onClick={() =>
-                            updateCartItemQuantity(productId._id, -1)
+                            updateCartQuantity(productId._id, quantity - 1)
                           }
                         />
                         <Input
@@ -84,13 +65,13 @@ const Cart = () => {
                         <Plus
                           className="cursor-pointer"
                           onClick={() =>
-                            updateCartItemQuantity(productId._id, 1)
+                            updateCartQuantity(productId._id, quantity + 1)
                           }
                         />
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      ${calculatePrice(price, quantity).toFixed(2)}
+                      ${calculateCartPrice(price, quantity).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <Button
@@ -110,7 +91,7 @@ const Cart = () => {
 
         {/* Cart Summary */}
         <CartSummary
-          subtotal={total}
+          subtotal={cartSubTotal}
           total={grandTotal}
           btnText="Proceed to Checkout"
           btnUrl="/checkout"

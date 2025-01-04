@@ -1,5 +1,5 @@
-import cors from "cors";
 import envConfig from "@/config/envConfig";
+
 const corsOptions = {
   origin: envConfig.client.endpoint,
   credentials: true,
@@ -8,6 +8,4 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-const corsMiddleware = cors(corsOptions);
-
-export default corsMiddleware;
+export default corsOptions;

@@ -46,23 +46,13 @@ declare global {
     };
   }
 
-  interface ICartItem {
+  interface ICartItems {
     productId: IProduct;
     quantity: number;
   }
 
-  interface ICart {
-    userId: string;
-    items: ICartItem[];
-  }
-
-  interface IWishlistItem {
+  interface IWishlistItems {
     productId: IProduct;
-  }
-
-  interface IWishlist {
-    userId: string;
-    items: IWishlistItem[];
   }
 }
 

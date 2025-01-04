@@ -25,7 +25,7 @@ function ProductSection({
             key={index}
             className="basis-full pl-[24px] sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
           >
-            <ProductCard {...item} />
+            <ProductCard product={item} />
           </CarouselItem>
         ))}
       </CarouselContent>
@@ -36,7 +36,7 @@ function ProductSection({
       <SectionHeader {...headerProps} />
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {items.map((item, index) => (
-          <ProductCard key={index} {...item} />
+          <ProductCard key={index} product={item} />
         ))}
       </div>
       {footerProps && <SectionFooter {...footerProps} />}

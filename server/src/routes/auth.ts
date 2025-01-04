@@ -1,25 +1,19 @@
 import { Router } from "express";
 import passport from "passport";
 import envConfig from "@/config/envConfig";
-import { prepareUserResponse } from "@/utils/user";
-import {
-  signup,
-  login,
-  verifyEmail,
-  logout,
-  resetPassword,
-  requestOtp,
-} from "@/controllers/auth";
+import * as controller from "@/controllers/auth";
+import { createAuthSession, sendResponse } from "@/utils/helper";
 
 const router: Router = Router();
-const failureRedirect = `${envConfig.client.endpoint}/auth/login`;
+const failureRedirect = `${envConfig.client.endpoint}/login`;
+const successRedirect = `${envConfig.client.endpoint}`;
 
-router.post("/login", login);
-router.post("/signup", signup);
-router.post("/logout", logout);
-router.post("/request-otp", requestOtp);
-router.get("/verify-email", verifyEmail);
-router.post("/reset-password", resetPassword);
+router.post("/login", controller.login);
+router.post("/signup", controller.signup);
+router.post("/logout", controller.logout);
+router.post("/request-otp", controller.requestOtp);
+router.post("/validate-otp", controller.validateOtp);
+router.post("/reset-password", controller.resetPassword);
 
 // Google Auth Routes
 router.get(
@@ -34,13 +28,10 @@ router.get(
   passport.authenticate("google", { session: false, failureRedirect }),
   async (req, res) => {
     if (req.user) {
-      await prepareUserResponse(
-        res,
-        req.user,
-        "Google authentication successful."
-      );
+      const tokenData = await createAuthSession(res, req.user);
+      if (tokenData) res.redirect(successRedirect);
     } else {
-      res.status(400).json({ message: "Authentication failed." });
+      sendResponse(res, 404, false, "Authentication failed.");
     }
   }
 );
@@ -50,7 +41,6 @@ router.get(
   "/facebook",
   passport.authenticate("facebook", {
     session: false,
-    scope: ["profile", "email"],
   })
 );
 router.get(
@@ -58,13 +48,10 @@ router.get(
   passport.authenticate("facebook", { session: false, failureRedirect }),
   async (req, res) => {
     if (req.user) {
-      await prepareUserResponse(
-        res,
-        req.user,
-        "Facebook authentication successful."
-      );
+      const tokenData = await createAuthSession(res, req.user);
+      if (tokenData) res.redirect(successRedirect);
     } else {
-      res.status(400).json({ message: "Authentication failed." });
+      sendResponse(res, 404, false, "Authentication failed.");
     }
   }
 );

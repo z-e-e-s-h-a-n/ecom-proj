@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import { ThemeProvider } from "next-themes";
+import { StoreProvider } from "@/providers/store";
 
 function Provider({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +13,7 @@ function Provider({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
       enableColorScheme
     >
-      {children}
+      <StoreProvider>{children}</StoreProvider>
     </ThemeProvider>
   );
 }

@@ -1,4 +1,5 @@
 import envConfig from "@/config/envConfig";
+import { sendResponse } from "@/utils/helper";
 import { NextFunction, Request, Response } from "express";
 
 export interface AppError extends Error {
@@ -22,9 +23,7 @@ const errorHandler = (
     isOperational,
   });
 
-  res.status(status).json({
-    status,
-    message,
+  sendResponse(res, status, false, message, {
     stack: envConfig.env === "development" ? err.stack : undefined,
   });
 };

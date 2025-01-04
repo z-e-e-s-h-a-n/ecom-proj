@@ -7,7 +7,7 @@
     @apply m-0 box-border scroll-smooth border-border p-0;
   }
   body {
-    @apply mx-auto max-w-[1440px] bg-background font-poppins text-foreground;
+    @apply container !p-0 bg-background font-poppins text-foreground;
   }
 
   input {
@@ -24,6 +24,10 @@
 
   button {
     @apply cursor-pointer;
+  }
+
+  span {
+    @apply inline-block;
   }
 
   :root {
@@ -113,6 +117,7 @@
   .container {
     @apply mx-auto max-w-[1440px] px-10;
   }
+
   .scrollbar-hidden::-webkit-scrollbar {
     @apply hidden;
   }
@@ -121,7 +126,7 @@
     scrollbar-width: none;
   }
   .primary-btn {
-    @apply hover:bg-primary-100 rounded-full bg-primary transition-all !important;
+    @apply hover:bg-primary/30 rounded-full bg-primary transition-all !important;
   }
   .flex-center {
     @apply flex items-center justify-center;
@@ -170,13 +175,18 @@
     @apply max-w-[95%] space-y-4 rounded-xl bg-white px-4 py-10 outline-none sm:w-fit md:rounded-[30px] md:px-8 !important;
   }
   .shad-submit-btn {
-    @apply button hover:bg-primary-100 rounded-full bg-primary transition-all !important;
+    @apply hover:bg-primary/30 rounded-full bg-primary transition-all !important;
   }
+  /* OTP Modal */
+
   .shad-otp {
     @apply flex-justify-between w-full gap-1 sm:gap-2 !important;
   }
   .shad-otp-slot {
-    @apply flex-justify-center shadow-drop-1 text-primary-100 size-12 gap-5 rounded-xl border-2 text-[40px] font-medium ring-primary md:size-16 !important;
+    @apply flex-justify-center shadow-light text-primary/30 size-12 gap-5 rounded-xl border-2 text-[40px] font-medium ring-primary md:size-16 !important;
+  }
+  .otp-close-button {
+    @apply absolute -right-1 -top-7 cursor-pointer sm:-right-2 sm:-top-4 !important;
   }
 
   .shad-sheet {

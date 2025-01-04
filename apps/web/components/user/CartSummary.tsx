@@ -45,8 +45,8 @@ function CartSummary({
           <>
             <Separator />
             <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-hidden">
-              {cartList.map(({ id, name, price, quantity, imageUrl }) => (
-                <div key={id} className="flex items-center gap-4">
+              {cartList.map(({ _id, name, price, quantity, imageUrl }) => (
+                <div key={_id} className="flex items-center gap-4">
                   <Image
                     width={40}
                     height={40}
@@ -56,7 +56,7 @@ function CartSummary({
                   />
                   <div className="text-sm flex-1 grid gap-2">
                     <Link
-                      href={`/products/${id}`}
+                      href={`/products/${_id}`}
                       className="flex justify-between gap-2"
                     >
                       <span>{name}</span>

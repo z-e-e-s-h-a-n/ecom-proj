@@ -32,16 +32,15 @@ import { cn } from "@workspace/ui/lib/utils";
 import { Logo } from "@/components/constant/IconSet";
 import CountBadge from "./CountBadge";
 import { ThemeSwitch } from "./ThemeSwitch";
-import { useUserSelector } from "@/store/features/user/userSelector";
 import { logoutUser } from "@/lib/actions/auth";
-import { clearUser } from "@/store/features/auth/authSlice";
 import { useToast } from "@workspace/ui/hooks/use-toast";
-import { useAppDispatch } from "@/hooks/useStore";
+import useStorage from "@/hooks/useStorage";
+import useAuth from "@/hooks/useAuth";
 
 function Header({ currentUser }: HeaderProps) {
   const pathname = usePathname();
-  const dispatch = useAppDispatch();
-  const { cart, wishlist } = useUserSelector();
+  const { cart, wishlist } = useStorage();
+  const { refetch: refetchCurrentUser } = useAuth();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -51,7 +50,7 @@ function Header({ currentUser }: HeaderProps) {
         title: "Success",
         description: "Logged out successfully.",
       });
-      dispatch(clearUser());
+      refetchCurrentUser();
     }
   };
   const isRouteActive = (route: string) => pathname.endsWith(route);

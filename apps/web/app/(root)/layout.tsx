@@ -1,7 +1,7 @@
 "use client";
 import Footer from "@/components/constant/Footer";
 import Header from "@/components/constant/Header";
-import { useAuth } from "@/hooks/useStorage";
+import useAuth from "@/hooks/useAuth";
 
 function RootLayout({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();

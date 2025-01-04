@@ -4,19 +4,27 @@ import bcrypt from "bcryptjs";
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
-  // username?: string;
   email: string;
   password: string;
   isVerified: boolean;
   googleId?: string;
   facebookId?: string;
-  role: "user" | "admin";
+  role: UserRole;
   comparePassword(password: string): Promise<boolean>;
+}
+
+export type UserRole = "user" | "admin";
+
+export interface SafeUser {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  isVerified: boolean;
 }
 
 const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
-  // username: { type: String, unique: true, default:  },
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
   isVerified: { type: Boolean, default: false },
@@ -27,7 +35,14 @@ const userSchema = new Schema<IUser>({
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 12);
+  }
+  next();
+});
+
+userSchema.pre("save", function (next) {
+  if (this.isModified("email")) {
+    this.email = this.email.toLowerCase();
   }
   next();
 });

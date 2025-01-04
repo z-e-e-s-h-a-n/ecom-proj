@@ -1,5 +1,7 @@
 import envConfig from "@/config/envConfig";
 import { CookieOptions, Response } from "express";
+import { generateTokens, ITokenPayload, manageTokensCookies } from "./jwt";
+import { IUser } from "@/models/user";
 
 export const getEnv = (key: string, fallback?: string): string => {
   const value = process.env[key];
@@ -30,22 +32,47 @@ export const durationToTime = (duration: string, asMs = false): number => {
   return asMs ? timeInSeconds * 1000 : timeInSeconds;
 };
 
-export const manageCookies = (
-  res: Response,
-  action: "add" | "remove",
-  details: { name: string; secret: string },
-  options: CookieOptions
-) => {
-  const { name, secret } = details;
+export const calculateExpiryTime = (duration: string, asMs = false): number => {
+  const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+  const durationInSeconds = durationToTime(duration, asMs);
+  return currentTimeInSeconds + durationInSeconds;
+};
 
-  if (action === "add" && secret) {
-    res.cookie(name, secret, {
-      httpOnly: true,
-      secure: envConfig.env === "production",
-      sameSite: "strict",
-      ...options,
-    });
-  } else if (action === "remove") {
-    res.clearCookie(name);
-  }
+export const calculateExpiresIn = (duration: string): number => {
+  const durationInSeconds = durationToTime(duration);
+  return durationInSeconds;
+};
+
+export const sendResponse = (
+  res: Response,
+  status: number,
+  success: boolean,
+  message: string,
+  data = {}
+) => {
+  res.status(status).json({ success, message, data });
+};
+
+export const addCookies = (
+  res: Response,
+  name: string,
+  secret: string,
+  options?: CookieOptions
+) => {
+  res.cookie(name, secret, {
+    httpOnly: true,
+    secure: envConfig.env === "production",
+    sameSite: "strict",
+    path: "/",
+    ...options,
+  });
+};
+
+export const createAuthSession = async (
+  res: Response,
+  user: IUser | ITokenPayload
+) => {
+  const tokenData = await generateTokens(user as ITokenPayload);
+  manageTokensCookies(res, "add", tokenData);
+  return tokenData;
 };

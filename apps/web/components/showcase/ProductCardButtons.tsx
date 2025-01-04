@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button, ButtonVariant } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
-import { useAuth, useCart, useWishlist } from "@/hooks/useStorage";
+import { useCart, useWishlist } from "@/hooks/useStorage";
 import { toast } from "sonner";
 
 interface IProductActions {
@@ -18,51 +18,50 @@ interface IProductActions {
   variant: ButtonVariant;
 }
 
-interface ProductButtonsProps extends IProduct {
+interface ProductButtonsProps {
+  product: IProduct;
   className?: string;
 }
 
-function ProductCardButtons({ className, _id, name }: ProductButtonsProps) {
-  const { currentUser } = useAuth();
-  const { addToCart, removeFromCart } = useCart(currentUser);
-  const { addToWishlist, removeFromWishlist } = useWishlist(currentUser);
-
-  const isInCart = false; // here defien the method
-  const isInWishlist = false; // here defien the method
+function ProductCardButtons({ className, product }: ProductButtonsProps) {
+  const { addToCart, removeFromCart, isInCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   const toggleCart = () => {
-    if (isInCart) {
-      removeFromCart(_id);
-      toast(`Removed from your cart`, { description: name });
+    if (isInCart(product._id)) {
+      removeFromCart(product._id);
+      toast(`Removed from your cart`, { description: product.name });
     } else {
-      addToCart(_id);
-      toast(`Added to your cart`, { description: name });
+      addToCart(product, 1);
+      toast(`Added to your cart`, { description: product.name });
     }
   };
 
   // Function to toggle wishlist item
   const toggleWishlist = () => {
-    if (isInWishlist) {
-      removeFromWishlist(_id);
-      toast(`Removed from your wishlist`, { description: name });
+    if (isInWishlist(product._id)) {
+      removeFromWishlist(product._id);
+      toast(`Removed from your wishlist`, { description: product.name });
     } else {
-      addToWishlist(_id);
-      toast(`Added to your wishlist`, { description: name });
+      addToWishlist(product);
+      toast(`Added to your wishlist`, { description: product.name });
     }
   };
 
   const productActions: IProductActions[] = [
     {
       Icon: ShoppingCart,
-      label: isInCart ? "Remove from Cart" : "Add to Cart",
+      label: isInCart(product._id) ? "Remove from Cart" : "Add to Cart",
       action: toggleCart,
-      variant: isInCart ? "default" : "outline",
+      variant: isInCart(product._id) ? "default" : "outline",
     },
     {
       Icon: Heart,
-      label: isInWishlist ? "Remove from Wishlist" : "Add to Wishlist",
+      label: isInWishlist(product._id)
+        ? "Remove from Wishlist"
+        : "Add to Wishlist",
       action: toggleWishlist,
-      variant: isInWishlist ? "default" : "outline",
+      variant: isInWishlist(product._id) ? "default" : "outline",
     },
     {
       Icon: Eye,

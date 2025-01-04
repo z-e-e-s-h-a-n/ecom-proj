@@ -2,32 +2,24 @@ import { Star } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import Link from "next/link";
-import { cn } from "@workspace/ui/lib/utils";
 import ProductCardButtons from "@/components/showcase/ProductCardButtons";
 
-export interface ProductCardProps extends IProduct {
-  className?: string;
-}
-
-function ProductCard(product: ProductCardProps) {
+const ProductCard = ({ product }: { product: IProduct }) => {
   return (
     <Link
-      href={`/products/${product.id}`}
-      className={cn(
-        "group/product-card overflow-hidden rounded-md bg-background shadow-light",
-        product.className
-      )}
+      href={`/products/${product._id}`}
+      className="group/product-card overflow-hidden rounded-md bg-background shadow-light"
     >
       <div className="flex-center relative h-[220px] w-full bg-secondary px-10 py-8">
         <Image
-          src={product.imageUrl}
+          src={product.images[0] || "/assets/images/placeholder.png"}
           alt="Product 1"
           width={190}
           height={180}
           loading="eager"
           className="h-full !object-contain transition-all duration-300 group-hover/product-card:scale-110"
         />
-        <ProductCardButtons {...product} />
+        <ProductCardButtons product={product} />
       </div>
       <div className="flex flex-col gap-1 px-2 py-4">
         <h3 className="h5 truncate">HAVIT HV-G92 Gamepad</h3>
@@ -48,6 +40,6 @@ function ProductCard(product: ProductCardProps) {
       </div>
     </Link>
   );
-}
+};
 
 export default ProductCard;

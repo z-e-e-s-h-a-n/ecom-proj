@@ -36,6 +36,7 @@ const envConfig = {
   client: {
     endpoint: getEnv("CLIENT_ENDPOINT"),
   },
+  productCreationPass: getEnv("PRODUCT_CREATION_PASS"),
 };
 
 export default envConfig;

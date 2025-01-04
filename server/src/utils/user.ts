@@ -1,9 +1,11 @@
-import { generateTokens, manageTokensCookies } from "@/utils/jwt";
 import { Response } from "express";
-import OtpVerificationModel from "@/models/otpVerification";
+import otpModel from "@/models/otp";
 import sendEmail from "@/config/nodemailer";
 import { ObjectId } from "@/types/global";
 import logger from "./logger";
+import { createAuthSession, sendResponse } from "./helper";
+import { IUser, SafeUser } from "@/models/user";
+import { Document } from "mongoose";
 
 export interface SendOtpPayload {
   userId: string | ObjectId;
@@ -26,12 +28,13 @@ export const sendOtp = async ({
   subject,
   message,
 }: SendOtpPayload) => {
-  const otpDocument = new OtpVerificationModel({ userId, purpose });
+  const otpDocument = new otpModel({ userId, purpose });
   const otp = otpDocument.generateOtp();
   await otpDocument.save();
 
   const verifyLink = `${process.env.APP_ENDPOINT}/auth/verify-otp?otp=${otp}&email=${email}`;
   const emailContent = `<h1>${subject}</h1>
+    <p>Your Otp Code is: <b>${otp}</b></p>
     <p>${message}</p>
     <a href="${verifyLink}">${verifyLink}</a>`;
 
@@ -40,38 +43,41 @@ export const sendOtp = async ({
 };
 
 export const verifyOtp = async ({ userId, otp, purpose }: verifyOtpPayload) => {
-  const otpRecord = await OtpVerificationModel.findOne({ userId, purpose });
+  const otpRecord = await otpModel.findOne({ userId, purpose });
   if (!otpRecord || !otpRecord.verifyOtp(otp)) {
     logger.alert("Invalid or expired OTP.");
     throw new Error("Invalid or expired OTP.");
   }
-  await OtpVerificationModel.deleteOne({ _id: otpRecord._id });
+  await otpModel.deleteOne({ _id: otpRecord._id });
   return { status: 200, message: "OTP verified successfully." };
+};
+
+export const formatUserResponse = (
+  user: Document | any,
+  additionalInfo: Record<string, any> = {}
+): SafeUser & Record<string, any> => {
+  return {
+    _id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    isAuth: true,
+    isVerified: user.isVerified,
+    ...additionalInfo,
+  };
 };
 
 export const prepareUserResponse = async (
   res: Response,
-  user: any,
+  user: IUser,
   message: string
 ) => {
   try {
-    const tokenData = await generateTokens({ id: user._id, role: user.role });
-    manageTokensCookies(res, "add", tokenData);
+    const tokenData = await createAuthSession(res, user);
+    const userResponse = formatUserResponse(user);
 
-    const userResponse = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isAuth: true,
-    };
-
-    res.status(200).json({
-      message,
-      user: userResponse,
-      ...tokenData,
-    });
+    sendResponse(res, 200, true, message, { user: userResponse, ...tokenData });
   } catch (error) {
-    res.status(500).json({ message: "Error processing user response." });
+    sendResponse(res, 500, false, "Error processing user response.");
   }
 };

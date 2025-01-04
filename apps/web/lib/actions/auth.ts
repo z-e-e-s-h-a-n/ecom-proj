@@ -50,14 +50,14 @@ export const resetPassword = async (data: IResetPasswordData) => {
   return apiRequest("POST", "/auth/reset-password", data);
 };
 
-export const loginWithGoogle = () => {
+export const loginWithGoogle = async () => {
   window.location.href = `${envConfig.server.endpoint}/auth/google`;
 };
 
-export const loginWithFacebook = () => {
+export const loginWithFacebook = async () => {
   window.location.href = `${envConfig.server.endpoint}/auth/facebook`;
 };
 
-export const loginWithApple = () => {
-  alert("Apple login is not yet implemented");
+export const loginWithApple = async () => {
+  alert("Apple login not implemented yet.");
 };

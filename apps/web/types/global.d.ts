@@ -49,7 +49,6 @@ declare global {
     label: string;
     Icon: LucideIcon;
     url: string;
-    className?: string;
   }
 
   interface ShowcaseSectionProps {
@@ -78,7 +77,7 @@ declare global {
   }
 
   interface ProductSectionProps extends ShowcaseSectionProps {
-    items: ProductCardProps[];
+    items: IProduct[];
   }
 
   interface CategorySectionProps extends ShowcaseSectionProps {

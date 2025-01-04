@@ -1,21 +1,17 @@
 import { apiRequest } from "@/config/axios";
 
-type ActionType = "add" | "remove";
-interface syncDBPayload {
-  items?: AddToCartPayload[];
-  productIds?: string[];
-}
-
 export interface AddToCartPayload {
   productId: string;
   quantity: number;
 }
 
-export const getCurrentUser = async () => {
+export interface RemoveFromCartPayload {
+  productId: string;
+}
+
+export const getCurrentUser = async (): Promise<TCurrentUser> => {
   try {
     const response = await apiRequest("GET", "/users/me");
-    console.log("response response response response response", response);
-
     if (!response.success) return null;
     return response.data.user as IUser;
   } catch (error) {
@@ -24,36 +20,29 @@ export const getCurrentUser = async () => {
   }
 };
 
-export const fetchUserCart = async () => {
+// API Calls
+export const getUserCart = async (): Promise<ICartItems[]> => {
   const response = await apiRequest("GET", `/users/cart`);
-  return response.data.cart;
+  return response.data?.cart?.items || [];
 };
 
-export const fetchUserWishlist = async () => {
+export const getUserWishlist = async (): Promise<IWishlistItems[]> => {
   const response = await apiRequest("GET", `/users/wishlist`);
-  return response.data.wishlist;
+  return response.data?.wishlist?.items || [];
 };
 
-export const syncCartToServer = async (
-  action: ActionType,
-  payload: syncDBPayload
-) => {
-  const response = await apiRequest(
-    action === "add" ? "POST" : "DELETE",
-    "/users/cart",
-    payload
-  );
-  return response.data.cart;
+export const addToCartServer = async (items: AddToCartPayload[]) => {
+  await apiRequest("POST", "/users/cart", { items });
 };
 
-export const syncWishlistToServer = async (
-  action: ActionType,
-  payload: syncDBPayload
-) => {
-  const response = await apiRequest(
-    action === "add" ? "POST" : "DELETE",
-    "/users/wishlist",
-    payload
-  );
-  return response.data.wishlist;
+export const removeFromCartServer = async (productId: string) => {
+  await apiRequest("DELETE", `/users/cart/${productId}`);
+};
+
+export const addToWishlistServer = async (items: RemoveFromCartPayload[]) => {
+  await apiRequest("POST", "/users/wishlist", { items });
+};
+
+export const removeFromWishlistServer = async (productId: string) => {
+  await apiRequest("DELETE", `/users/wishlist/${productId}`);
 };

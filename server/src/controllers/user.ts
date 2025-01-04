@@ -1,18 +1,206 @@
+import CartModel from "@/models/cart";
+import OrderModel from "@/models/order";
+import PaymentModel from "@/models/payment";
 import UserModel from "@/models/user";
+import WishlistModel from "@/models/wishlist";
+import { sendResponse } from "@/utils/helper";
 import logger from "@/utils/logger";
-import { prepareUserResponse } from "@/utils/user";
+import { formatUserResponse } from "@/utils/user";
 import { Request, Response } from "express";
 
 export const getUser = async (req: Request, res: Response) => {
   try {
-    const user = await UserModel.findById(req.user.id);
+    const user = await UserModel.findById(req.user._id);
     if (!user) {
-      res.status(404).json({ message: "User not found." });
-      return;
+      return sendResponse(res, 404, false, "User not found.");
     }
-    await prepareUserResponse(res, user, "User fetched successfully.");
+    const userResponse = formatUserResponse(user, { isAuth: true });
+    sendResponse(res, 200, true, "User fetched successfully.", {
+      user: userResponse,
+    });
   } catch (error) {
     logger.error("Error fetching user profile:", { error });
-    res.status(500).json({ message: "Error fetching user profile" });
+    sendResponse(res, 500, false, "Internal server error.");
+  }
+};
+
+export const getCart = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  try {
+    const cart = await CartModel.findOne({ userId }).populate(
+      "items.productId"
+    );
+    sendResponse(res, 200, true, "Cart fetched successfully", {
+      cart: cart || { userId, items: [] },
+    });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to fetch cart");
+  }
+};
+
+export const addToCart = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const items = req.body.items;
+
+  try {
+    const cart = await CartModel.findOneAndUpdate(
+      { userId },
+      { $push: { items: { $each: items } } },
+      { new: true, upsert: true }
+    );
+    sendResponse(res, 200, true, "Items added to your cart", { cart });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to add items to cart");
+  }
+};
+
+export const removeFromCart = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const productId = req.params.productId;
+
+  try {
+    const cart = await CartModel.findOneAndUpdate(
+      { userId },
+      { $pull: { items: { productId } } },
+      { new: true }
+    );
+    sendResponse(res, 200, true, "Item removed from cart", { cart });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to remove item from cart");
+  }
+};
+
+export const getWishlist = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  try {
+    const wishlist = await WishlistModel.findOne({ userId }).populate(
+      "items.productId"
+    );
+    sendResponse(res, 200, true, "Wishlist fetched successfully", {
+      wishlist: wishlist || { userId, items: [] },
+    });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to fetch wishlist");
+  }
+};
+
+export const addToWishlist = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const items = req.body.items;
+
+  try {
+    const wishlist = await WishlistModel.findOneAndUpdate(
+      { userId },
+      { $push: { items: { $each: items } } },
+      { new: true, upsert: true }
+    );
+    sendResponse(res, 200, true, "Items added to your wishlist", { wishlist });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to add items to wishlist");
+  }
+};
+
+export const removeFromWishlist = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const productId = req.params.productId;
+
+  try {
+    const wishlist = await WishlistModel.findOneAndUpdate(
+      { userId },
+      { $pull: { items: { productId } } },
+      { new: true }
+    );
+    sendResponse(res, 200, true, "Item removed from wishlist", { wishlist });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to remove item from wishlist");
+  }
+};
+
+export const placeOrder = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const { products, totalAmount } = req.body;
+
+  if (!products || !totalAmount) {
+    return sendResponse(res, 400, false, "Missing Fields are required.");
+  }
+
+  try {
+    const order = new OrderModel({
+      userId,
+      products,
+      totalAmount,
+      paymentStatus: "Pending",
+      orderStatus: "Pending",
+    });
+
+    await order.save();
+    sendResponse(res, 201, true, "Order placed successfully", { order });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to place order");
+  }
+};
+
+export const getUserOrders = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+
+  try {
+    const orders = await OrderModel.find({ userId }).populate(
+      "products.productId"
+    );
+    sendResponse(res, 200, true, "Orders fetched successfully", { orders });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to fetch orders");
+  }
+};
+
+export const getOrderById = async (req: Request, res: Response) => {
+  const userId = req.user._id;
+  const { orderId } = req.params;
+
+  try {
+    const order = await OrderModel.findOne({ userId, _id: orderId }).populate(
+      "products.productId"
+    );
+
+    if (!order) {
+      return sendResponse(res, 404, false, "Order not found");
+    }
+
+    sendResponse(res, 200, true, "Order fetched successfully", { order });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to fetch order");
+  }
+};
+
+export const initiatePayment = async (req: Request, res: Response) => {
+  const { orderId, amount, paymentMethod } = req.body;
+  const userId = req.user._id;
+  try {
+    const payment = await PaymentModel.create({
+      userId,
+      orderId,
+      amount,
+      paymentMethod,
+      status: "Pending",
+    });
+    sendResponse(res, 201, true, "Payment initiated successfully", { payment });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to initiate payment");
+  }
+};
+
+export const verifyPayment = async (req: Request, res: Response) => {
+  const { transactionId, status } = req.body;
+  try {
+    const payment = await PaymentModel.findOneAndUpdate(
+      { transactionId },
+      { status },
+      { new: true }
+    );
+    sendResponse(res, 200, true, "Payment status updated successfully", {
+      payment,
+    });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to verify payment");
   }
 };

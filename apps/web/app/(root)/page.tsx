@@ -1,21 +1,21 @@
+"use client";
 import HeroSection from "@/components/showcase/HeroSection";
 import CategorySection from "@/components/showcase/CategorySection";
 import ProductSection from "@/components/showcase/ProductSection";
 import { Separator } from "@workspace/ui/components/separator";
-import {
-  productList,
-  categoryList,
-  bannerCardsList,
-} from "@/constants/product";
+import { categoryList, bannerCardsList } from "@/constants/product";
 import BannerCardSection from "@/components/showcase/BannerCardSection";
+import useStorage from "@/hooks/useStorage";
 
 function Home() {
+  const { products } = useStorage();
+
   return (
     <>
       <HeroSection />
       <BannerCardSection items={bannerCardsList} />
       <ProductSection
-        items={productList}
+        items={products}
         useCarousel={true}
         headerProps={{
           title: "Flash Sale",
@@ -38,7 +38,7 @@ function Home() {
       />
       <Separator />
       <ProductSection
-        items={productList}
+        items={products}
         headerProps={{
           title: "Best Selling Products",
           subtitle: { text: "This Month" },
@@ -46,7 +46,7 @@ function Home() {
         }}
       />
       <ProductSection
-        items={productList}
+        items={products}
         useCarousel={true}
         headerProps={{
           title: "Explore Our Products",

@@ -39,6 +39,8 @@ const findOrCreateUser = async ({ provider, ...profile }: any) => {
 };
 
 const handleOAuth = (profile: any, done: Function) => {
+  console.log("profile profile profile profile ", profile);
+
   findOrCreateUser(profile)
     .then((user) => done(null, user))
     .catch((error) => done(error, false));

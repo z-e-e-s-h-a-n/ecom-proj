@@ -19,7 +19,7 @@ const defaultData: CountdownData = {
   state: "NOT_STARTED",
 };
 
-export const useCountdown = (startDate: Date, endDate: Date): CountdownData => {
+const useCountdown = (startDate: Date, endDate: Date): CountdownData => {
   const [timeLeft, setTimeLeft] = useState<CountdownData>(defaultData);
 
   useEffect(() => {
@@ -54,3 +54,5 @@ export const useCountdown = (startDate: Date, endDate: Date): CountdownData => {
 
   return timeLeft;
 };
+
+export default useCountdown;

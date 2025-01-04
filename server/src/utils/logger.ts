@@ -16,7 +16,7 @@ const logger = createLogger({
   ],
 });
 
-if (envConfig.env !== "production") {
+if (envConfig?.env !== "production") {
   logger.add(
     new transports.Console({
       format: format.combine(format.colorize(), format.simple()),

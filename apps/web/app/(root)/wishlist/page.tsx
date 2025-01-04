@@ -1,21 +1,18 @@
 "use client";
 import ProductSection from "@/components/showcase/ProductSection";
-import { productList } from "@/constants/product";
-import { useStorage } from "@/hooks/useStorage";
+import useStorage from "@/hooks/useStorage";
 import React from "react";
 
 function Wishlist() {
-  const { wishlist, cart } = useStorage();
+  const { wishlist, cart, products } = useStorage();
 
-  const wishlistProducts = productList.filter((product) =>
-    wishlist?.items?.some((item) => item.productId._id === product._id)
-  );
+  const wishlistProducts = wishlist.map(({ productId }) => productId);
 
-  const justForYouProducts = productList
+  const justForYouProducts = products
     .filter(
       (product) =>
-        !wishlist?.items?.some((item) => item.productId._id === product._id) &&
-        !cart?.items?.some((item) => item.productId._id === product._id) &&
+        !wishlistProducts?.some((item) => item._id === product._id) &&
+        !cart?.some((item) => item.productId._id === product._id) &&
         product.stock > 0
     )
     .slice(0, 5);
