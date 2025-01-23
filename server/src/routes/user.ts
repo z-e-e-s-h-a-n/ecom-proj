@@ -1,33 +1,28 @@
 import { Router } from "express";
-import { authGuard } from "@/middlewares/auth";
 import * as controller from "@/controllers/user";
 
 const router: Router = Router();
 
 // User routes
-router.get("/me", authGuard(), controller.getUser);
+router.get("/me", controller.getUser);
 
 // Cart routes
-router.get("/cart", authGuard(), controller.getCart);
-router.post("/cart", authGuard(), controller.addToCart);
-router.put("/cart", authGuard(), controller.updateCart);
-router.delete("/cart/:productId", authGuard(), controller.removeFromCart);
+router.get("/cart", controller.getCart);
+router.post("/cart", controller.addToCart);
+router.put("/cart", controller.updateCart);
+router.delete("/cart/:productId", controller.removeFromCart);
 
-router.get("/wishlist", authGuard(), controller.getWishlist);
-router.post("/wishlist", authGuard(), controller.addToWishlist);
-router.delete(
-  "/wishlist/:productId",
-  authGuard(),
-  controller.removeFromWishlist
-);
+router.get("/wishlist", controller.getWishlist);
+router.post("/wishlist", controller.addToWishlist);
+router.delete("/wishlist/:productId", controller.removeFromWishlist);
 
 // Order routes
-router.get("/orders", authGuard(), controller.getUserOrders);
-router.post("/orders", authGuard(), controller.placeOrder);
-router.get("/orders/:orderId", authGuard(), controller.getOrderById);
+router.get("/orders", controller.getUserOrders);
+router.post("/orders", controller.placeOrder);
+router.get("/orders/:orderId", controller.getOrderById);
 
 // Payment routes
-router.post("/payment/initiate", authGuard(), controller.initiatePayment);
-router.post("/payment/verify", authGuard(), controller.verifyPayment);
+router.post("/payment/initiate", controller.initiatePayment);
+router.post("/payment/verify", controller.verifyPayment);
 
 export default router;

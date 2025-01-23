@@ -1,9 +1,9 @@
 import { IPasswordResetToken } from "@/models/PasswordResetToken";
-import { IUser } from "@/models/user";
+import { ISafeUser } from "@/models/user";
 
 declare global {
   namespace Express {
-    interface User extends IUser {}
+    interface User extends ISafeUser {}
     interface passwordResetToken extends IPasswordResetToken {}
   }
 }

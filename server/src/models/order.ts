@@ -11,7 +11,7 @@ export interface IOrder extends Document {
   }[];
   totalAmount: number;
   paymentStatus: PaymentStatus;
-  payments: mongoose.Types.ObjectId[];
+  paymentId: mongoose.Types.ObjectId;
   orderStatus: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -40,12 +40,11 @@ const orderSchema = new Schema<IOrder>(
       enum: ["Pending", "Completed", "Failed"],
       default: "Pending",
     },
-    payments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Payment",
-      },
-    ],
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+      required: true,
+    },
     orderStatus: {
       type: String,
       enum: ["Pending", "Shipped", "Delivered", "Cancelled"],

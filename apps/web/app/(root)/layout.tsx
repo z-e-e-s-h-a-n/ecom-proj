@@ -10,9 +10,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    const hasSynced = sessionStorage.getItem("synced");
-
-    if (currentUser && !hasSynced) {
+    if (currentUser) {
       syncLocalToServer(currentUser).then(() => {
         sessionStorage.setItem("synced", "true");
       });

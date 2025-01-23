@@ -146,6 +146,7 @@ function Header({ currentUser }: HeaderProps) {
                 <DropdownMenuItem
                   className="flex-items-center cursor-pointer gap-2"
                   onClick={handleLogout}
+                  disabled={!currentUser}
                 >
                   <LogOut className="size-4" />
                   Sign Out
@@ -153,7 +154,7 @@ function Header({ currentUser }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button>
+            <Button disabled={!!currentUser}>
               <Link href="/sign-in">Login</Link>
             </Button>
           )}

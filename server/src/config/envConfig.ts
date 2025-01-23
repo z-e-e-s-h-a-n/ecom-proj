@@ -23,9 +23,7 @@ const envConfig = {
     pass: getEnv("EMAIL_PASS"),
     from: getEnv("EMAIL_FROM"),
   },
-  session: {
-    secret: getEnv("SESSION_SECRET"),
-  },
+
   db: {
     uri: getEnv("MONGO_URI"),
   },
@@ -36,7 +34,6 @@ const envConfig = {
   client: {
     endpoint: getEnv("CLIENT_ENDPOINT"),
   },
-  productCreationPass: getEnv("PRODUCT_CREATION_PASS"),
 };
 
 export default envConfig;

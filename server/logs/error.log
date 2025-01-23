@@ -172,3 +172,85 @@
 {"error":{"expiredAt":"2025-01-06T12:23:37.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-06 17:27:45"}
 {"error":{"expiredAt":"2025-01-06T12:23:37.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-06 17:27:45"}
 {"error":{"expiredAt":"2025-01-06T12:23:37.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-06 17:27:45"}
+{"error":{"expiredAt":"2025-01-22T07:41:38.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 12:42:44"}
+{"error":{"expiredAt":"2025-01-22T07:41:38.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 12:42:44"}
+{"error":{"expiredAt":"2025-01-22T07:41:38.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 12:42:44"}
+{"error":{"expiredAt":"2025-01-22T07:57:44.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:29:20"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:29:20"}
+{"error":{"expiredAt":"2025-01-22T07:57:44.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:30:22"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:30:22"}
+{"error":{"expiredAt":"2025-01-22T07:57:44.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:30:31"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:30:31"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:35"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:35"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:35"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:35"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:35"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:35"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:37"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:37"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:37"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:37"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:42"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:42"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:42"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:42"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:42"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:42"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:46"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:46"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:46"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:46"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:46"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:46"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:50"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:50"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:46:58"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:46:58"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:47:00"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:47:00"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:47:02"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:47:02"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:47:07"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:47:07"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:47:08"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:47:08"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:47:17"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:47:18"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:48:52"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:48:52"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:49:24"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:49:24"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:52:11"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:52:11"}
+{"error":{"expiredAt":"2025-01-22T09:45:45.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 14:52:15"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 14:52:15"}
+{"error":{"expiredAt":"2025-01-22T10:08:04.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:09:52"}
+{"error":{"expiredAt":"2025-01-22T10:08:04.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:09:52"}
+{"error":{"expiredAt":"2025-01-22T10:08:04.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:09:52"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 15:09:52"}
+{"error":{"expiredAt":"2025-01-22T09:58:18.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:16:12"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 15:16:12"}
+{"error":{"expiredAt":"2025-01-22T09:58:18.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:16:14"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-01-22 15:16:14"}
+{"error":{"expiredAt":"2025-01-22T10:32:59.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:40:49"}
+{"error":{"expiredAt":"2025-01-22T10:32:59.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:40:49"}
+{"error":{"expiredAt":"2025-01-22T10:32:59.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:40:49"}
+{"error":{"expiredAt":"2025-01-22T10:55:50.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:57:20"}
+{"error":{"expiredAt":"2025-01-22T10:55:50.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:57:20"}
+{"error":{"expiredAt":"2025-01-22T10:55:50.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 15:57:20"}
+{"error":{"expiredAt":"2025-01-22T11:25:06.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 16:38:23"}
+{"error":{"expiredAt":"2025-01-22T11:25:06.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 16:38:23"}
+{"error":{"expiredAt":"2025-01-22T11:25:06.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 16:38:23"}
+{"error":{"expiredAt":"2025-01-22T11:53:23.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 16:54:40"}
+{"error":{"expiredAt":"2025-01-22T11:53:23.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 16:54:40"}
+{"error":{"expiredAt":"2025-01-22T11:53:23.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 16:54:40"}
+{"error":{"expiredAt":"2025-01-22T12:12:48.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 17:33:31"}
+{"error":{"expiredAt":"2025-01-22T12:12:48.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 17:33:31"}
+{"error":{"expiredAt":"2025-01-22T12:12:48.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 17:33:31"}
+{"error":{"expiredAt":"2025-01-22T12:48:31.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 17:49:59"}
+{"error":{"expiredAt":"2025-01-22T12:48:31.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 17:49:59"}
+{"error":{"expiredAt":"2025-01-22T12:48:31.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 17:49:59"}
+{"error":{"expiredAt":"2025-01-22T13:04:59.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 18:31:04"}
+{"error":{"expiredAt":"2025-01-22T13:04:59.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 18:31:04"}
+{"error":{"expiredAt":"2025-01-22T13:04:59.000Z","message":"jwt expired","name":"TokenExpiredError"},"level":"error","message":"Error verifying token","service":"user-service","timestamp":"2025-01-22 18:31:04"}

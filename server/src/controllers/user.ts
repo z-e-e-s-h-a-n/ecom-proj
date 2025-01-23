@@ -11,13 +11,15 @@ import { Request, Response } from "express";
 
 export const getUser = async (req: Request, res: Response) => {
   try {
+    if (!req.user) {
+      return sendResponse(res, 401, false, "Unauthorized access.");
+    }
     const user = await UserModel.findById(req.user._id);
     if (!user) {
       return sendResponse(res, 404, false, "User not found.");
     }
-    const userResponse = formatUserResponse(user, { isAuth: true });
     sendResponse(res, 200, true, "User fetched successfully.", {
-      user: userResponse,
+      user: formatUserResponse(user),
     });
   } catch (error) {
     logger.error("Error fetching user profile:", { error });
@@ -26,6 +28,9 @@ export const getUser = async (req: Request, res: Response) => {
 };
 
 export const getCart = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
 
   try {
@@ -39,6 +44,9 @@ export const getCart = async (req: Request, res: Response) => {
 };
 
 export const addToCart = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { items } = req.body;
 
@@ -63,6 +71,9 @@ export const addToCart = async (req: Request, res: Response) => {
 };
 
 export const updateCart = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { productId, quantity } = req.body;
 
@@ -84,6 +95,9 @@ export const updateCart = async (req: Request, res: Response) => {
 };
 
 export const removeFromCart = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { productId } = req.params;
 
@@ -100,6 +114,9 @@ export const removeFromCart = async (req: Request, res: Response) => {
 };
 
 export const getWishlist = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
 
   try {
@@ -113,8 +130,12 @@ export const getWishlist = async (req: Request, res: Response) => {
 };
 
 export const addToWishlist = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { items } = req.body;
+  console.log("wishlist items", items);
 
   try {
     const addOps = items.map((item: any) =>
@@ -139,6 +160,9 @@ export const addToWishlist = async (req: Request, res: Response) => {
 };
 
 export const removeFromWishlist = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { productId } = req.params;
 
@@ -155,6 +179,9 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
 };
 
 export const placeOrder = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { products, totalAmount } = req.body;
 
@@ -179,6 +206,9 @@ export const placeOrder = async (req: Request, res: Response) => {
 };
 
 export const getUserOrders = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
 
   try {
@@ -192,6 +222,9 @@ export const getUserOrders = async (req: Request, res: Response) => {
 };
 
 export const getOrderById = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { orderId } = req.params;
 
@@ -211,6 +244,9 @@ export const getOrderById = async (req: Request, res: Response) => {
 };
 
 export const initiatePayment = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const { orderId, amount, paymentMethod } = req.body;
   const userId = req.user._id;
   try {

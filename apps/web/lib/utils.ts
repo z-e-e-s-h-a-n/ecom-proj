@@ -1,10 +1,3 @@
-export const getEnv = (key: string, fallback?: string): string => {
-  const value = process.env[key];
-  if (!value && !fallback)
-    throw new Error(`Missing environment variable: ${key}`);
-  return value || fallback!;
-};
-
 export const getLocalStorage = <T>(key: string, fallback: T): T => {
   if (typeof window === "undefined") return fallback;
   const storedValue = localStorage.getItem(key);

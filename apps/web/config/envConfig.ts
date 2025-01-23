@@ -1,13 +1,11 @@
-import { getEnv } from "@/lib/utils";
-
 const envConfig = {
-  env: getEnv("NODE_ENV", "development"),
+  env: process.env.NODE_ENV,
 
   app: {
-    endpoint: getEnv("APP_ENDPOINT", "http://localhost:3000"),
+    endpoint: process.env.NEXT_PUBLIC_APP_ENDPOINT,
   },
   server: {
-    endpoint: getEnv("SERVER_ENDPOINT", "http://localhost:4000"),
+    endpoint: process.env.NEXT_PUBLIC_SERVER_ENDPOINT,
   },
 };
 

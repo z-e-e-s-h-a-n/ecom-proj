@@ -12,6 +12,7 @@ import productRoutes from "@/routes/product";
 import fakerRoutes from "@/routes/faker";
 import errorHandler from "@/middlewares/errorHandler";
 import { sendResponse } from "@/utils/helper";
+import { authGuard } from "@/middlewares/auth";
 
 const app: Application = express();
 
@@ -25,7 +26,7 @@ app.use(compression());
 app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
+app.use("/users", authGuard(), userRoutes);
 app.use("/products", productRoutes);
 app.use("/faker", fakerRoutes);
 

@@ -15,11 +15,13 @@ export interface IUser extends Document {
 
 export type UserRole = "user" | "admin";
 
-export interface SafeUser {
+export interface ISafeUser {
   _id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
+  googleId?: string;
+  facebookId?: string;
   isVerified: boolean;
 }
 

@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 // Category Schema
 export interface ICategory extends Document {
   name: string;
-  desc: string;
+  description: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -12,7 +12,7 @@ export interface ICategory extends Document {
 const categorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true, unique: true },
-    desc: { type: String },
+    description: { type: String },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

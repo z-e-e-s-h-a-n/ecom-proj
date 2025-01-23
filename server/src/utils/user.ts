@@ -4,9 +4,8 @@ import sendEmail from "@/config/nodemailer";
 import { ObjectId } from "@/types/global";
 import logger from "./logger";
 import { createAuthSession, sendResponse } from "./helper";
-import { IUser, SafeUser } from "@/models/user";
-import { Document } from "mongoose";
-
+import {IUser,   ISafeUser } from "@/models/user";
+ 
 export interface SendOtpPayload {
   userId: string | ObjectId;
   email: string;
@@ -53,9 +52,9 @@ export const verifyOtp = async ({ userId, otp, purpose }: verifyOtpPayload) => {
 };
 
 export const formatUserResponse = (
-  user: Document | any,
+  user:  IUser,
   additionalInfo: Record<string, any> = {}
-): SafeUser & Record<string, any> => {
+): ISafeUser & Record<string, any> => {
   return {
     _id: user._id.toString(),
     name: user.name,

@@ -26,7 +26,11 @@ export const useCart = () => {
 
   const { data, isLoading } = useQuery<ICartItems[]>({
     queryKey: ["cart"],
-    queryFn: getUserCart,
+    queryFn: async () => {
+      const serverCart = currentUser ? await getUserCart() : [];
+      updateLocalStorage("cart", serverCart);
+      return serverCart;
+    },
     enabled: !!currentUser,
     initialData: getLocalStorage<ICartItems[]>("cart", []),
   });
@@ -128,7 +132,11 @@ export const useWishlist = () => {
 
   const { data, isLoading } = useQuery<IWishlistItems[]>({
     queryKey: ["wishlist"],
-    queryFn: getUserWishlist,
+    queryFn: async () => {
+      const serverWishlist = currentUser ? await getUserWishlist() : [];
+      updateLocalStorage("wishlist", serverWishlist);
+      return serverWishlist;
+    },
     enabled: !!currentUser,
     initialData: getLocalStorage<IWishlistItems[]>("wishlist", []),
   });
@@ -224,7 +232,6 @@ export const syncLocalToServer = async (currentUser: TCurrentUser) => {
       quantity,
     }));
     await addToCartServer(cartPayload);
-    updateLocalStorage("cart", []);
   }
 
   if (localWishlist.length > 0) {
@@ -232,7 +239,6 @@ export const syncLocalToServer = async (currentUser: TCurrentUser) => {
       productId: productId._id,
     }));
     await addToWishlistServer(wishlistPayload);
-    updateLocalStorage("wishlist", []);
   }
 };
 

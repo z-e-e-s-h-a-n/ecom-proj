@@ -91,6 +91,9 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
 // Add Review For a product
 export const addReview = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return sendResponse(res, 401, false, "Unauthorized access.");
+  }
   const userId = req.user._id;
   const { productId } = req.params;
   const { rating, comment } = req.body;
