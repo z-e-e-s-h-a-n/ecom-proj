@@ -20,7 +20,9 @@ function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="space-y-12">
       <Header currentUser={currentUser} />
-      <main className="container min-h-screen space-y-16">{children}</main>
+      <main className="container min-h-screen space-y-16 pb-8 pt-16">
+        {children}
+      </main>
       <Footer />
     </div>
   );

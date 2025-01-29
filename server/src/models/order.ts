@@ -1,18 +1,22 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, ObjectId } from "mongoose";
 import { PaymentStatus } from "./payment";
 
 export type OrderStatus = "Pending" | "Shipped" | "Delivered" | "Canceled";
+export interface IOrderItem {
+  productId: ObjectId;
+  variantId: ObjectId;
+  quantity: number;
+  price: number;
+}
 
 export interface IOrder extends Document {
-  userId: mongoose.Types.ObjectId;
-  products: {
-    productId: mongoose.Types.ObjectId;
-    quantity: number;
-  }[];
+  userId: ObjectId;
+  items: IOrderItem[];
   totalAmount: number;
   paymentStatus: PaymentStatus;
-  paymentId: mongoose.Types.ObjectId;
+  paymentId: ObjectId;
   orderStatus: OrderStatus;
+  metadata: Map<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,14 +28,19 @@ const orderSchema = new Schema<IOrder>(
       ref: "User",
       required: true,
     },
-    products: [
+    items: [
       {
         productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
           required: true,
         },
-        quantity: { type: Number, required: true },
+        variantId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+        },
+        quantity: { type: Number, required: true, min: 1 },
+        price: { type: Number, required: true },
       },
     ],
     totalAmount: { type: Number, required: true },
@@ -50,6 +59,7 @@ const orderSchema = new Schema<IOrder>(
       enum: ["Pending", "Shipped", "Delivered", "Cancelled"],
       default: "Pending",
     },
+    metadata: { type: Map, of: Schema.Types.Mixed },
   },
   { timestamps: true }
 );

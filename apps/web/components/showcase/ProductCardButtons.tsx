@@ -7,61 +7,40 @@ import {
   ArrowLeftRight,
 } from "lucide-react";
 import { Button, ButtonVariant } from "@workspace/ui/components/button";
-import { cn } from "@workspace/ui/lib/utils";
-import { useCart, useWishlist } from "@/hooks/useStorage";
-import { toast } from "sonner";
+import { useStorageUtils } from "@/hooks/useStorage";
 
 interface IProductActions {
   Icon: LucideIcon;
   label: string;
-  action: () => void;
+  action: (product: IProduct, variantId: string) => void;
   variant: ButtonVariant;
 }
 
 interface ProductButtonsProps {
   product: IProduct;
-  className?: string;
+  variant: IProduct["variations"][number];
 }
 
-function ProductCardButtons({ className, product }: ProductButtonsProps) {
-  const { addToCart, removeFromCart, isInCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+function ProductCardButtons({ product, variant }: ProductButtonsProps) {
+  const { toggleWishlist, isInWishlist, toggleCart, isInCart } =
+    useStorageUtils();
+  const variantId = variant._id;
 
-  const toggleCart = () => {
-    if (isInCart(product._id)) {
-      removeFromCart(product._id);
-      toast(`Removed from your cart`, { description: product.name });
-    } else {
-      addToCart(product, 1);
-      toast(`Added to your cart`, { description: product.name });
-    }
-  };
-
-  // Function to toggle wishlist item
-  const toggleWishlist = () => {
-    if (isInWishlist(product._id)) {
-      removeFromWishlist(product._id);
-      toast(`Removed from your wishlist`, { description: product.name });
-    } else {
-      addToWishlist(product);
-      toast(`Added to your wishlist`, { description: product.name });
-    }
-  };
+  const isItemInCart = isInCart(product, variantId);
+  const isItemInWishlist = isInWishlist(product, variantId);
 
   const productActions: IProductActions[] = [
     {
       Icon: ShoppingCart,
-      label: isInCart(product._id) ? "Remove from Cart" : "Add to Cart",
+      label: isItemInCart ? "Remove from Cart" : "Add to Cart",
       action: toggleCart,
-      variant: isInCart(product._id) ? "default" : "outline",
+      variant: isItemInCart ? "default" : "outline",
     },
     {
       Icon: Heart,
-      label: isInWishlist(product._id)
-        ? "Remove from Wishlist"
-        : "Add to Wishlist",
+      label: isItemInWishlist ? "Remove from Wishlist" : "Add to Wishlist",
       action: toggleWishlist,
-      variant: isInWishlist(product._id) ? "default" : "outline",
+      variant: isItemInWishlist ? "default" : "outline",
     },
     {
       Icon: Eye,
@@ -78,12 +57,7 @@ function ProductCardButtons({ className, product }: ProductButtonsProps) {
   ];
 
   return (
-    <div
-      className={cn(
-        "absolute right-4 top-6 z-20 flex flex-col gap-2 opacity-0 transition-all duration-300 group-hover/product-card:top-4 group-hover/product-card:opacity-100",
-        className
-      )}
-    >
+    <div className="absolute right-4 top-6 z-20 flex flex-col gap-2 opacity-0 transition-all duration-300 group-hover/product-card:top-4 group-hover/product-card:opacity-100">
       {productActions.map(({ label, Icon, action, variant }) => (
         <Button
           key={label}
@@ -92,7 +66,7 @@ function ProductCardButtons({ className, product }: ProductButtonsProps) {
           className="rounded-full"
           onClick={(e) => {
             e.preventDefault();
-            action();
+            action(product, variantId);
           }}
         >
           <Icon />

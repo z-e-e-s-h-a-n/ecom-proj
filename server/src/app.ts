@@ -9,7 +9,10 @@ import passport from "@/config/passport";
 import authRoutes from "@/routes/auth";
 import userRoutes from "@/routes/user";
 import productRoutes from "@/routes/product";
-import fakerRoutes from "@/routes/faker";
+import categoryRoutes from "@/routes/category";
+import attributeRoutes from "@/routes/attribute";
+import specsRoutes from "@/routes/specification";
+import reviewRoutes from "@/routes/review";
 import errorHandler from "@/middlewares/errorHandler";
 import { sendResponse } from "@/utils/helper";
 import { authGuard } from "@/middlewares/auth";
@@ -27,8 +30,11 @@ app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
 app.use("/users", authGuard(), userRoutes);
+app.use("/products/categories", categoryRoutes);
+app.use("/products/attributes", attributeRoutes);
+app.use("/products/specifications", specsRoutes);
+app.use("/products/reviews", reviewRoutes);
 app.use("/products", productRoutes);
-app.use("/faker", fakerRoutes);
 
 app.get("/", (_, res) => {
   sendResponse(res, 200, true, "Welcome to NoSha e-commerce API!");

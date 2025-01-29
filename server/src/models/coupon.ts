@@ -5,11 +5,11 @@ export interface ICoupon extends Document {
   type: "Percentage" | "Fixed";
   value: number;
   expires: Date;
-  usageLimit: number;
+  usageLimit?: number;
   usedCount: number;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const couponSchema = new Schema<ICoupon>(

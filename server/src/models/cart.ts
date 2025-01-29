@@ -1,28 +1,32 @@
-// models/cart.ts
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, ObjectId } from "mongoose";
 
 export interface ICartItem {
-  productId: mongoose.Types.ObjectId;
+  productId: ObjectId;
+  variantId: ObjectId;
   quantity: number;
 }
 
 export interface ICart extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId: ObjectId;
   items: ICartItem[];
 }
 
 const cartSchema = new Schema<ICart>(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     items: [
       {
         productId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: Schema.Types.ObjectId,
           ref: "Product",
+          required: true,
+        },
+        variantId: {
+          type: Schema.Types.ObjectId,
           required: true,
         },
         quantity: { type: Number, default: 1 },

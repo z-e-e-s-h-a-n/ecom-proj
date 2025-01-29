@@ -50,12 +50,17 @@ export const addToCart = async (req: Request, res: Response) => {
   const userId = req.user._id;
   const { items } = req.body;
 
+  if (!Array.isArray(items) || items.length === 0) {
+    return sendResponse(res, 400, false, "Invalid cart data.");
+  }
+
   try {
     const addOps = items.map((item: any) =>
       CartModel.updateOne(
         {
           userId,
           "items.productId": { $ne: item.productId },
+          "items.variantId": { $ne: item.variantId },
         },
         { $push: { items: item } },
         { upsert: true }
@@ -63,8 +68,7 @@ export const addToCart = async (req: Request, res: Response) => {
     );
     await Promise.all(addOps);
 
-    const cart = await findAndPopulate(CartModel, userId);
-    sendResponse(res, 200, true, "Unique items added to your cart", { cart });
+    sendResponse(res, 200, true, "Unique items added to your cart");
   } catch (error) {
     sendResponse(res, 500, false, "Failed to add items to cart");
   }
@@ -75,11 +79,11 @@ export const updateCart = async (req: Request, res: Response) => {
     return sendResponse(res, 401, false, "Unauthorized access.");
   }
   const userId = req.user._id;
-  const { productId, quantity } = req.body;
+  const { productId, variantId, quantity } = req.body;
 
   try {
     const cart = await CartModel.findOneAndUpdate(
-      { userId, "items.productId": productId },
+      { userId, "items.productId": productId, "items.variantId": variantId },
       { $set: { "items.$.quantity": quantity } },
       { new: true }
     );
@@ -99,12 +103,12 @@ export const removeFromCart = async (req: Request, res: Response) => {
     return sendResponse(res, 401, false, "Unauthorized access.");
   }
   const userId = req.user._id;
-  const { productId } = req.params;
+  const { productId, variantId } = req.body;
 
   try {
     const cart = await CartModel.findOneAndUpdate(
       { userId },
-      { $pull: { items: { productId } } },
+      { $pull: { items: { productId, variantId } } },
       { new: true }
     );
     sendResponse(res, 200, true, "Item removed from cart", { cart });
@@ -135,7 +139,10 @@ export const addToWishlist = async (req: Request, res: Response) => {
   }
   const userId = req.user._id;
   const { items } = req.body;
-  console.log("wishlist items", items);
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return sendResponse(res, 400, false, "Invalid wishlist data.");
+  }
 
   try {
     const addOps = items.map((item: any) =>
@@ -143,6 +150,7 @@ export const addToWishlist = async (req: Request, res: Response) => {
         {
           userId,
           "items.productId": { $ne: item.productId },
+          "items.variantId": { $ne: item.variantId },
         },
         { $push: { items: item } },
         { upsert: true }
@@ -150,10 +158,7 @@ export const addToWishlist = async (req: Request, res: Response) => {
     );
     await Promise.all(addOps);
 
-    const wishlist = await findAndPopulate(WishlistModel, userId);
-    sendResponse(res, 200, true, "Unique items added to your wishlist", {
-      wishlist,
-    });
+    sendResponse(res, 200, true, "Unique items added to your wishlist");
   } catch (error) {
     sendResponse(res, 500, false, "Failed to add items to wishlist");
   }
@@ -164,12 +169,12 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
     return sendResponse(res, 401, false, "Unauthorized access.");
   }
   const userId = req.user._id;
-  const { productId } = req.params;
+  const { productId, variantId } = req.body;
 
   try {
     const wishlist = await WishlistModel.findOneAndUpdate(
       { userId },
-      { $pull: { items: { productId } } },
+      { $pull: { items: { productId, variantId } } },
       { new: true }
     );
     sendResponse(res, 200, true, "Item removed from wishlist", { wishlist });
@@ -183,19 +188,20 @@ export const placeOrder = async (req: Request, res: Response) => {
     return sendResponse(res, 401, false, "Unauthorized access.");
   }
   const userId = req.user._id;
-  const { products, totalAmount } = req.body;
+  const { items, totalAmount, metadata } = req.body;
 
-  if (!products || !totalAmount) {
+  if (!items || !totalAmount) {
     return sendResponse(res, 400, false, "Missing Fields are required.");
   }
 
   try {
     const order = new OrderModel({
       userId,
-      products,
+      items,
       totalAmount,
       paymentStatus: "Pending",
       orderStatus: "Pending",
+      metadata,
     });
 
     await order.save();

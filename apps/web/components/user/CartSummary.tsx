@@ -7,6 +7,7 @@ import React from "react";
 import { Card } from "@workspace/ui/components/card";
 import { Lock, Tag } from "lucide-react";
 import Image from "next/image";
+import { getVariant } from "@/lib/utils";
 
 // CartSummary Component
 interface CartSummaryProps {
@@ -19,7 +20,7 @@ interface CartSummaryProps {
   cardType?: "default" | "checkout";
   salesTax?: number;
   deliveryCharge?: number;
-  cartList?: IProduct[];
+  cartList?: ICartItem[];
 }
 
 function CartSummary({
@@ -34,6 +35,8 @@ function CartSummary({
   cardType = "default",
   deliveryCharge = 0,
 }: CartSummaryProps) {
+  if (!cartList || cartList?.length === 0) return null;
+
   return (
     <div className="space-y-4 w-80 h-fit sticky top-0">
       <Card className="h-full grid gap-3 p-4">
@@ -45,34 +48,43 @@ function CartSummary({
           <>
             <Separator />
             <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-hidden">
-              {cartList.map(({ _id, name, price, quantity, imageUrl }) => (
-                <div key={_id} className="flex items-center gap-4">
-                  <Image
-                    width={40}
-                    height={40}
-                    className="aspect-square object-contain"
-                    src={imageUrl}
-                    alt={name}
-                  />
-                  <div className="text-sm flex-1 grid gap-2">
-                    <Link
-                      href={`/products/${_id}`}
-                      className="flex justify-between gap-2"
-                    >
-                      <span>{name}</span>
-                      <div className="flex gap-2">
-                        <span className="text-muted-foreground line-through">
-                          ${(price.original * quantity).toFixed(2)}
-                        </span>
-                        <span>${(price.sale * quantity).toFixed(2)}</span>
-                      </div>
-                    </Link>
-                    <span className="text-muted-foreground text-sm">
-                      Qty: {quantity}
-                    </span>
+              {cartList.map(({ productId: product, variantId, quantity }) => {
+                const variant = getVariant(product, variantId);
+
+                return (
+                  <div key={product._id} className="flex items-center gap-4">
+                    <Image
+                      width={40}
+                      height={40}
+                      className="aspect-square object-contain"
+                      src={variant.images[0]!}
+                      alt={product.name}
+                    />
+                    <div className="text-sm flex-1 grid gap-2">
+                      <Link
+                        href={`/products/${product._id}?variant=${variantId}`}
+                        className="flex justify-between gap-2"
+                      >
+                        <span>{product.name}</span>
+                        <div className="flex gap-2">
+                          <span className="text-muted-foreground line-through">
+                            $
+                            {(variant.pricing[0].original! * quantity).toFixed(
+                              2
+                            )}
+                          </span>
+                          <span>
+                            ${(variant.pricing[0].sale! * quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      </Link>
+                      <span className="text-muted-foreground text-sm">
+                        Qty: {quantity}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

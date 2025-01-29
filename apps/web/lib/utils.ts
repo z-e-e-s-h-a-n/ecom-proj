@@ -11,6 +11,14 @@ export const updateLocalStorage = <T>(key: string, data: T): void => {
 export const calculateCartPrice = (price: number, quantity: number) =>
   price * quantity;
 
+export const getVariant = (product: IProduct, variantId?: string) =>
+  product.variations.reduce(
+    (selected, variant) => (variant._id === variantId ? variant : selected),
+    product.variations.find((variant) => variant.isDefault)!
+  );
+
+export const formatPrice = (price?: number) => (price ? `$${price}` : null);
+
 export const handleError = (error: unknown, message: string) => {
   console.log(error, message);
   throw error;

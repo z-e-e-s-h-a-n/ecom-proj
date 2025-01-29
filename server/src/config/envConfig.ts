@@ -23,7 +23,9 @@ const envConfig = {
     pass: getEnv("EMAIL_PASS"),
     from: getEnv("EMAIL_FROM"),
   },
-
+  ipStack: {
+    apiKey: getEnv("IP_STACK_API_KEY"),
+  },
   db: {
     uri: getEnv("MONGO_URI"),
   },

@@ -2,9 +2,10 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import {
   getEnv,
   addCookies,
-  calculateExpiresIn,
-  calculateExpiryTime,
+  durationToTime,
   createAuthSession,
+  getDeviceInfo,
+  calculateExpiryTime,
 } from "@/utils/helper";
 import { Request, Response } from "express";
 import RefreshTokenModel from "@/models/refreshToken";
@@ -18,6 +19,7 @@ export interface IJwtTokens {
   accessToken: string;
   refreshExp: number;
   accessExp: number;
+  deviceId: string;
 }
 
 export interface ITokenPayload {
@@ -25,39 +27,48 @@ export interface ITokenPayload {
   role: string;
 }
 
-export const generateTokens = async ({
-  _id,
-  role,
-}: ITokenPayload): Promise<IJwtTokens> => {
+export const generateTokens = async (
+  req: Request,
+  { _id, role }: ITokenPayload
+): Promise<IJwtTokens> => {
   if (!_id || !role) {
     throw new Error("Missing required parameters");
   }
 
   const payload: JwtPayload = { _id: _id.toString(), role };
+  const accessExp = durationToTime("15m");
+  const refreshExp = durationToTime("7d");
 
-  const accessDuration = "15m";
-  const refreshDuration = "7d";
-
-  const accessExp = calculateExpiryTime(accessDuration, true);
-  const refreshExp = calculateExpiryTime(refreshDuration, true);
-
-  const accessToken = jwt.sign({ ...payload }, envConfig.jwt.accessSecret, {
-    expiresIn: calculateExpiresIn(accessDuration),
+  const accessToken = jwt.sign(payload, envConfig.jwt.accessSecret, {
+    expiresIn: accessExp,
   });
 
-  const refreshToken = jwt.sign({ ...payload }, envConfig.jwt.refreshSecret, {
-    expiresIn: calculateExpiresIn(refreshDuration),
+  const refreshToken = jwt.sign(payload, envConfig.jwt.refreshSecret, {
+    expiresIn: refreshExp,
   });
 
+  const deviceInfo = await getDeviceInfo(req);
   logger.info("Generated new tokens", { userId: _id });
 
   await RefreshTokenModel.updateOne(
-    { userId: _id },
-    { token: refreshToken, blacklisted: false },
+    { userId: _id, "deviceInfo.id": deviceInfo.id },
+    {
+      token: refreshToken,
+      deviceInfo,
+      expiresAt: calculateExpiryTime(refreshExp, true),
+      blacklisted: false,
+      isActive: true,
+    },
     { upsert: true }
   );
 
-  return { accessToken, refreshToken, accessExp, refreshExp };
+  return {
+    accessToken,
+    refreshToken,
+    accessExp,
+    refreshExp,
+    deviceId: deviceInfo.id,
+  };
 };
 
 export const verifyJwtToken = (
@@ -111,7 +122,7 @@ export const refreshAccessToken = async (
   }
 
   logger.info("Refresh token successfully verified", { userId: decoded._id });
-  return createAuthSession(res, decoded as ITokenPayload);
+  return createAuthSession(req, res, decoded as ITokenPayload);
 };
 
 export const handleTokenRefresh = async (req: Request, res: Response) => {
@@ -141,15 +152,18 @@ export const manageTokensCookies = (
       value: tokenData?.refreshToken,
       exp: tokenData?.refreshExp,
     },
+    {
+      name: "deviceId",
+      value: tokenData?.deviceId,
+      exp: tokenData?.refreshExp,
+    },
   ];
 
   tokens.forEach(({ name, value, exp }) => {
     if (action === "add" && value && exp) {
-      addCookies(res, name, value, { maxAge: exp });
+      addCookies(res, name, value, { maxAge: exp * 1000 });
     } else if (action === "remove") {
       res.clearCookie(name);
     }
   });
-
-  logger.info(`Tokens ${action === "add" ? "added" : "removed"} successfully.`);
 };

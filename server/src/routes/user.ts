@@ -7,18 +7,24 @@ const router: Router = Router();
 router.get("/me", controller.getUser);
 
 // Cart routes
-router.get("/cart", controller.getCart);
-router.post("/cart", controller.addToCart);
-router.put("/cart", controller.updateCart);
-router.delete("/cart/:productId", controller.removeFromCart);
+router
+  .route("/cart")
+  .get(controller.getCart)
+  .post(controller.addToCart)
+  .put(controller.updateCart)
+  .delete(controller.removeFromCart);
 
-router.get("/wishlist", controller.getWishlist);
-router.post("/wishlist", controller.addToWishlist);
-router.delete("/wishlist/:productId", controller.removeFromWishlist);
+router
+  .route("/wishlist")
+  .get(controller.getWishlist)
+  .post(controller.addToWishlist)
+  .delete(controller.removeFromWishlist);
 
 // Order routes
-router.get("/orders", controller.getUserOrders);
-router.post("/orders", controller.placeOrder);
+router
+  .route("/orders")
+  .get(controller.getUserOrders)
+  .post(controller.placeOrder);
 router.get("/orders/:orderId", controller.getOrderById);
 
 // Payment routes

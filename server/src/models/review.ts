@@ -1,9 +1,10 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { ObjectId, Schema } from "mongoose";
 
 // Review Schema
 export interface IReview extends Document {
-  userId: mongoose.Types.ObjectId;
-  productId: mongoose.Types.ObjectId;
+  userId: ObjectId;
+  productId: ObjectId;
+  variantId: ObjectId;
   rating: number;
   comment: string;
   createdAt: Date;
@@ -13,13 +14,17 @@ export interface IReview extends Document {
 const reviewSchema = new Schema<IReview>(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     productId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Product",
+      required: true,
+    },
+    variantId: {
+      type: Schema.Types.ObjectId,
       required: true,
     },
     rating: { type: Number, required: true, min: 1, max: 5 },

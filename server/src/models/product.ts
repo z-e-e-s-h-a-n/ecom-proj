@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import crypto from "crypto";
 
 export interface IShipping {
   weight?: number;
@@ -9,32 +10,7 @@ export interface IShipping {
   };
 }
 
-export interface IVariationValue extends IShipping {
-  price: number;
-  salePrice?: number;
-  stock: number;
-  sku: string;
-}
-
-export interface IVariation {
-  type: string;
-  values: IVariationValue[];
-}
-
-export interface IReview {
-  user: mongoose.Types.ObjectId;
-  comment: string;
-  rating: number;
-  createdAt: Date;
-}
-
-export interface IProduct extends Document {
-  name: string;
-  description: string;
-  images: string[];
-  video?: string;
-  highlights?: string[];
-  category: mongoose.Types.ObjectId;
+export interface IVariant extends IShipping {
   pricing: {
     region: string;
     currency: string;
@@ -42,111 +18,147 @@ export interface IProduct extends Document {
     sale?: number;
     multiplier?: number;
   }[];
+  sku?: string;
   stock: number;
-  variations: IVariation[];
-  tags: string[];
+  images: string[];
+  attributes: Record<string, string>;
   isActive: boolean;
+  isDefault: boolean;
+}
+
+export interface IProduct extends Document {
+  name: string;
+  slug?: string;
+  highlights?: string[];
+  description: string;
+  images: string[];
+  video?: string;
+  tags: string[];
   rating: number;
-  reviews: IReview[];
+  category: ObjectId;
+  variations: IVariant[];
+  attributes: { id: ObjectId; options: string[] }[];
+  specifications: { id: ObjectId; value: string }[];
+  reviews: ObjectId[];
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-
-  calculateShippingCost(
-    weight: number,
-    dimensions: { length: number; width: number; height: number }
-  ): number;
-  findVariationBySKU(sku: string): IVariationValue | null;
 }
+
+const variationSchema = new Schema<IVariant>({
+  sku: { type: String, unique: true },
+  pricing: [
+    {
+      region: { type: String, required: true },
+      currency: { type: String, required: true },
+      original: { type: Number, required: true },
+      sale: { type: Number },
+      multiplier: { type: Number },
+    },
+  ],
+  stock: { type: Number, required: true },
+  images: { type: [String], default: [] },
+  attributes: { type: Map, of: String },
+  weight: { type: Number },
+  dimensions: {
+    length: { type: Number },
+    width: { type: Number },
+    height: { type: Number },
+  },
+  isActive: { type: Boolean, default: true },
+  isDefault: { type: Boolean, default: false },
+});
 
 const productSchema = new Schema<IProduct>(
   {
     name: { type: String, required: true },
+    slug: { type: String, unique: true },
+    highlights: { type: [String], default: [] },
     description: { type: String, required: true },
     images: { type: [String], required: true },
     video: { type: String },
-    highlights: { type: [String], default: [] },
-    category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
-    },
-    pricing: [
-      {
-        region: { type: String, required: true },
-        currency: { type: String, required: true },
-        original: { type: Number, required: true },
-        sale: { type: Number },
-        multiplier: { type: Number, default: 1 },
-      },
-    ],
-    stock: { type: Number, default: 0 },
-    variations: [
-      {
-        type: { type: String, required: true },
-        values: [
-          {
-            price: { type: Number, required: true },
-            salePrice: { type: Number },
-            stock: { type: Number, required: true },
-            sku: { type: String, required: true, unique: true },
-            weight: { type: Number, default: 0 },
-            dimensions: {
-              length: { type: Number, default: 0 },
-              width: { type: Number, default: 0 },
-              height: { type: Number, default: 0 },
-            },
-          },
-        ],
-      },
-    ],
     tags: { type: [String], default: [] },
-    isActive: { type: Boolean, default: true },
-    rating: { type: Number, default: 0 },
-    reviews: [
+    rating: { type: Number, default: 0, min: 0, max: 5 },
+    category: { type: Schema.ObjectId, ref: "Category", required: true },
+    variations: {
+      type: [variationSchema],
+      validate: {
+        validator: function (v: IVariant[]) {
+          return v && v.length > 0;
+        },
+        message: "Product must have at least one variation.",
+      },
+    },
+    attributes: [
       {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        comment: { type: String },
-        rating: { type: Number, required: true },
-        createdAt: { type: Date, default: Date.now },
+        id: {
+          type: Schema.ObjectId,
+          ref: "Attribute",
+          required: true,
+        },
+        options: { type: [String], required: true },
       },
     ],
+    specifications: [
+      {
+        id: {
+          type: Schema.ObjectId,
+          ref: "Specification",
+          required: true,
+        },
+        value: { type: String, required: true },
+      },
+    ],
+    reviews: [{ type: Schema.ObjectId, ref: "Review" }],
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
 
-productSchema.pre("save", function (next) {
-  if (this.isModified("variations")) {
-    this.variations.forEach((variation) => {
-      variation.values.forEach((value) => {
-        if (!value.sku) {
-          value.sku = `${this.name.substring(0, 3).toUpperCase()}-${variation.type}-${Date.now()}`;
-        }
-      });
-    });
+productSchema.pre("save", async function (next) {
+  if (this.name && !this.slug) {
+    this.slug = this.name.toLowerCase().replace(/\s+/g, "-");
+  }
+
+  let defaultVariant = false;
+
+  this.variations.forEach((variant: IVariant) => {
+    const skuPrefix = this.name.substring(0, 3).toUpperCase();
+    const uniqueSuffix = crypto.randomBytes(4).toString("hex");
+
+    if (!variant.sku) {
+      variant.sku = `${skuPrefix}-${uniqueSuffix}`;
+    }
+
+    if (variant.isDefault) {
+      defaultVariant = true;
+    }
+  });
+
+  if (!defaultVariant && this?.variations[0]) {
+    this.variations[0].isDefault = true;
   }
   next();
 });
 
-productSchema.methods.calculateShippingCost = function (
-  weight: number,
-  dimensions: { length: number; width: number; height: number }
-): number {
-  const volume = dimensions.length * dimensions.width * dimensions.height;
-  return weight * 0.5 + volume * 0.01;
-};
-
-productSchema.methods.findVariationBySKU = function (
-  sku: string
-): IVariationValue | null {
-  for (const variation of this.variations) {
-    const value = variation.values.find((value: any) => value.sku === sku);
-    if (value) return value;
-  }
-  return null;
-};
-
-productSchema.index({ name: "text", description: "text", tags: "text" });
+productSchema.index({ name: 1 });
 productSchema.index({ category: 1 });
+productSchema.index({ isActive: 1 });
+
+productSchema.statics = {
+  findByCategory: function (categoryId: ObjectId) {
+    return this.find({ category: categoryId });
+  },
+
+  findByRating: function (rating: number) {
+    return this.find({ rating: { $gte: rating } }).sort({ rating: -1 });
+  },
+
+  searchByName: function (searchTerm: string) {
+    const regex = new RegExp(searchTerm, "i");
+    return this.find({ name: { $regex: regex } });
+  },
+};
 
 const ProductModel = mongoose.model<IProduct>("Product", productSchema);
 export default ProductModel;

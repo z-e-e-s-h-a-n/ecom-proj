@@ -12,8 +12,6 @@ declare global {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
   }
 
-  type DivProps = React.HTMLAttributes<HTMLDivElement>;
-
   type SVGIconProps = React.SVGProps<SVGSVGElement>;
 
   interface CSSCustomProperties extends React.CSSProperties {
@@ -77,7 +75,7 @@ declare global {
   }
 
   interface ProductSectionProps extends ShowcaseSectionProps {
-    items: IProduct[];
+    items: { product: IProduct; variantId?: string }[];
   }
 
   interface CategorySectionProps extends ShowcaseSectionProps {

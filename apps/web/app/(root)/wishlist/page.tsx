@@ -1,24 +1,30 @@
 "use client";
 import ProductSection from "@/components/showcase/ProductSection";
 import useStorage from "@/hooks/useStorage";
+import { getVariant } from "@/lib/utils";
 import React from "react";
 
 function Wishlist() {
   const { wishlist, cart, products } = useStorage();
 
-  const wishlistProducts = wishlist.map(({ productId }) => productId);
+  const wishlistProducts = wishlist.map(({ productId, variantId }) => ({
+    product: productId,
+    variantId,
+  }));
 
   const justForYouProducts = products
     .filter(
-      (product) =>
-        !wishlistProducts?.some((item) => item._id === product._id) &&
-        !cart?.some((item) => item.productId._id === product._id) &&
-        product.stock > 0
+      ({ product }) =>
+        !wishlist?.some(
+          ({ productId, variantId }) =>
+            productId._id === product._id ||
+            !(getVariant(productId, variantId)?.stock > 0)
+        ) && !cart?.some((item) => item.productId._id === product._id)
     )
     .slice(0, 5);
 
   return (
-    <div>
+    <>
       <ProductSection
         items={wishlistProducts}
         headerProps={{
@@ -43,7 +49,7 @@ function Wishlist() {
           },
         }}
       />
-    </div>
+    </>
   );
 }
 

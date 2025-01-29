@@ -12,14 +12,11 @@ export const authGuard = (role: string = "user") => {
     try {
       const accessToken = req.cookies.accessToken;
 
-      if (!accessToken) {
-        logger.warn("Missing access token");
-        return sendResponse(res, 401, false, "Authorization token missing.");
-      }
-
-      const decoded = verifyJwtToken(accessToken, "JWT_ACCESS_SECRET");
-      if (decoded) {
-        attachDecodedUser(req, decoded);
+      if (accessToken) {
+        const decoded = verifyJwtToken(accessToken, "JWT_ACCESS_SECRET");
+        if (decoded) {
+          attachDecodedUser(req, decoded);
+        }
       } else {
         logger.warn("Access token invalid or expired. Attempting refresh...");
         await handleTokenRefresh(req, res);

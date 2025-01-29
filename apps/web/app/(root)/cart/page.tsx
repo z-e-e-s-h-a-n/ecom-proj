@@ -7,14 +7,16 @@ import Image from "next/image";
 import { useCart } from "@/hooks/useStorage";
 import { DELIVERY_CHARGE } from "@/constants/user";
 import CartSummary from "@/components/user/CartSummary";
-import { calculateCartPrice } from "@/lib/utils";
+import { calculateCartPrice, getVariant } from "@/lib/utils";
+import Link from "next/link";
+import QuantityInput from "@/components/form/QuantityInput";
 
 const Cart = () => {
-  const { cart, removeFromCart, cartSubTotal, updateCartQuantity } = useCart();
+  const { cart, cartSubTotal, updateCart } = useCart();
   const grandTotal = cartSubTotal + DELIVERY_CHARGE;
 
   return (
-    <div className="flex flex-col gap-8 pb-8 pt-16">
+    <>
       <h1 className="h3">Checkout</h1>
       <div className="flex gap-6">
         {/* Cart Items */}
@@ -30,55 +32,42 @@ const Cart = () => {
               </tr>
             </thead>
             <tbody>
-              {cart.map(({ productId, quantity }) => {
-                const price = productId.pricing["US"]?.original || 0;
+              {cart.map(({ productId, quantity, variantId }) => {
+                // Get details of the selected variant
+                const variant = getVariant(productId, variantId);
+
+                const price =
+                  variant?.pricing[0]?.sale ||
+                  variant?.pricing[0]?.original ||
+                  0;
 
                 return (
                   <tr
                     key={productId._id}
                     className="border-b hover:bg-secondary/20"
                   >
-                    <td className="flex items-center gap-4 px-6 py-4">
-                      <Image
-                        src={productId.images[0] || "/path-to-placeholder.jpg"}
-                        alt={productId.name || "Product"}
-                        width={48}
-                        height={48}
-                        className="rounded object-contain aspect-square"
-                      />
-                      <span>{productId.name}</span>
+                    <td className="px-6 py-4">
+                      <Link
+                        href={`/products/${productId._id}?variant=${variantId}`}
+                        className="flex items-center gap-4"
+                      >
+                        <Image
+                          src={variant.images[0] || "/path-to-placeholder.jpg"}
+                          alt={productId.name || "Product"}
+                          width={48}
+                          height={48}
+                          className="rounded object-contain aspect-square"
+                        />
+                        <span>{productId.name}</span>
+                      </Link>
                     </td>
                     <td className="px-6 py-4">${price}</td>
                     <td className="px-6 py-4">
-                      <div className="flex-center  [&_>button]:size-6  [&_>button]:rounded-full  relative max-w-24 [&_>button]:absolute border rounded-lg">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="left-2"
-                          disabled={quantity === 1}
-                          onClick={() =>
-                            updateCartQuantity(productId._id, quantity - 1)
-                          }
-                        >
-                          <Minus />
-                        </Button>
-                        <Input
-                          value={quantity}
-                          readOnly
-                          className="w-full text-center shad-input "
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="right-2"
-                          disabled={quantity === productId.stock}
-                          onClick={() =>
-                            updateCartQuantity(productId._id, quantity + 1)
-                          }
-                        >
-                          <Plus />
-                        </Button>
-                      </div>
+                      <QuantityInput
+                        product={productId}
+                        variant={variant}
+                        quantity={quantity}
+                      />
                     </td>
                     <td className="px-6 py-4">
                       ${calculateCartPrice(price, quantity).toFixed(2)}
@@ -87,7 +76,9 @@ const Cart = () => {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={() => removeFromCart(productId._id)}
+                        onClick={() =>
+                          updateCart("remove", productId, variantId)
+                        }
                         className="rounded-full"
                       >
                         <Trash2 />
@@ -108,7 +99,7 @@ const Cart = () => {
           btnUrl="/checkout"
         />
       </div>
-    </div>
+    </>
   );
 };
 

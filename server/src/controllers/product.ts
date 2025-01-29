@@ -3,21 +3,28 @@ import { Request, Response } from "express";
 import ProductModel from "@/models/product";
 import { sendResponse } from "@/utils/helper";
 import logger from "@/utils/logger";
-import ReviewModel from "@/models/review";
 
 // Create Product
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const productData = req.body;
+    const { products } = req.body;
 
-    const newProduct = new ProductModel(productData);
+    if (!Array.isArray(products) || products.length === 0) {
+      return sendResponse(res, 400, false, "Invalid products data.");
+    }
 
-    await newProduct.save();
-    sendResponse(res, 201, true, "Product created successfully.", {
-      product: newProduct,
+    const savedProducts = await Promise.all(
+      products.map(async (product: any) => {
+        const newProduct = await ProductModel.create(product);
+        return newProduct;
+      })
+    );
+
+    sendResponse(res, 201, true, "Products created successfully.", {
+      products: savedProducts,
     });
   } catch (error) {
-    logger.error("Error creating product: ", error);
+    logger.error("Error creating products: ", error);
     sendResponse(res, 500, false, "Internal server error.");
   }
 };
@@ -43,12 +50,17 @@ export const updateProduct = async (req: Request, res: Response) => {
 };
 
 // Get Product by ID
-export const getProduct = async (req: Request, res: Response) => {
+export const getProductById = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
+    if (!productId)
+      return sendResponse(res, 400, false, "Product ID is required.");
+
     const product = await ProductModel.findById(productId)
       .populate("category")
-      .populate("reviews");
+      .populate("reviews")
+      .populate("specifications.id")
+      .populate("attributes.id");
     if (!product) {
       return sendResponse(res, 404, false, "Product not found.");
     }
@@ -86,54 +98,5 @@ export const deleteProduct = async (req: Request, res: Response) => {
   } catch (error) {
     logger.error("Error deleting product: ", error);
     sendResponse(res, 500, false, "Internal server error.");
-  }
-};
-
-// Add Review For a product
-export const addReview = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
-  const { productId } = req.params;
-  const { rating, comment } = req.body;
-
-  try {
-    const existingReview = await ReviewModel.findOne({ userId, productId });
-
-    if (existingReview) {
-      return sendResponse(
-        res,
-        400,
-        false,
-        "You have already reviewed this product."
-      );
-    }
-
-    const review = await ReviewModel.create({
-      userId,
-      productId,
-      rating,
-      comment,
-    });
-
-    sendResponse(res, 201, true, "Review added successfully", { review });
-  } catch (error) {
-    sendResponse(res, 500, false, "Failed to add review");
-  }
-};
-
-// Get Reviews for a Product
-export const getReviewsForProduct = async (req: Request, res: Response) => {
-  const { productId } = req.params;
-
-  try {
-    const reviews = await ReviewModel.find({ productId })
-      .populate("userId", "name email")
-      .exec();
-
-    sendResponse(res, 200, true, "Reviews fetched successfully", { reviews });
-  } catch (error) {
-    sendResponse(res, 500, false, "Failed to fetch reviews");
   }
 };

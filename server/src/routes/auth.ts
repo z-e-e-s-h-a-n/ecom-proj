@@ -28,7 +28,7 @@ router.get(
   passport.authenticate("google", { session: false, failureRedirect }),
   async (req, res) => {
     if (req.user) {
-      const tokenData = await createAuthSession(res, req.user);
+      const tokenData = await createAuthSession(req, res, req.user);
       if (tokenData) res.redirect(successRedirect);
     } else {
       sendResponse(res, 404, false, "Authentication failed.");
@@ -48,7 +48,7 @@ router.get(
   passport.authenticate("facebook", { session: false, failureRedirect }),
   async (req, res) => {
     if (req.user) {
-      const tokenData = await createAuthSession(res, req.user);
+      const tokenData = await createAuthSession(req, res, req.user);
       if (tokenData) res.redirect(successRedirect);
     } else {
       sendResponse(res, 404, false, "Authentication failed.");

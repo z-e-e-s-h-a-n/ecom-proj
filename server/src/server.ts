@@ -7,8 +7,15 @@ import envConfig from "@/config/envConfig";
 const PORT = envConfig.app.port;
 connectDB();
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
-export { app };
+process.on("SIGINT", () => {
+  server.close(() => {
+    console.log("Process terminated");
+    process.exit(0);
+  });
+});
+
+export { app, server };

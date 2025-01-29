@@ -5,7 +5,6 @@ import AddressForm from "@/components/form/AddressForm";
 import CartSummary from "@/components/user/CartSummary";
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@workspace/ui/components/card";
-import { productList } from "@/constants/product";
 import { cn } from "@workspace/ui/lib/utils";
 import { cardPaymentSchema, type TCardPaymentSchema } from "@/schemas/form";
 import { Button } from "@workspace/ui/components/button";
@@ -14,15 +13,28 @@ import CustomInput from "@/components/form/CustomInput";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useCart } from "@/hooks/useStorage";
+import { getLocalStorage } from "@/lib/utils";
 
 export type CheckoutSteps = "address" | "payment";
 export type SetStepAction = React.Dispatch<React.SetStateAction<CheckoutSteps>>;
 
-function CheckoutLayout() {
+function CheckoutLayout({ searchParams }: PageParams) {
   const { toast } = useToast();
+  const { cart } = useCart();
   const [step, setStep] = useState<CheckoutSteps>("address");
   const [payMethod, setPayMethod] = useState<"card" | "cod">("card");
   const [isLoading, setIsLoading] = useState(false);
+  const cartSource = (React.use(searchParams)?.source as string) || "";
+
+  // seeing if the user checkout from cart page or from product details page
+  const getCartList = () => {
+    if (cartSource === "cartItem") {
+      return [getLocalStorage("cartItem", {}) as ICartItem];
+    }
+
+    return cart;
+  };
 
   const form = useForm<TCardPaymentSchema>({
     resolver: zodResolver(cardPaymentSchema),
@@ -124,7 +136,7 @@ function CheckoutLayout() {
         total={200}
         cardType="checkout"
         disableBtn={step !== "payment" || isLoading || payMethod !== "cod"}
-        cartList={productList.slice(0, 6)}
+        cartList={getCartList().slice(0, 6)}
         btnText={step === "payment" ? "Place Order" : "Proceed to Checkout"}
         btnAction={() => {
           toast({

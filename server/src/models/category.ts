@@ -1,23 +1,31 @@
 import mongoose, { Schema } from "mongoose";
 
-// Category Schema
 export interface ICategory extends Document {
   name: string;
-  description: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  slug: string;
+  description?: string;
+  image?: string;
+  parent?: mongoose.Types.ObjectId;
 }
 
-const categorySchema = new Schema<ICategory>(
+const CategorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true, unique: true },
+    slug: { type: String, required: true, unique: true },
     description: { type: String },
-    isActive: { type: Boolean, default: true },
+    image: { type: String },
+    parent: { type: Schema.Types.ObjectId, ref: "Category" },
   },
   { timestamps: true }
 );
 
-const CategoryModel = mongoose.model<ICategory>("Category", categorySchema);
+CategorySchema.pre("save", function (next) {
+  if (this.name && !this.slug) {
+    this.slug = this.name.toLowerCase().replace(/\s+/g, "-");
+  }
+  next();
+});
 
-export default CategoryModel;
+const Category = mongoose.model<ICategory>("Category", CategorySchema);
+
+export default Category;

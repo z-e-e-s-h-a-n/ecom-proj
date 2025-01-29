@@ -5,54 +5,94 @@ declare global {
     name: string;
     email: string;
     isVerified: boolean;
-    isAuth: boolean;
     role: "user" | "admin";
   }
 
   type TCurrentUser = IUser | null | undefined;
 
-  interface IProduct {
-    _id: string;
-    name: string;
-    desc: string;
-    images: string[];
-    category: string;
-    pricing: {
-      [countryCode: string]: { original: number; sale?: number };
-    };
-    availability: {
-      [countryCode: string]: boolean;
-    };
-    stock: number;
-    variants: {
-      colors: string[];
-      sizes: string[];
-      attributes: Record<string, string | number>;
-    };
-    rating: number;
-    reviews: string[];
-    isActive: boolean;
-    tags: string[];
-    specs: Record<string, string | number>;
-    brand: string;
-    sku: string;
-    upc: string;
-    material: string;
-    weight: number;
-    dimensions: {
+  export interface IShipping {
+    weight?: number;
+    dimensions?: {
       length: number;
       width: number;
       height: number;
     };
   }
 
-  interface ICartItems {
-    productId: IProduct;
-    quantity: number;
+  export interface IVariant extends IShipping {
+    _id: string;
+    pricing: {
+      region: string;
+      currency: string;
+      original: number;
+      sale?: number;
+      multiplier?: number;
+    }[];
+    sku: string;
+    stock: number;
+    images: string[];
+    attributes: Record<string, string>;
+    isActive: boolean;
+    isDefault: boolean;
   }
 
-  interface IWishlistItems {
+  export interface IReview {
+    userId: string;
+    productId: string;
+    variantId: string;
+    rating: number;
+    comment: string;
+    createdAt: Date;
+  }
+
+  export type AttrTypes = "color" | "select" | "radio" | "button" | "image";
+
+  export interface IAttribute {
+    name: string;
+    type: AttrTypes;
+    options: string[];
+    categories: string[];
+  }
+
+  export interface ISpecification {
+    name: string;
+    options: string[];
+    categories: string[];
+  }
+
+  export interface IProduct {
+    _id: string;
+    name: string;
+    slug: string;
+    highlights?: string[];
+    description: string;
+    images: string[];
+    video?: string;
+    tags: string[];
+    rating: number;
+    category: string;
+    variations: IVariant[];
+    attributes: {
+      id: IAttribute;
+      options: string[];
+    }[];
+    specifications: {
+      id: ISpecification;
+      value: string | number | boolean;
+    }[];
+    reviews: IReview[];
+    isActive: boolean;
+  }
+
+  export interface ICartItem {
     productId: IProduct;
+    quantity: number;
+    variantId: string;
+  }
+
+  export interface IWishlistItem {
+    productId: IProduct;
+    variantId: string;
   }
 }
 

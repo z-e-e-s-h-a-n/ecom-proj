@@ -59,7 +59,7 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    await prepareUserResponse(res, user, "Login successful.");
+    await prepareUserResponse(req, res, user, "Login successful.");
   } catch (error) {
     logger.error("Error during login", { error });
     sendResponse(res, 500, false, "Internal server error during login.");
@@ -173,12 +173,23 @@ export const validateOtp = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) {
-      await RefreshTokenModel.findOneAndUpdate(
-        { token: refreshToken },
-        { $set: { blacklisted: true } }
-      );
+    const deviceId = req.cookies.deviceId;
+
+    if (!refreshToken || !deviceId) {
+      logger.warn("Logout attempted without refreshToken or deviceId.");
+      manageTokensCookies(res, "remove");
+      return sendResponse(res, 200, true, "Logged out (no active session).");
     }
+
+    const result = await RefreshTokenModel.findOneAndUpdate(
+      { token: refreshToken, "deviceInfo.id": deviceId },
+      { $set: { blacklisted: true } }
+    );
+
+    if (!result) {
+      logger.warn("No matching refreshToken found for logout.");
+    }
+
     manageTokensCookies(res, "remove");
     sendResponse(res, 200, true, "Logged out successfully.");
   } catch (error) {

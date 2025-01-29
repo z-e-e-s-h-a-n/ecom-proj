@@ -1,12 +1,13 @@
 // models/wishlist.ts
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, ObjectId } from "mongoose";
 
 export interface IWishlistItem {
-  productId: mongoose.Types.ObjectId;
+  productId: ObjectId;
+  variantId: ObjectId;
 }
 
 export interface IWishlist extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId: ObjectId;
   items: IWishlistItem[];
 }
 
@@ -20,8 +21,12 @@ const wishlistSchema = new Schema<IWishlist>(
     items: [
       {
         productId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: Schema.Types.ObjectId,
           ref: "Product",
+          required: true,
+        },
+        variantId: {
+          type: Schema.Types.ObjectId,
           required: true,
         },
       },

@@ -1,19 +1,16 @@
 // routes/product.ts
 import { Router } from "express";
 import * as controller from "@/controllers/product";
-import { authGuard } from "@/middlewares/auth";
 
 const router: Router = Router();
 
 // CRUD Routes for Products
-router.post("/", controller.createProduct);
-router.put("/:productId", controller.updateProduct);
-router.get("/:productId", controller.getProduct);
-router.get("/", controller.getProducts);
-router.delete("/:productId", controller.deleteProduct);
+router.route("/").post(controller.createProduct).get(controller.getProducts);
 
-// Review routes
-router.post("/:productId/review", authGuard(), controller.addReview);
-router.get("/:productId/reviews", controller.getReviewsForProduct);
+router
+  .route("/:productId")
+  .get(controller.getProductById)
+  .put(controller.updateProduct)
+  .delete(controller.deleteProduct);
 
 export default router;

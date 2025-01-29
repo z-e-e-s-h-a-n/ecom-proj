@@ -1,11 +1,11 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import otpModel from "@/models/otp";
 import sendEmail from "@/config/nodemailer";
 import { ObjectId } from "@/types/global";
 import logger from "./logger";
 import { createAuthSession, sendResponse } from "./helper";
-import {IUser,   ISafeUser } from "@/models/user";
- 
+import { IUser, ISafeUser } from "@/models/user";
+
 export interface SendOtpPayload {
   userId: string | ObjectId;
   email: string;
@@ -52,7 +52,7 @@ export const verifyOtp = async ({ userId, otp, purpose }: verifyOtpPayload) => {
 };
 
 export const formatUserResponse = (
-  user:  IUser,
+  user: IUser,
   additionalInfo: Record<string, any> = {}
 ): ISafeUser & Record<string, any> => {
   return {
@@ -67,12 +67,13 @@ export const formatUserResponse = (
 };
 
 export const prepareUserResponse = async (
+  req: Request,
   res: Response,
   user: IUser,
   message: string
 ) => {
   try {
-    const tokenData = await createAuthSession(res, user);
+    const tokenData = await createAuthSession(req, res, user);
     const userResponse = formatUserResponse(user);
 
     sendResponse(res, 200, true, message, { user: userResponse, ...tokenData });
