@@ -1,13 +1,12 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCart } from "@/hooks/useStorage";
 import { DELIVERY_CHARGE } from "@/constants/user";
 import CartSummary from "@/components/user/CartSummary";
-import { calculateCartPrice, getVariant } from "@/lib/utils";
+import { formatProductPrice, getVariant } from "@/lib/utils";
 import Link from "next/link";
 import QuantityInput from "@/components/form/QuantityInput";
 
@@ -33,13 +32,10 @@ const Cart = () => {
             </thead>
             <tbody>
               {cart.map(({ productId, quantity, variantId }) => {
-                // Get details of the selected variant
                 const variant = getVariant(productId, variantId);
-
-                const price =
-                  variant?.pricing[0]?.sale ||
-                  variant?.pricing[0]?.original ||
-                  0;
+                const { fmtPrice, price, multiplier } = formatProductPrice(
+                  variant.pricing
+                );
 
                 return (
                   <tr
@@ -61,7 +57,7 @@ const Cart = () => {
                         <span>{productId.name}</span>
                       </Link>
                     </td>
-                    <td className="px-6 py-4">${price}</td>
+                    <td className="px-6 py-4">{fmtPrice}</td>
                     <td className="px-6 py-4">
                       <QuantityInput
                         product={productId}
@@ -69,9 +65,7 @@ const Cart = () => {
                         quantity={quantity}
                       />
                     </td>
-                    <td className="px-6 py-4">
-                      ${calculateCartPrice(price, quantity).toFixed(2)}
-                    </td>
+                    <td className="px-6 py-4">{multiplier(price, quantity)}</td>
                     <td className="px-6 py-4 text-center">
                       <Button
                         variant="destructive"
@@ -97,6 +91,7 @@ const Cart = () => {
           total={grandTotal}
           btnText="Proceed to Checkout"
           btnUrl="/checkout"
+          cartList={cart}
         />
       </div>
     </>

@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 import ProductModel from "@/models/product";
 import { sendResponse } from "@/utils/helper";
-import logger from "@/utils/logger";
+import logger from "@/config/logger";
 
 // Create Product
 export const createProduct = async (req: Request, res: Response) => {
@@ -49,7 +49,6 @@ export const updateProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Get Product by ID
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
@@ -60,27 +59,33 @@ export const getProductById = async (req: Request, res: Response) => {
       .populate("category")
       .populate("reviews")
       .populate("specifications.id")
-      .populate("attributes.id");
-    if (!product) {
-      return sendResponse(res, 404, false, "Product not found.");
-    }
+      .populate("attributes.id")
+      .setOptions({ req })
+      .lean()
+      .exec();
+
+    if (!product) return sendResponse(res, 404, false, "Product not found.");
 
     sendResponse(res, 200, true, "Product fetched successfully.", { product });
   } catch (error) {
-    logger.error("Error fetching product: ", error);
+    logger.error("Error fetching product:", error);
     sendResponse(res, 500, false, "Internal server error.");
   }
 };
 
-// Get All Products
-export const getProducts = async (_: Request, res: Response) => {
+export const getProducts = async (req: Request, res: Response) => {
   try {
-    const products = await ProductModel.find().populate("category");
+    const products = await ProductModel.find()
+      .populate("category")
+      .setOptions({ req })
+      .lean()
+      .exec();
+
     sendResponse(res, 200, true, "Products fetched successfully.", {
       products,
     });
   } catch (error) {
-    logger.error("Error fetching products: ", error);
+    logger.error("Error fetching products:", error);
     sendResponse(res, 500, false, "Internal server error.");
   }
 };

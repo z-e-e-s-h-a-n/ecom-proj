@@ -4,8 +4,7 @@ import PaymentModel from "@/models/payment";
 import UserModel from "@/models/user";
 import WishlistModel from "@/models/wishlist";
 import { sendResponse } from "@/utils/helper";
-import logger from "@/utils/logger";
-import { findAndPopulate } from "@/utils/mongoose";
+import logger from "@/config/logger";
 import { formatUserResponse } from "@/utils/user";
 import { Request, Response } from "express";
 
@@ -34,7 +33,14 @@ export const getCart = async (req: Request, res: Response) => {
   const userId = req.user._id;
 
   try {
-    const cart = await findAndPopulate(CartModel, userId);
+    const cart = await CartModel.findOne({ userId })
+      .populate({
+        path: "items.productId",
+        options: { req },
+      })
+      .lean()
+      .exec();
+
     sendResponse(res, 200, true, "Cart fetched successfully", {
       cart: cart || { userId, items: [] },
     });
@@ -92,7 +98,7 @@ export const updateCart = async (req: Request, res: Response) => {
       return sendResponse(res, 404, false, "Item not found in cart");
     }
 
-    sendResponse(res, 200, true, "Item updated in cart", { cart });
+    sendResponse(res, 200, true, "Item updated in cart");
   } catch (error) {
     sendResponse(res, 500, false, "Failed to update cart item");
   }
@@ -106,12 +112,12 @@ export const removeFromCart = async (req: Request, res: Response) => {
   const { productId, variantId } = req.body;
 
   try {
-    const cart = await CartModel.findOneAndUpdate(
+    await CartModel.findOneAndUpdate(
       { userId },
       { $pull: { items: { productId, variantId } } },
       { new: true }
     );
-    sendResponse(res, 200, true, "Item removed from cart", { cart });
+    sendResponse(res, 200, true, "Item removed from cart");
   } catch (error) {
     sendResponse(res, 500, false, "Failed to remove item from cart");
   }
@@ -124,7 +130,14 @@ export const getWishlist = async (req: Request, res: Response) => {
   const userId = req.user._id;
 
   try {
-    const wishlist = await findAndPopulate(WishlistModel, userId);
+    const wishlist = await WishlistModel.findOne({ userId })
+      .populate({
+        path: "items.productId",
+        options: { req },
+      })
+      .lean()
+      .exec();
+
     sendResponse(res, 200, true, "Wishlist fetched successfully", {
       wishlist: wishlist || { userId, items: [] },
     });
@@ -172,12 +185,12 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
   const { productId, variantId } = req.body;
 
   try {
-    const wishlist = await WishlistModel.findOneAndUpdate(
+    await WishlistModel.findOneAndUpdate(
       { userId },
       { $pull: { items: { productId, variantId } } },
       { new: true }
     );
-    sendResponse(res, 200, true, "Item removed from wishlist", { wishlist });
+    sendResponse(res, 200, true, "Item removed from wishlist");
   } catch (error) {
     sendResponse(res, 500, false, "Failed to remove item from wishlist");
   }

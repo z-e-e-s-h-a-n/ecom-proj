@@ -11,7 +11,7 @@ import { Request, Response } from "express";
 import RefreshTokenModel from "@/models/refreshToken";
 import envConfig from "@/config/envConfig";
 import mongoose from "mongoose";
-import logger from "@/utils/logger";
+import logger from "@/config/logger";
 import { ISafeUser } from "@/models/user";
 
 export interface IJwtTokens {

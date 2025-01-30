@@ -6,15 +6,21 @@ import ProductSection from "@/components/showcase/ProductSection";
 import { useStorageUtils, useProduct, useProducts } from "@/hooks/useStorage";
 import { Button } from "@workspace/ui/components/button";
 import { Separator } from "@workspace/ui/components/separator";
-import { Bus, Heart, RefreshCcw } from "lucide-react";
+import { Bus, Heart, RefreshCcw, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import QuantityInput from "@/components/form/QuantityInput";
 import VariantInput from "@/components/form/VariantInput";
-import { getVariant, formatPrice } from "@/lib/utils";
+import {
+  getVariant,
+  formatProductPrice,
+  updateLocalStorage,
+} from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 function ProductDetails({ params, searchParams }: PageParams) {
   const id = React.use(params)?.id || "";
   const variantId = (React.use(searchParams)?.variant as string) || "";
+  const router = useRouter();
   const { product, isLoading, error } = useProduct(id);
   const { isInCart, isInWishlist, toggleCart, toggleWishlist } =
     useStorageUtils();
@@ -64,14 +70,29 @@ function ProductDetails({ params, searchParams }: PageParams) {
     return <div className="p-6 text-center">Product not found.</div>;
 
   const renderPricing = () => {
-    const { original, sale } =
-      selectedVariant?.pricing.find((p) => p.region === "US") || {};
+    const { fmtOriginal, sale, fmtPrice } = formatProductPrice(
+      selectedVariant.pricing
+    );
     return (
-      <div className="flex gap-4 text-lg">
-        <span className="text-primary">{formatPrice(sale || original)}</span>
-        {sale && <span className="line-through">{formatPrice(original)}</span>}
+      <div className="flex-items-center gap-4 text-lg">
+        <span className="text-primary">{fmtPrice}</span>
+        {sale && (
+          <span className="line-through text-muted-foreground text-sm">
+            {fmtOriginal}
+          </span>
+        )}
       </div>
     );
+  };
+
+  const handleBuyNow = () => {
+    updateLocalStorage("cartItem", {
+      productId: product,
+      quantity,
+      variantId: selectedVariant._id,
+    });
+
+    router.push("/checkout?cartSource=cartItem");
   };
 
   return (
@@ -105,7 +126,7 @@ function ProductDetails({ params, searchParams }: PageParams) {
             <h1 className="h3">{product.name}</h1>
             <div className="flex items-center gap-2">
               <span>Stars</span>
-              <span>({product.reviews?.length || 0} Reviews)</span>
+              <span>({product.reviews?.length || 4} Reviews)</span>
               <span>
                 | {selectedVariant?.stock > 0 ? "In Stock" : "Out of Stock"}
               </span>
@@ -129,13 +150,19 @@ function ProductDetails({ params, searchParams }: PageParams) {
               quantity={quantity}
               setQuantity={setQuantity}
             />
+            <Button className="w-1/2" onClick={handleBuyNow}>
+              Buy Now
+            </Button>
             <Button
+              size="icon"
               disabled={selectedVariant?.stock === 0}
+              variant={
+                isInCart(product, selectedVariant._id) ? "default" : "outline"
+              }
               onClick={() => toggleCart(product, selectedVariant._id, quantity)}
+              className="flex-shrink-0"
             >
-              {isInCart(product, selectedVariant._id)
-                ? "Remove from Cart"
-                : "Add to Cart"}
+              <ShoppingCart />
             </Button>
             <Button
               size="icon"
@@ -145,6 +172,7 @@ function ProductDetails({ params, searchParams }: PageParams) {
                   : "outline"
               }
               onClick={() => toggleWishlist(product, selectedVariant._id)}
+              className="flex-shrink-0"
             >
               <Heart />
             </Button>

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import logger from "@/utils/logger";
+import logger from "@/config/logger";
 import AttributeModel from "@/models/attribute";
 import { sendResponse } from "@/utils/helper";
 

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import otpModel from "@/models/otp";
 import sendEmail from "@/config/nodemailer";
 import { ObjectId } from "@/types/global";
-import logger from "./logger";
+import logger from "../config/logger";
 import { createAuthSession, sendResponse } from "./helper";
 import { IUser, ISafeUser } from "@/models/user";
 

@@ -1,4 +1,5 @@
 import { Button } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
 import Image from "next/image";
 import React from "react";
 
@@ -19,7 +20,13 @@ function VariantInput({
         const { name, type } = attr;
 
         return (
-          <div key={name} className="flex flex-col gap-2">
+          <div
+            key={name}
+            className={cn(
+              "flex gap-2",
+              options.length < 2 ? "items-center" : "flex-col"
+            )}
+          >
             <label className="font-medium text-lg">{name}:</label>
             <div className="flex flex-wrap gap-4">
               {type === "color" && (

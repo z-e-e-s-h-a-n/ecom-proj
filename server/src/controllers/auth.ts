@@ -1,4 +1,4 @@
-import logger from "@/utils/logger";
+import logger from "@/config/logger";
 import UserModel from "@/models/user";
 import { Request, Response } from "express";
 import { manageTokensCookies } from "@/utils/jwt";

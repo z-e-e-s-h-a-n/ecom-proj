@@ -110,11 +110,11 @@ export const useCart = () => {
   const cartSubTotal = useMemo(
     () =>
       data?.reduce((sum, item) => {
-        const variantPricing = item.productId.variations
-          .find((variation) => variation._id === item.variantId)
-          ?.pricing.find((pricing) => pricing.region === "US");
+        const { original, sale } = item.productId.variations.find(
+          (variation) => variation._id === item.variantId
+        )!.pricing;
 
-        return sum + (variantPricing?.original || 0) * item.quantity;
+        return sum + ((sale ?? original) || 0) * item.quantity;
       }, 0) || 0,
     [data]
   );

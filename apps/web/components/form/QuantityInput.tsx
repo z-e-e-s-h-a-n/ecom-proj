@@ -2,6 +2,7 @@
 import { useCart } from "@/hooks/useStorage";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import { cn } from "@workspace/ui/lib/utils";
 import { Minus, Plus } from "lucide-react";
 
 export interface IQuantityInput {
@@ -9,6 +10,7 @@ export interface IQuantityInput {
   variant: IProduct["variations"][number];
   product: IProduct;
   setQuantity?: (quantity: number) => void;
+  className?: string;
 }
 
 function QuantityInput({
@@ -16,6 +18,7 @@ function QuantityInput({
   quantity,
   product,
   setQuantity,
+  className,
 }: IQuantityInput) {
   const { updateCart } = useCart();
 
@@ -28,7 +31,12 @@ function QuantityInput({
   };
 
   return (
-    <div className="flex-center  [&_>button]:size-6  [&_>button]:rounded-full  relative max-w-24 [&_>button]:absolute border rounded-lg">
+    <div
+      className={cn(
+        "flex-center flex-shrink-0  [&_>button]:size-6  [&_>button]:rounded-full  relative max-w-24 [&_>button]:absolute border rounded",
+        className
+      )}
+    >
       <Button
         size="icon"
         variant="ghost"

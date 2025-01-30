@@ -7,7 +7,7 @@ import React from "react";
 import { Card } from "@workspace/ui/components/card";
 import { Lock, Tag } from "lucide-react";
 import Image from "next/image";
-import { getVariant } from "@/lib/utils";
+import { formatProductPrice, getVariant } from "@/lib/utils";
 
 // CartSummary Component
 interface CartSummaryProps {
@@ -50,6 +50,9 @@ function CartSummary({
             <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-hidden">
               {cartList.map(({ productId: product, variantId, quantity }) => {
                 const variant = getVariant(product, variantId);
+                const { original, sale, multiplier } = formatProductPrice(
+                  variant.pricing
+                );
 
                 return (
                   <div key={product._id} className="flex items-center gap-4">
@@ -68,14 +71,9 @@ function CartSummary({
                         <span>{product.name}</span>
                         <div className="flex gap-2">
                           <span className="text-muted-foreground line-through">
-                            $
-                            {(variant.pricing[0].original! * quantity).toFixed(
-                              2
-                            )}
+                            {multiplier(original, quantity)}
                           </span>
-                          <span>
-                            ${(variant.pricing[0].sale! * quantity).toFixed(2)}
-                          </span>
+                          {sale && <span>{multiplier(sale, quantity)}</span>}
                         </div>
                       </Link>
                       <span className="text-muted-foreground text-sm">

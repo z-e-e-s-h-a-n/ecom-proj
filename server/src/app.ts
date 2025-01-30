@@ -12,6 +12,7 @@ import productRoutes from "@/routes/product";
 import categoryRoutes from "@/routes/category";
 import attributeRoutes from "@/routes/attribute";
 import specsRoutes from "@/routes/specification";
+import currencyRoutes from "@/routes/currency";
 import reviewRoutes from "@/routes/review";
 import errorHandler from "@/middlewares/errorHandler";
 import { sendResponse } from "@/utils/helper";
@@ -34,6 +35,7 @@ app.use("/products/categories", categoryRoutes);
 app.use("/products/attributes", attributeRoutes);
 app.use("/products/specifications", specsRoutes);
 app.use("/products/reviews", reviewRoutes);
+app.use("/products/currency", currencyRoutes);
 app.use("/products", productRoutes);
 
 app.get("/", (_, res) => {

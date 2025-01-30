@@ -22,12 +22,13 @@ declare global {
   export interface IVariant extends IShipping {
     _id: string;
     pricing: {
-      region: string;
+      country: string;
+      countryCode: string;
       currency: string;
+      symbol: string;
       original: number;
       sale?: number;
-      multiplier?: number;
-    }[];
+    };
     sku: string;
     stock: number;
     images: string[];

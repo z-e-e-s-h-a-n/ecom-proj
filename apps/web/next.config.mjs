@@ -2,7 +2,12 @@
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
   images: {
-    domains: ["loremflickr.com", "picsum.photos"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
+    ],
   },
 };
 

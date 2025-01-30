@@ -25,7 +25,7 @@ function CheckoutLayout({ searchParams }: PageParams) {
   const [step, setStep] = useState<CheckoutSteps>("address");
   const [payMethod, setPayMethod] = useState<"card" | "cod">("card");
   const [isLoading, setIsLoading] = useState(false);
-  const cartSource = (React.use(searchParams)?.source as string) || "";
+  const cartSource = (React.use(searchParams)?.cartSource as string) || "";
 
   // seeing if the user checkout from cart page or from product details page
   const getCartList = () => {
@@ -136,7 +136,7 @@ function CheckoutLayout({ searchParams }: PageParams) {
         total={200}
         cardType="checkout"
         disableBtn={step !== "payment" || isLoading || payMethod !== "cod"}
-        cartList={getCartList().slice(0, 6)}
+        cartList={getCartList()}
         btnText={step === "payment" ? "Place Order" : "Proceed to Checkout"}
         btnAction={() => {
           toast({

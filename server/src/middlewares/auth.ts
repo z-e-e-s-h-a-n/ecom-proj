@@ -4,7 +4,7 @@ import {
   attachDecodedUser,
   handleTokenRefresh,
 } from "@/utils/jwt";
-import logger from "@/utils/logger";
+import logger from "@/config/logger";
 import { sendResponse } from "@/utils/helper";
 
 export const authGuard = (role: string = "user") => {

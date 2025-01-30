@@ -3,7 +3,7 @@ import Image from "next/image";
 import React from "react";
 import Link from "next/link";
 import ProductCardButtons from "@/components/showcase/ProductCardButtons";
-import { getVariant } from "@/lib/utils";
+import { formatProductPrice, getVariant } from "@/lib/utils";
 
 export interface IProductCard {
   product: IProduct;
@@ -12,6 +12,7 @@ export interface IProductCard {
 
 const ProductCard = ({ product, variantId }: IProductCard) => {
   const variant = getVariant(product, variantId);
+  const { fmtOriginal, fmtPrice, sale } = formatProductPrice(variant.pricing);
 
   return (
     <Link
@@ -32,10 +33,12 @@ const ProductCard = ({ product, variantId }: IProductCard) => {
       <div className="flex flex-col gap-1 px-2 py-4">
         <h3 className="h5 truncate">{product.name}</h3>
         <div className="flex-items-center subtitle-1 gap-2">
-          <span>${variant?.pricing[0]?.sale}</span>
-          <span className="text-muted-foreground line-through">
-            ${variant?.pricing[0]?.original}
-          </span>
+          <span>{fmtPrice}</span>
+          {sale && (
+            <span className="text-muted-foreground text-sm line-through">
+              {fmtOriginal}
+            </span>
+          )}
         </div>
         <div className="flex-items-center gap-2">
           <div className="flex-items-center gap-1">

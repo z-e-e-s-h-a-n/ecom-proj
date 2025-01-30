@@ -1,5 +1,7 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import mongoose, { Schema, Document, ObjectId, Model } from "mongoose";
 import crypto from "crypto";
+import { formatProductPricing } from "@/utils/helper";
+import { Request } from "express";
 
 export interface IShipping {
   weight?: number;
@@ -12,11 +14,12 @@ export interface IShipping {
 
 export interface IVariant extends IShipping {
   pricing: {
-    region: string;
+    country: string;
+    countryCode: string;
     currency: string;
+    symbol: string;
     original: number;
     sale?: number;
-    multiplier?: number;
   }[];
   sku?: string;
   stock: number;
@@ -45,20 +48,36 @@ export interface IProduct extends Document {
   updatedAt: Date;
 }
 
+export interface IProductModel extends Model<IProduct> {
+  findByCategory(categoryId: ObjectId): Promise<IProduct[]>;
+  findByRating(rating: number): Promise<IProduct[]>;
+  searchByName(searchTerm: string): Promise<IProduct[]>;
+  fetchFormattedProduct(
+    req: Request,
+    productId: string
+  ): Promise<IProduct | null>;
+}
+
 const variationSchema = new Schema<IVariant>({
   sku: { type: String, unique: true },
   pricing: [
     {
-      region: { type: String, required: true },
+      country: { type: String, required: true },
       currency: { type: String, required: true },
+      countryCode: { type: String, required: true },
+      symbol: { type: String, required: true },
       original: { type: Number, required: true },
       sale: { type: Number },
-      multiplier: { type: Number },
     },
   ],
+
   stock: { type: Number, required: true },
   images: { type: [String], default: [] },
-  attributes: { type: Map, of: String },
+  attributes: {
+    type: Map,
+    of: String,
+    get: (val: any) => (val ? Object.fromEntries(val) : {}),
+  },
   weight: { type: Number },
   dimensions: {
     length: { type: Number },
@@ -141,6 +160,41 @@ productSchema.pre("save", async function (next) {
   next();
 });
 
+variationSchema.pre("validate", function (next) {
+  const seen = new Set();
+  for (const price of this.pricing) {
+    const key = `${price.country}-${price.countryCode}-${price.currency}`;
+    if (seen.has(key)) {
+      return next(
+        new Error(
+          `Duplicate pricing entry found for ${price.country} (${price.countryCode}) in ${price.currency}`
+        )
+      );
+    }
+    seen.add(key);
+  }
+  next();
+});
+
+productSchema.post(["find", "findOne"], async function (docs, next) {
+  if (!docs) return next();
+
+  const req = this.getOptions()?.req as Request | undefined;
+  if (!req) return next();
+
+  if (Array.isArray(docs)) {
+    await Promise.all(
+      docs.map(async (doc) => {
+        doc.variations = await formatProductPricing(req, doc);
+      })
+    );
+  } else {
+    docs.variations = await formatProductPricing(req, docs);
+  }
+
+  next();
+});
+
 productSchema.index({ name: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ isActive: 1 });
@@ -160,5 +214,9 @@ productSchema.statics = {
   },
 };
 
-const ProductModel = mongoose.model<IProduct>("Product", productSchema);
+const ProductModel = mongoose.model<IProduct, IProductModel>(
+  "Product",
+  productSchema
+);
+
 export default ProductModel;

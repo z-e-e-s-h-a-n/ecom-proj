@@ -4,8 +4,12 @@ import { generateTokens, ITokenPayload, manageTokensCookies } from "./jwt";
 import { IUser } from "@/models/user";
 import { UAParser } from "ua-parser-js";
 import axios from "axios";
-import logger from "@/utils/logger";
+import logger from "@/config/logger";
 import ms from "ms";
+import { type ILookupIPInfo } from "@/types/global";
+import { IProduct } from "@/models/product";
+import CurrencyOptionModel from "@/models/currency";
+import getSymbolFromCurrency from "currency-symbol-map";
 
 export const getEnv = (key: string, fallback?: string): string => {
   const value = process.env[key];
@@ -66,38 +70,29 @@ export const createAuthSession = async (
   return tokenData;
 };
 
-const getClientIp = (req: Request): string => {
-  return (
-    req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() ??
-    (req.ip || "unknown_ip")
-  );
-};
-
-export const lookupIPLocation = async (ip: string): Promise<string> => {
+export const lookupIPInfo = async <T>(
+  req: Request,
+  fallback: T
+): Promise<ILookupIPInfo<T>> => {
   try {
-    if (ip === "::1" || ip === "127.0.0.1") {
-      return "Localhost (Development)";
-    }
+    const ip =
+      req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() ??
+      req.ip;
 
-    const response = await axios.get(
-      `http://api.ipstack.com/${ip}?access_key=${envConfig.ipStack.apiKey}`
-    );
+    if (!ip || ip === "::1" || ip === "127.0.0.1") return { fallback };
 
-    if (response.data?.city && response.data?.country_name) {
-      return `${response.data.city}, ${response.data.country_name}`;
-    }
-
-    return "Unknown location";
+    const { data } = await axios.get(`http://ip-api.com/json/${ip}`);
+    const symbol =
+      getSymbolFromCurrency(data.currency) || (fallback as any)?.symbol;
+    return { data: { ...data, symbol }, fallback };
   } catch (error) {
     logger.error("Failed to resolve IP location:", error);
-    return "Unknown location";
+    return { fallback };
   }
 };
 
-// Modify getDeviceInfo to include generated ID
 export const getDeviceInfo = async (req: Request) => {
-  const ip = getClientIp(req) || "unknown_ip";
-  const location = await lookupIPLocation(ip);
+  const ipInfo = await lookupIPInfo(req, "Unknown location");
   const ua = req.headers["user-agent"] || "Unknown User-Agent";
 
   const parser = new UAParser(ua);
@@ -110,11 +105,108 @@ export const getDeviceInfo = async (req: Request) => {
   return {
     id: deviceId,
     name: `${browser} on ${os}`,
-    ip,
-    location,
+    ip: ipInfo.data ? ipInfo.data.query : ipInfo.fallback,
+    location: ipInfo.data
+      ? `${ipInfo.data.city}, ${ipInfo.data.country}`
+      : ipInfo.fallback,
     lastUsed: new Date(),
     userAgent: ua,
     os,
     browser,
   };
+};
+
+export const findAndPopulate = async (
+  model: any,
+  query: object,
+  populateFields: string | string[] = ["items.productId"]
+) => {
+  const fields = Array.isArray(populateFields)
+    ? populateFields
+    : [populateFields];
+  let queryBuilder = model.findOne(query);
+  fields.forEach((field) => {
+    queryBuilder = queryBuilder.populate(field);
+  });
+  return queryBuilder;
+};
+
+const exchangeRateCache = new Map<string, number>();
+
+export const getExchangeRates = async (
+  currency = "USD",
+  fallback: number
+): Promise<number> => {
+  if (exchangeRateCache.has(currency))
+    return exchangeRateCache.get(currency) || fallback;
+
+  try {
+    const { data } = await axios.get(
+      `https://api.exchangerate-api.com/v4/latest/${currency}`
+    );
+    const rate = data.rates[currency] || fallback;
+    exchangeRateCache.set(currency, rate);
+    return rate;
+  } catch (error) {
+    logger.error("Error fetching exchange rates:", error);
+    return fallback;
+  }
+};
+
+export const formatProductPricing = async (req: Request, product: IProduct) => {
+  try {
+    const defaultCurrency = (await CurrencyOptionModel.findOne({
+      isDefault: true,
+    }).lean()) || { currency: "USD", symbol: "$", countryCode: "US" };
+
+    const ipInfo = await lookupIPInfo(req, defaultCurrency);
+    const { countryCode } = ipInfo.data ?? ipInfo.fallback;
+
+    let currencyOption: any = await CurrencyOptionModel.findOne({
+      countryCode,
+    }).lean();
+
+    if (!currencyOption) {
+      const currency = ipInfo.data?.currency ?? ipInfo.fallback.currency;
+      const symbol = ipInfo.data?.symbol ?? ipInfo.fallback.currency;
+      const multiplier = await getExchangeRates(currency, 1);
+      currencyOption = { currency, symbol, multiplier };
+    }
+
+    const { multiplier, currency, symbol } = currencyOption;
+
+    return product.variations.map((variation) => {
+      const pricing = variation.pricing.find(
+        (p) => p.countryCode === countryCode
+      );
+      if (pricing) return { ...variation, pricing };
+
+      const fallbackPricing = variation.pricing.find(
+        (p) => p.currency === "USD"
+      );
+      if (!fallbackPricing) {
+        logger.warn(`No fallback USD pricing for variation: ${variation.sku}`);
+        return { ...variation, pricing: {} };
+      }
+
+      return {
+        ...variation,
+        pricing: {
+          countryCode,
+          currency,
+          symbol,
+          original: fallbackPricing.original * multiplier,
+          sale: fallbackPricing.sale
+            ? fallbackPricing.sale * multiplier
+            : undefined,
+        },
+      };
+    });
+  } catch (error) {
+    logger.error("Error formatting pricing:", error);
+    return product.variations.map((variation) => ({
+      ...variation,
+      pricing: {},
+    }));
+  }
 };
