@@ -1,7 +1,7 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import {
   getEnv,
-  addCookies,
+  setCookie,
   durationToTime,
   createAuthSession,
   getDeviceInfo,
@@ -36,8 +36,8 @@ export const generateTokens = async (
   }
 
   const payload: JwtPayload = { _id: _id.toString(), role };
-  const accessExp = durationToTime("15m");
-  const refreshExp = durationToTime("7d");
+  const accessExp = "15m";
+  const refreshExp = "7d";
 
   const accessToken = jwt.sign(payload, envConfig.jwt.accessSecret, {
     expiresIn: accessExp,
@@ -55,7 +55,7 @@ export const generateTokens = async (
     {
       token: refreshToken,
       deviceInfo,
-      expiresAt: calculateExpiryTime(refreshExp, true),
+      expiresAt: calculateExpiryTime(durationToTime(accessExp), true),
       blacklisted: false,
       isActive: true,
     },
@@ -65,8 +65,8 @@ export const generateTokens = async (
   return {
     accessToken,
     refreshToken,
-    accessExp,
-    refreshExp,
+    accessExp: durationToTime(accessExp, true),
+    refreshExp: durationToTime(refreshExp, true),
     deviceId: deviceInfo.id,
   };
 };
@@ -121,14 +121,18 @@ export const refreshAccessToken = async (
     throw new Error("Invalid refresh token.");
   }
 
-  logger.info("Refresh token successfully verified", { userId: decoded._id });
+  logger.info("Refresh token successfully verified", {
+    userId: decoded._id,
+  });
   return createAuthSession(req, res, decoded as ITokenPayload);
 };
 
 export const handleTokenRefresh = async (req: Request, res: Response) => {
   const tokenData = await refreshAccessToken(req, res);
 
-  logger.info("New tokens issued for the user", { userId: req.cookies.userId });
+  logger.info("New tokens issued for the user", {
+    userId: req.user?._id,
+  });
 
   const decoded = verifyJwtToken(tokenData.accessToken, "JWT_ACCESS_SECRET");
   if (!decoded) throw new Error("Failed to decode new access token.");
@@ -145,23 +149,23 @@ export const manageTokensCookies = (
     {
       name: "accessToken",
       value: tokenData?.accessToken,
-      exp: tokenData?.accessExp,
+      maxAge: tokenData?.accessExp,
     },
     {
       name: "refreshToken",
       value: tokenData?.refreshToken,
-      exp: tokenData?.refreshExp,
+      maxAge: tokenData?.refreshExp,
     },
     {
       name: "deviceId",
       value: tokenData?.deviceId,
-      exp: tokenData?.refreshExp,
+      maxAge: tokenData?.refreshExp,
     },
   ];
 
-  tokens.forEach(({ name, value, exp }) => {
-    if (action === "add" && value && exp) {
-      addCookies(res, name, value, { maxAge: exp * 1000 });
+  tokens.forEach(({ name, value, maxAge }) => {
+    if (action === "add" && value && maxAge) {
+      setCookie(res, name, value, { maxAge });
     } else if (action === "remove") {
       res.clearCookie(name);
     }

@@ -95,6 +95,15 @@ declare global {
     productId: IProduct;
     variantId: string;
   }
+
+  export interface ICurrencyOption {
+    country: string;
+    currency: string;
+    countryCode: string;
+    symbol: string;
+    multiplier: number;
+    isDefault: boolean;
+  }
 }
 
 export {};

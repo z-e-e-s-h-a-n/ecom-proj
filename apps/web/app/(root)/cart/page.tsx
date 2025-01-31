@@ -12,6 +12,7 @@ import QuantityInput from "@/components/form/QuantityInput";
 
 const Cart = () => {
   const { cart, cartSubTotal, updateCart } = useCart();
+
   const grandTotal = cartSubTotal + DELIVERY_CHARGE;
 
   return (

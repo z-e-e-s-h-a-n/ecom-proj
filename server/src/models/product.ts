@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document, ObjectId, Model } from "mongoose";
 import crypto from "crypto";
-import { formatProductPricing } from "@/utils/helper";
+import { formatProductPricing, getCookie } from "@/utils/helper";
 import { Request } from "express";
+import { ICurrencyOption } from "./currency";
+import logger from "@/config/logger";
 
 export interface IShipping {
   weight?: number;
@@ -177,19 +179,25 @@ variationSchema.pre("validate", function (next) {
 });
 
 productSchema.post(["find", "findOne"], async function (docs, next) {
-  if (!docs) return next();
+  if (!docs || (Array.isArray(docs) && docs.length === 0)) return next();
 
   const req = this.getOptions()?.req as Request | undefined;
   if (!req) return next();
 
+  const currencyInfo = getCookie<ICurrencyOption>(req, "currencyInfo");
+  if (!currencyInfo) {
+    logger.warn("currencyInfo not found in cookies");
+    return next();
+  }
+
   if (Array.isArray(docs)) {
     await Promise.all(
       docs.map(async (doc) => {
-        doc.variations = await formatProductPricing(req, doc);
+        doc.variations = await formatProductPricing(currencyInfo, doc);
       })
     );
   } else {
-    docs.variations = await formatProductPricing(req, docs);
+    docs.variations = await formatProductPricing(currencyInfo, docs);
   }
 
   next();

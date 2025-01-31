@@ -8,7 +8,7 @@ router
   .get(controller.getAllCurrencies)
   .post(controller.createCurrency);
 
-router.route("/:countryCode").get(controller.getCurrencyByCountry);
+router.get("/:currency", controller.getCurrencyInfo);
 
 router
   .route("/:id")

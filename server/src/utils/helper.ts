@@ -8,8 +8,8 @@ import logger from "@/config/logger";
 import ms from "ms";
 import { type ILookupIPInfo } from "@/types/global";
 import { IProduct } from "@/models/product";
-import CurrencyOptionModel from "@/models/currency";
 import getSymbolFromCurrency from "currency-symbol-map";
+import { ICurrencyOption } from "@/models/currency";
 
 export const getEnv = (key: string, fallback?: string): string => {
   const value = process.env[key];
@@ -45,19 +45,40 @@ export const sendResponse = (
   res.status(status).json({ success, message, data });
 };
 
-export const addCookies = (
+export const setCookie = (
   res: Response,
-  name: string,
-  secret: string,
+  key: string,
+  value: any,
   options?: CookieOptions
 ) => {
-  res.cookie(name, secret, {
+  res.cookie(key, typeof value === "string" ? value : JSON.stringify(value), {
     httpOnly: true,
     secure: envConfig.env === "production",
     sameSite: "strict",
     path: "/",
     ...options,
   });
+};
+
+export const getCookie = <T>(req: Request, key: string): T | null => {
+  const cookie = req.cookies[key];
+  if (!cookie) {
+    return null;
+  }
+  try {
+    return JSON.parse(cookie) as T;
+  } catch (error) {
+    logger.error(`Error parsing cookie for key ${key}:`, error);
+    return null;
+  }
+};
+
+export const clearCookie = (
+  res: Response,
+  key: string,
+  options?: CookieOptions
+) => {
+  res.clearCookie(key, options);
 };
 
 export const createAuthSession = async (
@@ -78,13 +99,16 @@ export const lookupIPInfo = async <T>(
     const ip =
       req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() ??
       req.ip;
-
     if (!ip || ip === "::1" || ip === "127.0.0.1") return { fallback };
 
     const { data } = await axios.get(`http://ip-api.com/json/${ip}`);
     const symbol =
       getSymbolFromCurrency(data.currency) || (fallback as any)?.symbol;
-    return { data: { ...data, symbol }, fallback };
+    const multiplier = await getExchangeRates(
+      data.currency,
+      (fallback as any)?.multiplier
+    );
+    return { data: { ...data, symbol, multiplier }, fallback };
   } catch (error) {
     logger.error("Failed to resolve IP location:", error);
     return { fallback };
@@ -116,21 +140,6 @@ export const getDeviceInfo = async (req: Request) => {
   };
 };
 
-export const findAndPopulate = async (
-  model: any,
-  query: object,
-  populateFields: string | string[] = ["items.productId"]
-) => {
-  const fields = Array.isArray(populateFields)
-    ? populateFields
-    : [populateFields];
-  let queryBuilder = model.findOne(query);
-  fields.forEach((field) => {
-    queryBuilder = queryBuilder.populate(field);
-  });
-  return queryBuilder;
-};
-
 const exchangeRateCache = new Map<string, number>();
 
 export const getExchangeRates = async (
@@ -153,27 +162,12 @@ export const getExchangeRates = async (
   }
 };
 
-export const formatProductPricing = async (req: Request, product: IProduct) => {
+export const formatProductPricing = async (
+  currencyInfo: ICurrencyOption,
+  product: IProduct
+) => {
   try {
-    const defaultCurrency = (await CurrencyOptionModel.findOne({
-      isDefault: true,
-    }).lean()) || { currency: "USD", symbol: "$", countryCode: "US" };
-
-    const ipInfo = await lookupIPInfo(req, defaultCurrency);
-    const { countryCode } = ipInfo.data ?? ipInfo.fallback;
-
-    let currencyOption: any = await CurrencyOptionModel.findOne({
-      countryCode,
-    }).lean();
-
-    if (!currencyOption) {
-      const currency = ipInfo.data?.currency ?? ipInfo.fallback.currency;
-      const symbol = ipInfo.data?.symbol ?? ipInfo.fallback.currency;
-      const multiplier = await getExchangeRates(currency, 1);
-      currencyOption = { currency, symbol, multiplier };
-    }
-
-    const { multiplier, currency, symbol } = currencyOption;
+    const { multiplier = 1, currency, symbol, countryCode } = currencyInfo;
 
     return product.variations.map((variation) => {
       const pricing = variation.pricing.find(

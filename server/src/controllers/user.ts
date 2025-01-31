@@ -41,11 +41,14 @@ export const getCart = async (req: Request, res: Response) => {
       .lean()
       .exec();
 
-    sendResponse(res, 200, true, "Cart fetched successfully", {
-      cart: cart || { userId, items: [] },
+    const cartData = cart ? cart : { userId, items: [] };
+
+    sendResponse(res, 200, true, "Cart fetched successfully.", {
+      cart: cartData,
     });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to fetch cart");
+    logger.error("Error fetching cart:", error);
+    sendResponse(res, 500, false, "Failed to fetch cart.");
   }
 };
 
@@ -138,11 +141,12 @@ export const getWishlist = async (req: Request, res: Response) => {
       .lean()
       .exec();
 
-    sendResponse(res, 200, true, "Wishlist fetched successfully", {
+    sendResponse(res, 200, true, "Wishlist fetched successfully.", {
       wishlist: wishlist || { userId, items: [] },
     });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to fetch wishlist");
+    logger.error("Error fetching wishlist:", error);
+    sendResponse(res, 500, false, "Failed to fetch wishlist.");
   }
 };
 
@@ -231,9 +235,14 @@ export const getUserOrders = async (req: Request, res: Response) => {
   const userId = req.user._id;
 
   try {
-    const orders = await OrderModel.find({ userId }).populate(
-      "products.productId"
-    );
+    const orders = await OrderModel.find({ userId })
+      .populate({
+        path: "items.productId",
+        options: { req },
+      })
+      .lean()
+      .exec();
+
     sendResponse(res, 200, true, "Orders fetched successfully", { orders });
   } catch (error) {
     sendResponse(res, 500, false, "Failed to fetch orders");
@@ -248,9 +257,13 @@ export const getOrderById = async (req: Request, res: Response) => {
   const { orderId } = req.params;
 
   try {
-    const order = await OrderModel.findOne({ userId, _id: orderId }).populate(
-      "products.productId"
-    );
+    const order = await OrderModel.findOne({ userId, _id: orderId })
+      .populate({
+        path: "items.productId",
+        options: { req },
+      })
+      .lean()
+      .exec();
 
     if (!order) {
       return sendResponse(res, 404, false, "Order not found");

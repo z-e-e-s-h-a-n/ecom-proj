@@ -8,6 +8,7 @@ import { Card } from "@workspace/ui/components/card";
 import { Lock, Tag } from "lucide-react";
 import Image from "next/image";
 import { formatProductPrice, getVariant } from "@/lib/utils";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // CartSummary Component
 interface CartSummaryProps {
@@ -35,7 +36,8 @@ function CartSummary({
   cardType = "default",
   deliveryCharge = 0,
 }: CartSummaryProps) {
-  if (!cartList || cartList?.length === 0) return null;
+  const { currencyInfo, isLoadingCurrency } = useCurrency();
+  if (!cartList || cartList?.length === 0 || isLoadingCurrency) return null;
 
   return (
     <div className="space-y-4 w-80 h-fit sticky top-0">
@@ -104,21 +106,33 @@ function CartSummary({
         <ul className="space-y-2">
           <li className="flex justify-between">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>
+              {currencyInfo?.symbol}
+              {subtotal.toFixed(2)}
+            </span>
           </li>
           <li className="flex justify-between">
             <span>Delivery</span>
-            <span>${deliveryCharge.toFixed(2)}</span>
+            <span>
+              {currencyInfo?.symbol}
+              {deliveryCharge.toFixed(2)}
+            </span>
           </li>
           <li className="flex justify-between">
             <span>Sales tax</span>
-            <span>${salesTax.toFixed(2)}</span>
+            <span>
+              {currencyInfo?.symbol}
+              {salesTax.toFixed(2)}
+            </span>
           </li>
         </ul>
         <Separator />
         <div className="h4 subtitle-1 flex justify-between">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>
+            {currencyInfo?.symbol}
+            {total.toFixed(2)}
+          </span>
         </div>
         {btnText && (
           <>

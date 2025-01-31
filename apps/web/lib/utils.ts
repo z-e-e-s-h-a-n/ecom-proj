@@ -19,7 +19,7 @@ export const formatProductPrice = ({
   sale,
   symbol,
 }: IVariant["pricing"]) => {
-  const formatToTwoDecimal = (value: number) => value.toFixed(2);
+  const formatToTwoDecimal = (value: number) => parseFloat(value?.toFixed(2));
 
   return {
     sale: formatToTwoDecimal(sale || 0),

@@ -45,7 +45,11 @@ export const getReviews = async (req: Request, res: Response) => {
   try {
     const reviews = await ReviewModel.find({ productId })
       .populate("userId", "name email")
-      .populate("productId")
+      .populate({
+        path: "items.productId",
+        options: { req },
+      })
+      .lean()
       .exec();
 
     sendResponse(res, 200, true, "Reviews fetched successfully", { reviews });

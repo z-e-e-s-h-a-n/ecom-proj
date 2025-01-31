@@ -52,14 +52,17 @@ export const updateProduct = async (req: Request, res: Response) => {
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
-    if (!productId)
-      return sendResponse(res, 400, false, "Product ID is required.");
+    if (!productId) {
+      return sendResponse(res, 400, false, "Product ID Requires");
+    }
 
     const product = await ProductModel.findById(productId)
-      .populate("category")
-      .populate("reviews")
-      .populate("specifications.id")
-      .populate("attributes.id")
+      .populate([
+        { path: "category" },
+        { path: "reviews" },
+        { path: "specifications.id" },
+        { path: "attributes.id" },
+      ])
       .setOptions({ req })
       .lean()
       .exec();
@@ -75,10 +78,16 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
     const products = await ProductModel.find()
       .populate("category")
       .setOptions({ req })
       .lean()
+      .skip(skip)
+      .limit(limit)
       .exec();
 
     sendResponse(res, 200, true, "Products fetched successfully.", {
