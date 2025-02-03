@@ -5,10 +5,7 @@ import { sendResponse } from "@/utils/helper";
 
 // Add Review For a product
 export const addReview = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { productId } = req.params;
   const { rating, comment, variantId } = req.body;
 
@@ -45,12 +42,7 @@ export const getReviews = async (req: Request, res: Response) => {
   try {
     const reviews = await ReviewModel.find({ productId })
       .populate("userId", "name email")
-      .populate({
-        path: "items.productId",
-        options: { req },
-      })
-      .lean()
-      .exec();
+      .populate("items.productId");
 
     sendResponse(res, 200, true, "Reviews fetched successfully", { reviews });
   } catch (error) {

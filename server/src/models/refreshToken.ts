@@ -4,7 +4,6 @@ export interface IRefreshToken extends Document {
   token: string;
   userId: ObjectId;
   deviceInfo: {
-    id: string;
     name: string;
     ip: string;
     location?: string;
@@ -23,7 +22,6 @@ const refreshTokenSchema = new Schema<IRefreshToken>({
   token: { type: String, required: true },
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   deviceInfo: {
-    id: { type: String, required: true },
     name: { type: String, required: true },
     ip: { type: String, required: true },
     location: { type: String },

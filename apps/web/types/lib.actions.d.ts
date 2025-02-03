@@ -1,7 +1,7 @@
 declare global {
   interface UpdateCartPayload {
     action: "add" | "remove" | "update";
-    payload: {
+    items: {
       productId: string;
       quantity: number;
       variantId: string;
@@ -10,7 +10,7 @@ declare global {
 
   type UpdateWishlistPayload = {
     action: "add" | "remove";
-    payload: {
+    items: {
       productId: string;
       variantId: string;
     }[];

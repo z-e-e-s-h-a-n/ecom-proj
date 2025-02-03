@@ -22,13 +22,11 @@ declare global {
   export interface IVariant extends IShipping {
     _id: string;
     pricing: {
-      country: string;
-      countryCode: string;
       currency: string;
       symbol: string;
       original: number;
       sale?: number;
-    };
+    }[];
     sku: string;
     stock: number;
     images: string[];
@@ -97,12 +95,11 @@ declare global {
   }
 
   export interface ICurrencyOption {
-    country: string;
     currency: string;
-    countryCode: string;
     symbol: string;
     multiplier: number;
     isDefault: boolean;
+    countries: { name: string; code: string }[];
   }
 }
 

@@ -1,4 +1,4 @@
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 import { sendResponse } from "@/utils/helper";
 import { NextFunction, Request, Response } from "express";
 

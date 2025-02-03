@@ -3,7 +3,8 @@ import Image from "next/image";
 import React from "react";
 import Link from "next/link";
 import ProductCardButtons from "@/components/showcase/ProductCardButtons";
-import { formatProductPrice, getVariant } from "@/lib/utils";
+import { getVariant } from "@/lib/utils";
+import usePricing from "@/hooks/usePricing";
 
 export interface IProductCard {
   product: IProduct;
@@ -12,6 +13,7 @@ export interface IProductCard {
 
 const ProductCard = ({ product, variantId }: IProductCard) => {
   const variant = getVariant(product, variantId);
+  const { formatProductPrice } = usePricing();
   const { fmtOriginal, fmtPrice, sale } = formatProductPrice(variant.pricing);
 
   return (

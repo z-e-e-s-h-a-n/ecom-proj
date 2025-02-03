@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 const useAuth = () => {
   const {
     data: currentUser,
-    isLoading,
+    isLoading: isUserLoading,
     error,
     refetch,
   } = useQuery<TCurrentUser>({
@@ -14,7 +14,7 @@ const useAuth = () => {
     initialData: null,
   });
 
-  return { currentUser, isLoading, error, refetch };
+  return { currentUser, isUserLoading, error, refetch };
 };
 
 export default useAuth;

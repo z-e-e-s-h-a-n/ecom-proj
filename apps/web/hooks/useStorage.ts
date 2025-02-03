@@ -9,7 +9,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useAuth from "@/hooks/useAuth";
 import { getProduct, getProducts } from "@/lib/actions/product";
 import { useToast } from "@workspace/ui/hooks/use-toast";
-import { useMemo } from "react";
 
 export const useCart = () => {
   const queryClient = useQueryClient();
@@ -80,8 +79,8 @@ export const useCart = () => {
     updateCartLocal(updatedCart);
 
     if (currentUser?._id) {
-      const payload = [{ productId: product._id, quantity, variantId }];
-      syncCartToServer({ action, payload });
+      const items = [{ productId: product._id, quantity, variantId }];
+      syncCartToServer({ action, items });
     }
 
     if (action !== "update") {
@@ -106,24 +105,11 @@ export const useCart = () => {
       quantity
     );
 
-  const cartSubTotal = useMemo(
-    () =>
-      data?.reduce((sum, item) => {
-        const { original, sale } = item.productId.variations.find(
-          (variation) => variation._id === item.variantId
-        )!.pricing;
-
-        return sum + ((sale ?? original) || 0) * item.quantity;
-      }, 0) || 0,
-    [data]
-  );
-
   return {
     cart: data || [],
     isLoading,
     isInCart,
     toggleCart,
-    cartSubTotal,
     updateCart,
   };
 };
@@ -183,8 +169,8 @@ export const useWishlist = () => {
     updateWishlistLocal(updatedWishlist);
 
     if (currentUser?._id) {
-      const payload = [{ productId: product._id, variantId }];
-      syncWishlistToServer({ action, payload });
+      const items = [{ productId: product._id, variantId }];
+      syncWishlistToServer({ action, items });
     }
 
     toast({
@@ -244,22 +230,20 @@ export const syncLocalToServer = async (currentUser: TCurrentUser) => {
     const localWishlist = getLocalStorage<IWishlistItem[]>("wishlist", []);
 
     if (localCart.length) {
-      const cartPayload = localCart.map(
-        ({ productId, quantity, variantId }) => ({
-          productId: productId._id,
-          quantity,
-          variantId,
-        })
-      );
-      await updateUserCart({ action: "add", payload: cartPayload });
+      const items = localCart.map(({ productId, quantity, variantId }) => ({
+        productId: productId._id,
+        quantity,
+        variantId,
+      }));
+      await updateUserCart({ action: "add", items });
     }
 
     if (localWishlist.length) {
-      const wishlistPayload = localWishlist.map(({ productId, variantId }) => ({
+      const items = localWishlist.map(({ productId, variantId }) => ({
         productId: productId._id,
         variantId,
       }));
-      await updateUserWishlist({ action: "add", payload: wishlistPayload });
+      await updateUserWishlist({ action: "add", items });
     }
   } catch (error) {
     console.error("Sync local to server failed:", error);

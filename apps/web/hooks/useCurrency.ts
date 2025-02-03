@@ -7,30 +7,31 @@ import { getCookie } from "cookies-next/client";
 export const useCurrency = () => {
   const queryClient = useQueryClient();
 
-  const { data: currencyList, isLoading: isLoadingList } = useQuery({
+  const {
+    data: currencyList,
+    isLoading: isLoadingList,
+    refetch: refetchCurrency,
+  } = useQuery<ICurrencyOption[]>({
     queryKey: ["currencyList"],
     queryFn: getAllCurrencies,
     staleTime: 1000 * 60 * 60 * 24,
   });
 
-  const { data: currencyInfo, isLoading: isLoadingCurrency } = useQuery({
-    queryKey: ["currencyInfo"],
-    queryFn: async () => {
-      const latestCurrency = getCookie("currencyInfo");
-      return latestCurrency
-        ? JSON.parse(latestCurrency)
-        : await getCurrencyInfo();
-    },
-    staleTime: 1000 * 60 * 60,
-  });
+  const { data: currencyInfo, isLoading: isLoadingCurrency } =
+    useQuery<ICurrencyOption>({
+      queryKey: ["currencyInfo"],
+      queryFn: async () => {
+        const localCurrency = getCookie("currencyInfo");
+        return localCurrency
+          ? JSON.parse(localCurrency)
+          : await getCurrencyInfo();
+      },
+    });
 
   const { mutate: setCurrency } = useMutation({
     mutationFn: getCurrencyInfo,
-    onSuccess: (newCurrency) => {
+    onSuccess: async (newCurrency) => {
       queryClient.setQueryData(["currencyInfo"], newCurrency);
-      queryClient.invalidateQueries({
-        queryKey: ["products", "product", "cart", "wishlist"],
-      });
     },
   });
 
@@ -40,5 +41,6 @@ export const useCurrency = () => {
     currencyList,
     isLoadingList,
     setCurrency,
+    refetchCurrency,
   };
 };

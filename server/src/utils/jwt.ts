@@ -9,22 +9,22 @@ import {
 } from "@/utils/helper";
 import { Request, Response } from "express";
 import RefreshTokenModel from "@/models/refreshToken";
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 import mongoose from "mongoose";
 import logger from "@/config/logger";
-import { ISafeUser } from "@/models/user";
+import { ISafeUser, UserRole } from "@/models/user";
 
 export interface IJwtTokens {
   refreshToken: string;
   accessToken: string;
   refreshExp: number;
   accessExp: number;
-  deviceId: string;
+  tokenId: string;
 }
 
 export interface ITokenPayload {
   _id: string | mongoose.Types.ObjectId;
-  role: string;
+  role: UserRole;
 }
 
 export const generateTokens = async (
@@ -48,18 +48,18 @@ export const generateTokens = async (
   });
 
   const deviceInfo = await getDeviceInfo(req);
-  logger.info("Generated new tokens", { userId: _id });
+  const tokenId = req.cookies.tokenId || new mongoose.Types.ObjectId();
 
-  await RefreshTokenModel.updateOne(
-    { userId: _id, "deviceInfo.id": deviceInfo.id },
+  const newToken = await RefreshTokenModel.findOneAndUpdate(
+    { userId: _id, _id: tokenId },
     {
       token: refreshToken,
       deviceInfo,
-      expiresAt: calculateExpiryTime(durationToTime(accessExp), true),
+      expiresAt: calculateExpiryTime(durationToTime(refreshExp), true),
       blacklisted: false,
       isActive: true,
     },
-    { upsert: true }
+    { new: true, upsert: true }
   );
 
   return {
@@ -67,7 +67,7 @@ export const generateTokens = async (
     refreshToken,
     accessExp: durationToTime(accessExp, true),
     refreshExp: durationToTime(refreshExp, true),
-    deviceId: deviceInfo.id,
+    tokenId: newToken._id.toString(),
   };
 };
 
@@ -157,8 +157,8 @@ export const manageTokensCookies = (
       maxAge: tokenData?.refreshExp,
     },
     {
-      name: "deviceId",
-      value: tokenData?.deviceId,
+      name: "tokenId",
+      value: tokenData?.tokenId,
       maxAge: tokenData?.refreshExp,
     },
   ];

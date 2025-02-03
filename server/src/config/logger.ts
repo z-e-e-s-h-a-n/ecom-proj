@@ -1,4 +1,4 @@
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 import { createLogger, format, transports } from "winston";
 
 const logger = createLogger({

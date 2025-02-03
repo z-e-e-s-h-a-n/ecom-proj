@@ -56,16 +56,12 @@ export const getProductById = async (req: Request, res: Response) => {
       return sendResponse(res, 400, false, "Product ID Requires");
     }
 
-    const product = await ProductModel.findById(productId)
-      .populate([
-        { path: "category" },
-        { path: "reviews" },
-        { path: "specifications.id" },
-        { path: "attributes.id" },
-      ])
-      .setOptions({ req })
-      .lean()
-      .exec();
+    const product = await ProductModel.findById(productId).populate([
+      { path: "category" },
+      { path: "reviews" },
+      { path: "specifications.id" },
+      { path: "attributes.id" },
+    ]);
 
     if (!product) return sendResponse(res, 404, false, "Product not found.");
 
@@ -84,8 +80,6 @@ export const getProducts = async (req: Request, res: Response) => {
 
     const products = await ProductModel.find()
       .populate("category")
-      .setOptions({ req })
-      .lean()
       .skip(skip)
       .limit(limit)
       .exec();

@@ -50,6 +50,7 @@ function Header({ currentUser }: HeaderProps) {
         title: "Success",
         description: "Logged out successfully.",
       });
+      sessionStorage.removeItem("synced");
       refetchCurrentUser();
     }
   };

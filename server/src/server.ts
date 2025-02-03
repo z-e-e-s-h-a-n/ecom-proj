@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import app from "@/app";
 import connectDB from "@/config/database";
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 
 const PORT = envConfig.app.port;
 connectDB();

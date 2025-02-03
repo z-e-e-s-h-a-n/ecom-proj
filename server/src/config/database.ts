@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 
 const connectDB = async () => {
   try {

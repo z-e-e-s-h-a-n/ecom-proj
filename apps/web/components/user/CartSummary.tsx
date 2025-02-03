@@ -7,57 +7,56 @@ import React from "react";
 import { Card } from "@workspace/ui/components/card";
 import { Lock, Tag } from "lucide-react";
 import Image from "next/image";
-import { formatProductPrice, getVariant } from "@/lib/utils";
+import { getVariant } from "@/lib/utils";
 import { useCurrency } from "@/hooks/useCurrency";
+import usePricing from "@/hooks/usePricing";
 
 // CartSummary Component
 interface CartSummaryProps {
-  total: number;
-  subtotal: number;
   btnUrl?: string;
   btnText?: string;
   btnAction?: () => void;
   disableBtn?: boolean;
   cardType?: "default" | "checkout";
-  salesTax?: number;
-  deliveryCharge?: number;
-  cartList?: ICartItem[];
+  items?: ICartItem[];
 }
 
 function CartSummary({
-  total,
-  subtotal,
   btnAction,
   disableBtn,
   btnText,
   btnUrl,
-  cartList = [],
-  salesTax = 0,
+  items = [],
   cardType = "default",
-  deliveryCharge = 0,
 }: CartSummaryProps) {
-  const { currencyInfo, isLoadingCurrency } = useCurrency();
-  if (!cartList || cartList?.length === 0 || isLoadingCurrency) return null;
+  const { currencyInfo } = useCurrency();
+  const { calcCartSubtotal, formatProductPrice } = usePricing();
+  if (!items || items?.length === 0) return null;
+
+  const subtotal = calcCartSubtotal(items);
+  const deliveryCharge = 0;
+  const salesTax = 0;
+  const total = subtotal + deliveryCharge + salesTax;
 
   return (
     <div className="space-y-4 w-80 h-fit sticky top-0">
       <Card className="h-full grid gap-3 p-4">
         <div className="subtitle-1 flex items-center justify-between">
-          <span>Order Summary ({cartList.length})</span>
+          <span>Order Summary ({items.length})</span>
           {cardType !== "default" && <Button variant="link">Edit cart</Button>}
         </div>
-        {cardType !== "default" && cartList.length > 0 && (
+        {cardType !== "default" && (
           <>
             <Separator />
             <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-hidden">
-              {cartList.map(({ productId: product, variantId, quantity }) => {
+              {items.map(({ productId: product, variantId, quantity }) => {
                 const variant = getVariant(product, variantId);
-                const { original, sale, multiplier } = formatProductPrice(
+                const { price, multiplier } = formatProductPrice(
                   variant.pricing
                 );
 
                 return (
-                  <div key={product._id} className="flex items-center gap-4">
+                  <div key={variant._id} className="flex items-center gap-4">
                     <Image
                       width={40}
                       height={40}
@@ -65,17 +64,14 @@ function CartSummary({
                       src={variant.images[0]!}
                       alt={product.name}
                     />
-                    <div className="text-sm flex-1 grid gap-2">
+                    <div className="text-sm flex-1 grid">
                       <Link
                         href={`/products/${product._id}?variant=${variantId}`}
                         className="flex justify-between gap-2"
                       >
                         <span>{product.name}</span>
                         <div className="flex gap-2">
-                          <span className="text-muted-foreground line-through">
-                            {multiplier(original, quantity)}
-                          </span>
-                          {sale && <span>{multiplier(sale, quantity)}</span>}
+                          <span>{multiplier(price, quantity)}</span>
                         </div>
                       </Link>
                       <span className="text-muted-foreground text-sm">

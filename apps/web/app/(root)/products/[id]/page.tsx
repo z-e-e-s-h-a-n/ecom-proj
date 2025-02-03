@@ -10,18 +10,16 @@ import { Bus, Heart, RefreshCcw, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import QuantityInput from "@/components/form/QuantityInput";
 import VariantInput from "@/components/form/VariantInput";
-import {
-  getVariant,
-  formatProductPrice,
-  updateLocalStorage,
-} from "@/lib/utils";
+import { getVariant, updateLocalStorage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import usePricing from "@/hooks/usePricing";
 
 function ProductDetails({ params, searchParams }: PageParams) {
   const id = React.use(params)?.id || "";
   const variantId = (React.use(searchParams)?.variant as string) || "";
   const router = useRouter();
   const { product, isLoading, error } = useProduct(id);
+  const { formatProductPrice } = usePricing();
   const { isInCart, isInWishlist, toggleCart, toggleWishlist } =
     useStorageUtils();
   const { products } = useProducts();

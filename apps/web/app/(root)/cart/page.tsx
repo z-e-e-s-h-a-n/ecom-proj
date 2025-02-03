@@ -4,17 +4,15 @@ import { Button } from "@workspace/ui/components/button";
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCart } from "@/hooks/useStorage";
-import { DELIVERY_CHARGE } from "@/constants/user";
 import CartSummary from "@/components/user/CartSummary";
-import { formatProductPrice, getVariant } from "@/lib/utils";
+import { getVariant } from "@/lib/utils";
 import Link from "next/link";
 import QuantityInput from "@/components/form/QuantityInput";
+import usePricing from "@/hooks/usePricing";
 
 const Cart = () => {
-  const { cart, cartSubTotal, updateCart } = useCart();
-
-  const grandTotal = cartSubTotal + DELIVERY_CHARGE;
-
+  const { cart, updateCart } = useCart();
+  const { formatProductPrice } = usePricing();
   return (
     <>
       <h1 className="h3">Checkout</h1>
@@ -40,7 +38,7 @@ const Cart = () => {
 
                 return (
                   <tr
-                    key={productId._id}
+                    key={variant._id}
                     className="border-b hover:bg-secondary/20"
                   >
                     <td className="px-6 py-4">
@@ -88,11 +86,9 @@ const Cart = () => {
 
         {/* Cart Summary */}
         <CartSummary
-          subtotal={cartSubTotal}
-          total={grandTotal}
           btnText="Proceed to Checkout"
           btnUrl="/checkout"
-          cartList={cart}
+          items={cart}
         />
       </div>
     </>

@@ -1,4 +1,4 @@
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 import { CookieOptions, Request, Response } from "express";
 import { generateTokens, ITokenPayload, manageTokensCookies } from "./jwt";
 import { IUser } from "@/models/user";
@@ -6,10 +6,7 @@ import { UAParser } from "ua-parser-js";
 import axios from "axios";
 import logger from "@/config/logger";
 import ms from "ms";
-import { type ILookupIPInfo } from "@/types/global";
-import { IProduct } from "@/models/product";
-import getSymbolFromCurrency from "currency-symbol-map";
-import { ICurrencyOption } from "@/models/currency";
+import { ILookupIPInfo } from "@/types/global";
 
 export const getEnv = (key: string, fallback?: string): string => {
   const value = process.env[key];
@@ -102,13 +99,8 @@ export const lookupIPInfo = async <T>(
     if (!ip || ip === "::1" || ip === "127.0.0.1") return { fallback };
 
     const { data } = await axios.get(`http://ip-api.com/json/${ip}`);
-    const symbol =
-      getSymbolFromCurrency(data.currency) || (fallback as any)?.symbol;
-    const multiplier = await getExchangeRates(
-      data.currency,
-      (fallback as any)?.multiplier
-    );
-    return { data: { ...data, symbol, multiplier }, fallback };
+
+    return { data, fallback };
   } catch (error) {
     logger.error("Failed to resolve IP location:", error);
     return { fallback };
@@ -123,11 +115,7 @@ export const getDeviceInfo = async (req: Request) => {
   const os = parser.getOS().name || "Unknown OS";
   const browser = parser.getBrowser().name || "Unknown Browser";
 
-  const existingDeviceId = req.cookies.deviceId;
-  const deviceId = existingDeviceId || crypto.randomUUID();
-
   return {
-    id: deviceId,
     name: `${browser} on ${os}`,
     ip: ipInfo.data ? ipInfo.data.query : ipInfo.fallback,
     location: ipInfo.data
@@ -140,67 +128,18 @@ export const getDeviceInfo = async (req: Request) => {
   };
 };
 
-const exchangeRateCache = new Map<string, number>();
-
 export const getExchangeRates = async (
   currency = "USD",
   fallback: number
 ): Promise<number> => {
-  if (exchangeRateCache.has(currency))
-    return exchangeRateCache.get(currency) || fallback;
-
   try {
     const { data } = await axios.get(
       `https://api.exchangerate-api.com/v4/latest/${currency}`
     );
     const rate = data.rates[currency] || fallback;
-    exchangeRateCache.set(currency, rate);
     return rate;
   } catch (error) {
     logger.error("Error fetching exchange rates:", error);
     return fallback;
-  }
-};
-
-export const formatProductPricing = async (
-  currencyInfo: ICurrencyOption,
-  product: IProduct
-) => {
-  try {
-    const { multiplier = 1, currency, symbol, countryCode } = currencyInfo;
-
-    return product.variations.map((variation) => {
-      const pricing = variation.pricing.find(
-        (p) => p.countryCode === countryCode
-      );
-      if (pricing) return { ...variation, pricing };
-
-      const fallbackPricing = variation.pricing.find(
-        (p) => p.currency === "USD"
-      );
-      if (!fallbackPricing) {
-        logger.warn(`No fallback USD pricing for variation: ${variation.sku}`);
-        return { ...variation, pricing: {} };
-      }
-
-      return {
-        ...variation,
-        pricing: {
-          countryCode,
-          currency,
-          symbol,
-          original: fallbackPricing.original * multiplier,
-          sale: fallbackPricing.sale
-            ? fallbackPricing.sale * multiplier
-            : undefined,
-        },
-      };
-    });
-  } catch (error) {
-    logger.error("Error formatting pricing:", error);
-    return product.variations.map((variation) => ({
-      ...variation,
-      pricing: {},
-    }));
   }
 };

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 import * as controller from "@/controllers/auth";
 import { createAuthSession, sendResponse } from "@/utils/helper";
 

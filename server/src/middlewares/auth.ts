@@ -6,18 +6,18 @@ import {
 } from "@/utils/jwt";
 import logger from "@/config/logger";
 import { sendResponse } from "@/utils/helper";
+import { UserRole } from "@/models/user";
 
-export const authGuard = (role: string = "user") => {
+export const authGuard = (role: UserRole = "customer") => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const accessToken = req.cookies.accessToken;
+      const refreshToken = req.cookies.refreshToken;
 
       if (accessToken) {
         const decoded = verifyJwtToken(accessToken, "JWT_ACCESS_SECRET");
-        if (decoded) {
-          attachDecodedUser(req, decoded);
-        }
-      } else {
+        if (decoded) attachDecodedUser(req, decoded);
+      } else if (refreshToken) {
         logger.warn("Access token invalid or expired. Attempting refresh...");
         await handleTokenRefresh(req, res);
       }

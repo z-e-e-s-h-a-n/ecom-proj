@@ -1,9 +1,5 @@
 import mongoose, { Schema, Document, ObjectId, Model } from "mongoose";
 import crypto from "crypto";
-import { formatProductPricing, getCookie } from "@/utils/helper";
-import { Request } from "express";
-import { ICurrencyOption } from "./currency";
-import logger from "@/config/logger";
 
 export interface IShipping {
   weight?: number;
@@ -16,8 +12,6 @@ export interface IShipping {
 
 export interface IVariant extends IShipping {
   pricing: {
-    country: string;
-    countryCode: string;
     currency: string;
     symbol: string;
     original: number;
@@ -32,6 +26,7 @@ export interface IVariant extends IShipping {
 }
 
 export interface IProduct extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   slug?: string;
   highlights?: string[];
@@ -54,25 +49,22 @@ export interface IProductModel extends Model<IProduct> {
   findByCategory(categoryId: ObjectId): Promise<IProduct[]>;
   findByRating(rating: number): Promise<IProduct[]>;
   searchByName(searchTerm: string): Promise<IProduct[]>;
-  fetchFormattedProduct(
-    req: Request,
-    productId: string
-  ): Promise<IProduct | null>;
 }
 
 const variationSchema = new Schema<IVariant>({
   sku: { type: String, unique: true },
   pricing: [
     {
-      country: { type: String, required: true },
-      currency: { type: String, required: true },
-      countryCode: { type: String, required: true },
+      currency: {
+        type: String,
+        required: true,
+        match: /^[A-Z]{3}$/,
+      },
       symbol: { type: String, required: true },
       original: { type: Number, required: true },
       sale: { type: Number },
     },
   ],
-
   stock: { type: Number, required: true },
   images: { type: [String], default: [] },
   attributes: {
@@ -112,6 +104,7 @@ const productSchema = new Schema<IProduct>(
     },
     attributes: [
       {
+        _id: false,
         id: {
           type: Schema.ObjectId,
           ref: "Attribute",
@@ -122,6 +115,7 @@ const productSchema = new Schema<IProduct>(
     ],
     specifications: [
       {
+        _id: false,
         id: {
           type: Schema.ObjectId,
           ref: "Specification",
@@ -154,52 +148,17 @@ productSchema.pre("save", async function (next) {
     if (variant.isDefault) {
       defaultVariant = true;
     }
+
+    const currencies = variant.pricing.map((p) => p.currency);
+    const uniqueCurrencies = new Set(currencies);
+    if (currencies.length !== uniqueCurrencies.size) {
+      throw new Error("Duplicate currency found in pricing array.");
+    }
   });
 
   if (!defaultVariant && this?.variations[0]) {
     this.variations[0].isDefault = true;
   }
-  next();
-});
-
-variationSchema.pre("validate", function (next) {
-  const seen = new Set();
-  for (const price of this.pricing) {
-    const key = `${price.country}-${price.countryCode}-${price.currency}`;
-    if (seen.has(key)) {
-      return next(
-        new Error(
-          `Duplicate pricing entry found for ${price.country} (${price.countryCode}) in ${price.currency}`
-        )
-      );
-    }
-    seen.add(key);
-  }
-  next();
-});
-
-productSchema.post(["find", "findOne"], async function (docs, next) {
-  if (!docs || (Array.isArray(docs) && docs.length === 0)) return next();
-
-  const req = this.getOptions()?.req as Request | undefined;
-  if (!req) return next();
-
-  const currencyInfo = getCookie<ICurrencyOption>(req, "currencyInfo");
-  if (!currencyInfo) {
-    logger.warn("currencyInfo not found in cookies");
-    return next();
-  }
-
-  if (Array.isArray(docs)) {
-    await Promise.all(
-      docs.map(async (doc) => {
-        doc.variations = await formatProductPricing(currencyInfo, doc);
-      })
-    );
-  } else {
-    docs.variations = await formatProductPricing(currencyInfo, docs);
-  }
-
   next();
 });
 

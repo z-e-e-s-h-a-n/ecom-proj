@@ -10,10 +10,9 @@ import { Request, Response } from "express";
 
 export const getUser = async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return sendResponse(res, 401, false, "Unauthorized access.");
-    }
-    const user = await UserModel.findById(req.user._id);
+    const userId = req.user?._id;
+
+    const user = await UserModel.findById(userId);
     if (!user) {
       return sendResponse(res, 404, false, "User not found.");
     }
@@ -27,36 +26,23 @@ export const getUser = async (req: Request, res: Response) => {
 };
 
 export const getCart = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
 
   try {
-    const cart = await CartModel.findOne({ userId })
-      .populate({
-        path: "items.productId",
-        options: { req },
-      })
-      .lean()
-      .exec();
+    const cart = await CartModel.findOne({ userId }).populate(
+      "items.productId"
+    );
 
-    const cartData = cart ? cart : { userId, items: [] };
-
-    sendResponse(res, 200, true, "Cart fetched successfully.", {
-      cart: cartData,
+    sendResponse(res, 200, true, "Cart fetched successfully", {
+      cart: cart || { userId, items: [] },
     });
   } catch (error) {
-    logger.error("Error fetching cart:", error);
-    sendResponse(res, 500, false, "Failed to fetch cart.");
+    sendResponse(res, 500, false, "Failed to fetch cart");
   }
 };
 
 export const addToCart = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { items } = req.body;
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -68,15 +54,20 @@ export const addToCart = async (req: Request, res: Response) => {
       CartModel.updateOne(
         {
           userId,
-          "items.productId": { $ne: item.productId },
-          "items.variantId": { $ne: item.variantId },
+          items: {
+            $not: {
+              $elemMatch: {
+                productId: item.productId,
+                variantId: item.variantId,
+              },
+            },
+          },
         },
         { $push: { items: item } },
         { upsert: true }
       )
     );
     await Promise.all(addOps);
-
     sendResponse(res, 200, true, "Unique items added to your cart");
   } catch (error) {
     sendResponse(res, 500, false, "Failed to add items to cart");
@@ -84,10 +75,7 @@ export const addToCart = async (req: Request, res: Response) => {
 };
 
 export const updateCart = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { productId, variantId, quantity } = req.body;
 
   try {
@@ -108,10 +96,7 @@ export const updateCart = async (req: Request, res: Response) => {
 };
 
 export const removeFromCart = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { productId, variantId } = req.body;
 
   try {
@@ -127,34 +112,23 @@ export const removeFromCart = async (req: Request, res: Response) => {
 };
 
 export const getWishlist = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
 
   try {
-    const wishlist = await WishlistModel.findOne({ userId })
-      .populate({
-        path: "items.productId",
-        options: { req },
-      })
-      .lean()
-      .exec();
+    const wishlist = await WishlistModel.findOne({ userId }).populate(
+      "items.productId"
+    );
 
-    sendResponse(res, 200, true, "Wishlist fetched successfully.", {
+    sendResponse(res, 200, true, "Wishlist fetched successfully", {
       wishlist: wishlist || { userId, items: [] },
     });
   } catch (error) {
-    logger.error("Error fetching wishlist:", error);
-    sendResponse(res, 500, false, "Failed to fetch wishlist.");
+    sendResponse(res, 500, false, "Failed to fetch wishlist");
   }
 };
 
 export const addToWishlist = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { items } = req.body;
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -166,8 +140,14 @@ export const addToWishlist = async (req: Request, res: Response) => {
       WishlistModel.updateOne(
         {
           userId,
-          "items.productId": { $ne: item.productId },
-          "items.variantId": { $ne: item.variantId },
+          items: {
+            $not: {
+              $elemMatch: {
+                productId: item.productId,
+                variantId: item.variantId,
+              },
+            },
+          },
         },
         { $push: { items: item } },
         { upsert: true }
@@ -182,10 +162,7 @@ export const addToWishlist = async (req: Request, res: Response) => {
 };
 
 export const removeFromWishlist = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { productId, variantId } = req.body;
 
   try {
@@ -201,10 +178,7 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
 };
 
 export const placeOrder = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { items, totalAmount, metadata } = req.body;
 
   if (!items || !totalAmount) {
@@ -229,20 +203,12 @@ export const placeOrder = async (req: Request, res: Response) => {
 };
 
 export const getUserOrders = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
 
   try {
-    const orders = await OrderModel.find({ userId })
-      .populate({
-        path: "items.productId",
-        options: { req },
-      })
-      .lean()
-      .exec();
-
+    const orders = await OrderModel.find({ userId }).populate(
+      "products.productId"
+    );
     sendResponse(res, 200, true, "Orders fetched successfully", { orders });
   } catch (error) {
     sendResponse(res, 500, false, "Failed to fetch orders");
@@ -250,20 +216,13 @@ export const getUserOrders = async (req: Request, res: Response) => {
 };
 
 export const getOrderById = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
-  const userId = req.user._id;
+  const userId = req.user?._id;
   const { orderId } = req.params;
 
   try {
-    const order = await OrderModel.findOne({ userId, _id: orderId })
-      .populate({
-        path: "items.productId",
-        options: { req },
-      })
-      .lean()
-      .exec();
+    const order = await OrderModel.findOne({ userId, _id: orderId }).populate(
+      "products.productId"
+    );
 
     if (!order) {
       return sendResponse(res, 404, false, "Order not found");
@@ -276,11 +235,8 @@ export const getOrderById = async (req: Request, res: Response) => {
 };
 
 export const initiatePayment = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return sendResponse(res, 401, false, "Unauthorized access.");
-  }
+  const userId = req.user?._id;
   const { orderId, amount, paymentMethod } = req.body;
-  const userId = req.user._id;
   try {
     const payment = await PaymentModel.create({
       userId,

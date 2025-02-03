@@ -6,7 +6,11 @@ export interface IOrderItem {
   productId: ObjectId;
   variantId: ObjectId;
   quantity: number;
-  price: number;
+  pricing: {
+    price: number;
+    symbol: string;
+    currency: string;
+  };
 }
 
 export interface IOrder extends Document {
@@ -40,7 +44,11 @@ const orderSchema = new Schema<IOrder>(
           required: true,
         },
         quantity: { type: Number, required: true, min: 1 },
-        price: { type: Number, required: true },
+        pricing: {
+          price: { type: Number, required: true },
+          symbol: { type: String, require: true },
+          currency: { type: String, required: true },
+        },
       },
     ],
     totalAmount: { type: Number, required: true },

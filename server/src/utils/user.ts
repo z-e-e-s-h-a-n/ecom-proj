@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import otpModel from "@/models/otp";
+import OtpModel from "@/models/otp";
 import sendEmail from "@/config/nodemailer";
 import { ObjectId } from "@/types/global";
 import logger from "../config/logger";
@@ -27,9 +27,12 @@ export const sendOtp = async ({
   subject,
   message,
 }: SendOtpPayload) => {
-  const otpDocument = new otpModel({ userId, purpose });
-  const otp = otpDocument.generateOtp();
-  await otpDocument.save();
+  const otp = OtpModel.generateOtp();
+  await OtpModel.findOneAndUpdate(
+    { userId, purpose },
+    { otp, createdAt: new Date() },
+    { upsert: true, new: true }
+  );
 
   const verifyLink = `${process.env.APP_ENDPOINT}/auth/verify-otp?otp=${otp}&email=${email}`;
   const emailContent = `<h1>${subject}</h1>
@@ -42,12 +45,12 @@ export const sendOtp = async ({
 };
 
 export const verifyOtp = async ({ userId, otp, purpose }: verifyOtpPayload) => {
-  const otpRecord = await otpModel.findOne({ userId, purpose });
+  const otpRecord = await OtpModel.findOne({ userId, purpose });
   if (!otpRecord || !otpRecord.verifyOtp(otp)) {
     logger.alert("Invalid or expired OTP.");
     throw new Error("Invalid or expired OTP.");
   }
-  await otpModel.deleteOne({ _id: otpRecord._id });
+  await OtpModel.deleteOne({ _id: otpRecord._id });
   return { status: 200, message: "OTP verified successfully." };
 };
 

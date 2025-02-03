@@ -9,20 +9,27 @@ import React, { useEffect } from "react";
 
 function RootLayout({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();
-  const { currencyInfo } = useCurrency();
+  const { currencyInfo, refetchCurrency } = useCurrency();
 
   useEffect(() => {
-    if (currentUser) {
+    if (!currencyInfo) {
+      refetchCurrency();
+    }
+  }, [currencyInfo, refetchCurrency]);
+
+  useEffect(() => {
+    if (currentUser && !sessionStorage.getItem("synced")) {
       syncLocalToServer(currentUser).then(() => {
         sessionStorage.setItem("synced", "true");
       });
     }
   }, [currentUser]);
 
+  if (!currencyInfo) return;
+
   return (
     <div className="space-y-12">
       <Header currentUser={currentUser} />
-      <button onClick={() => console.log(currencyInfo)}>test cookie</button>
       <main className="container min-h-screen space-y-16 pb-8 pt-16">
         {children}
       </main>

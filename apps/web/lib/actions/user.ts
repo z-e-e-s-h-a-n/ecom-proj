@@ -21,16 +21,13 @@ export const getUserWishlist = async (): Promise<IWishlistItem[]> => {
   return (response.data?.wishlist?.items || []) as IWishlistItem[];
 };
 
-export const updateUserCart = async ({
-  action,
-  payload,
-}: UpdateCartPayload) => {
+export const updateUserCart = async ({ action, items }: UpdateCartPayload) => {
   if (action === "add") {
-    await apiRequest("POST", "/users/cart", { items: payload });
+    await apiRequest("POST", "/users/cart", { items });
   } else if (action === "remove") {
-    await apiRequest("DELETE", `/users/cart`, payload[0]);
+    await apiRequest("DELETE", `/users/cart`, items[0]);
   } else if (action === "update") {
-    await apiRequest("PUT", `/users/cart`, payload[0]);
+    await apiRequest("PUT", `/users/cart`, items[0]);
   } else {
     throw new Error("Invalid action");
   }
@@ -38,13 +35,12 @@ export const updateUserCart = async ({
 
 export const updateUserWishlist = async ({
   action,
-  payload,
+  items,
 }: UpdateWishlistPayload) => {
   if (action === "add") {
-    await apiRequest("POST", "/users/wishlist", { items: payload });
+    await apiRequest("POST", "/users/wishlist", { items });
   } else if (action === "remove") {
-    await apiRequest("DELETE", "/users/wishlist", payload[0]);
-    console.log("wishlist payload", payload);
+    await apiRequest("DELETE", "/users/wishlist", items[0]);
   } else {
     throw new Error("Invalid action");
   }

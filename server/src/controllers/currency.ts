@@ -75,17 +75,16 @@ export const deleteCurrency = async (req: Request, res: Response) => {
 export const getCurrencyInfo = async (req: Request, res: Response) => {
   try {
     const { currency } = req.params;
-
-    let currencyInfo = undefined;
+    let currencyInfo;
 
     if (currency && currency !== "undefined") {
       currencyInfo = await CurrencyOptionModel.findOne({ currency }).lean();
     } else {
-      const defaultCurrency = await CurrencyOptionModel.findOne({
-        isDefault: true,
-      }).lean();
-      const ipInfo = await lookupIPInfo(req, defaultCurrency);
-      currencyInfo = ipInfo?.data ?? ipInfo.fallback;
+      const ipInfo = await lookupIPInfo(req, null);
+      const query = ipInfo?.data
+        ? { currency: ipInfo.data.currency }
+        : { isDefault: true };
+      currencyInfo = await CurrencyOptionModel.findOne(query).lean();
     }
 
     if (!currencyInfo) {

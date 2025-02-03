@@ -1,4 +1,4 @@
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 
 const corsOptions = {
   origin: envConfig.client.endpoint,

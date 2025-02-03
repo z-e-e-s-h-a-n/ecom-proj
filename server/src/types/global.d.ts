@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-export type ObjectId = mongoose.Types.ObjectId;
-
 export interface ILookupIPInfo<T> {
   data?: {
     query: string;
@@ -32,3 +30,5 @@ export interface ILookupIPInfo<T> {
 
   fallback: T;
 }
+
+export type ObjectId = mongoose.Types.ObjectId;

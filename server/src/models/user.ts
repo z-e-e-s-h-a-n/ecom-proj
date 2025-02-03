@@ -13,7 +13,7 @@ export interface IUser extends Document {
   comparePassword(password: string): Promise<boolean>;
 }
 
-export type UserRole = "user" | "admin";
+export type UserRole = "customer" | "admin";
 
 export interface ISafeUser {
   _id: string;
@@ -32,7 +32,7 @@ const userSchema = new Schema<IUser>({
   isVerified: { type: Boolean, default: false },
   googleId: { type: String },
   facebookId: { type: String },
-  role: { type: String, enum: ["user", "admin"], default: "user" },
+  role: { type: String, enum: ["customer", "admin"], default: "customer" },
 });
 
 userSchema.pre("save", async function (next) {

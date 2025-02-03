@@ -27,14 +27,10 @@ function CheckoutLayout({ searchParams }: PageParams) {
   const [isLoading, setIsLoading] = useState(false);
   const cartSource = (React.use(searchParams)?.cartSource as string) || "";
 
-  // seeing if the user checkout from cart page or from product details page
-  const getCartList = () => {
-    if (cartSource === "cartItem") {
-      return [getLocalStorage("cartItem", {}) as ICartItem];
-    }
-
-    return cart;
-  };
+  const items =
+    cartSource === "cartItem"
+      ? [getLocalStorage("cartItem", {}) as ICartItem]
+      : cart;
 
   const form = useForm<TCardPaymentSchema>({
     resolver: zodResolver(cardPaymentSchema),
@@ -90,6 +86,8 @@ function CheckoutLayout({ searchParams }: PageParams) {
     </Form>
   );
 
+  if (items.length === 0) return null;
+
   return (
     <div className="flex gap-16">
       <div className="flex-1 space-y-12">
@@ -132,11 +130,9 @@ function CheckoutLayout({ searchParams }: PageParams) {
         )}
       </div>
       <CartSummary
-        subtotal={150}
-        total={200}
         cardType="checkout"
         disableBtn={step !== "payment" || isLoading || payMethod !== "cod"}
-        cartList={getCartList()}
+        items={items}
         btnText={step === "payment" ? "Place Order" : "Proceed to Checkout"}
         btnAction={() => {
           toast({
