@@ -1,5 +1,4 @@
 import { ButtonProps } from "@workspace/ui/components/button";
-import { LucideIcon } from "lucide-react";
 import React from "react";
 
 declare global {
@@ -7,9 +6,12 @@ declare global {
     [key: string]: string;
   }
 
-  interface PageParams {
+  type TSearchParams = Record<string, string | string[] | undefined>;
+
+  interface PageProps {
     params: Promise<SegmentParams>;
-    searchParams: Promise<Record<string, string | string[] | undefined>>;
+    searchParams: Promise<TSearchParams>;
+    children?: React.ReactNode;
   }
 
   type SVGIconProps = React.SVGProps<SVGSVGElement>;
@@ -43,12 +45,6 @@ declare global {
     currentUser?: TCurrentUser;
   }
 
-  interface CategoryCardProps {
-    label: string;
-    Icon: LucideIcon;
-    url: string;
-  }
-
   interface ShowcaseSectionProps {
     className?: string;
     useCarousel?: boolean;
@@ -79,7 +75,24 @@ declare global {
   }
 
   interface CategorySectionProps extends ShowcaseSectionProps {
-    items: CategoryCardProps[];
+    items: ICategory[];
+  }
+
+  // types.ts
+  export interface IQueryParams extends TSearchParams {
+    searchQuery?: string;
+    categories?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    sort?: string;
+    [key: string]: any;
+  }
+
+  export interface ProductResponse {
+    products: Array<{ product: IProduct }>;
+    total: number;
+    page: number;
+    limit: number;
   }
 }
 

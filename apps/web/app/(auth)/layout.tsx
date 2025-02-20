@@ -1,8 +1,14 @@
+"use client";
 import Image from "next/image";
 import React from "react";
 import { Card, CardContent } from "@workspace/ui/components/card";
+import { notFound, useParams } from "next/navigation";
 
-function AuthLayout({ children }: { children: React.ReactNode }) {
+function AuthLayout({ children }: PageProps) {
+  const type = useParams()?.type as AuthFormType;
+  if (!["sign-up", "sign-in", "reset-password", "set-password"].includes(type))
+    notFound();
+
   return (
     <div className="flex-center min-h-svh flex-col bg-muted p-6 md:p-10">
       <div className="w-full max-w-sm md:max-w-3xl">

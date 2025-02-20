@@ -33,7 +33,7 @@ function QuantityInput({
   return (
     <div
       className={cn(
-        "flex-center flex-shrink-0  [&_>button]:size-6  [&_>button]:rounded-full  relative max-w-24 [&_>button]:absolute border rounded",
+        "flex-center flex-shrink-0  [&_>button]:size-6  [&_>button]:rounded-full  relative w-24 [&_>button]:absolute border rounded",
         className
       )}
     >

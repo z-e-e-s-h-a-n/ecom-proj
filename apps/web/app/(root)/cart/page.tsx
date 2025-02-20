@@ -1,95 +1,66 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { Trash2 } from "lucide-react";
-import Image from "next/image";
+import { Lock } from "lucide-react";
 import { useCart } from "@/hooks/useStorage";
-import CartSummary from "@/components/user/CartSummary";
-import { getVariant } from "@/lib/utils";
 import Link from "next/link";
-import QuantityInput from "@/components/form/QuantityInput";
 import usePricing from "@/hooks/usePricing";
+import { Separator } from "@workspace/ui/components/separator";
+import { Card } from "@workspace/ui/components/card";
+import { useCurrency } from "@/hooks/useCurrency";
+import CartTable from "@/components/showcase/CartTable";
 
 const Cart = () => {
-  const { cart, updateCart } = useCart();
-  const { formatProductPrice } = usePricing();
+  const { cart } = useCart();
+  const { calcCartSubtotal } = usePricing();
+  const { currencyInfo } = useCurrency();
+  const subtotal = calcCartSubtotal(cart).toFixed(2);
+
+  if (!cart.length) return <div>Items not found in your cart.</div>;
+
   return (
     <>
       <h1 className="h3">Checkout</h1>
       <div className="flex gap-6">
         {/* Cart Items */}
-        <div className="flex-1 max-h-[500px] overflow-y-auto scrollbar-hidden">
-          <table className="min-w-full table-auto rounded-lg shadow-md">
-            <thead>
-              <tr className="bg-secondary text-left text-sm uppercase text-secondary-foreground">
-                <th className="px-6 py-3">Product</th>
-                <th className="px-6 py-3">Price</th>
-                <th className="px-6 py-3">Quantity</th>
-                <th className="px-6 py-3">Subtotal</th>
-                <th className="sr-only">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cart.map(({ productId, quantity, variantId }) => {
-                const variant = getVariant(productId, variantId);
-                const { fmtPrice, price, multiplier } = formatProductPrice(
-                  variant.pricing
-                );
-
-                return (
-                  <tr
-                    key={variant._id}
-                    className="border-b hover:bg-secondary/20"
-                  >
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/products/${productId._id}?variant=${variantId}`}
-                        className="flex items-center gap-4"
-                      >
-                        <Image
-                          src={variant.images[0] || "/path-to-placeholder.jpg"}
-                          alt={productId.name || "Product"}
-                          width={48}
-                          height={48}
-                          className="rounded object-contain aspect-square"
-                        />
-                        <span>{productId.name}</span>
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4">{fmtPrice}</td>
-                    <td className="px-6 py-4">
-                      <QuantityInput
-                        product={productId}
-                        variant={variant}
-                        quantity={quantity}
-                      />
-                    </td>
-                    <td className="px-6 py-4">{multiplier(price, quantity)}</td>
-                    <td className="px-6 py-4 text-center">
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() =>
-                          updateCart("remove", productId, variantId)
-                        }
-                        className="rounded-full"
-                      >
-                        <Trash2 />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <CartTable items={cart} />
 
         {/* Cart Summary */}
-        <CartSummary
-          btnText="Proceed to Checkout"
-          btnUrl="/checkout"
-          items={cart}
-        />
+        <div className="space-y-4 w-80 h-fit sticky top-0">
+          <Card className="h-full grid gap-3 p-4">
+            <span>Order Summary ({cart.length})</span>
+
+            <Separator />
+
+            <ul className="space-y-2">
+              <li className="flex justify-between">
+                <span>Subtotal</span>
+                <span>
+                  {currencyInfo?.symbol}
+                  {subtotal}
+                </span>
+              </li>
+              <li className="flex justify-between">
+                <span>Shipping</span>
+                <span className="text-sm">calc at checkout</span>
+              </li>
+            </ul>
+            <Separator />
+            <div className="h4 subtitle-1 flex justify-between">
+              <span>Total</span>
+              <span>
+                {currencyInfo?.symbol}
+                {subtotal}
+              </span>
+            </div>
+            <Button>
+              <Link href="/checkout">PROCEED TO CHECKOUT</Link>
+            </Button>
+          </Card>
+          <div className="text-sm flex-center gap-2 text-primary">
+            <Lock className="size-4" /> Encrypted and secure payments
+          </div>
+        </div>
       </div>
     </>
   );

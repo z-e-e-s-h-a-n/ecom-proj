@@ -1,4 +1,5 @@
 import { apiRequest } from "@/config/axios";
+import { getLocalStorage } from "../utils";
 
 export const getCurrentUser = async (): Promise<TCurrentUser> => {
   try {
@@ -23,11 +24,11 @@ export const getUserWishlist = async (): Promise<IWishlistItem[]> => {
 
 export const updateUserCart = async ({ action, items }: UpdateCartPayload) => {
   if (action === "add") {
-    await apiRequest("POST", "/users/cart", { items });
+    await apiRequest("POST", "/users/cart", { data: items });
   } else if (action === "remove") {
-    await apiRequest("DELETE", `/users/cart`, items[0]);
+    await apiRequest("DELETE", `/users/cart`, { data: items[0] });
   } else if (action === "update") {
-    await apiRequest("PUT", `/users/cart`, items[0]);
+    await apiRequest("PUT", `/users/cart`, { data: items[0] });
   } else {
     throw new Error("Invalid action");
   }
@@ -38,10 +39,71 @@ export const updateUserWishlist = async ({
   items,
 }: UpdateWishlistPayload) => {
   if (action === "add") {
-    await apiRequest("POST", "/users/wishlist", { items });
+    await apiRequest("POST", "/users/wishlist", { data: items });
   } else if (action === "remove") {
-    await apiRequest("DELETE", "/users/wishlist", items[0]);
+    await apiRequest("DELETE", "/users/wishlist", { data: items[0] });
   } else {
     throw new Error("Invalid action");
   }
+};
+
+export const placeUserOrder = async (data: PlaceOrderPayload) => {
+  return await apiRequest("POST", "/users/orders", { data });
+};
+
+export const syncUserStorage = async (currentUser: TCurrentUser) => {
+  if (!currentUser) return;
+
+  try {
+    const localCart = getLocalStorage<ICartItem[]>("cart", []);
+    const localWishlist = getLocalStorage<IWishlistItem[]>("wishlist", []);
+
+    if (localCart.length) {
+      const items = localCart.map(({ productId, quantity, variantId }) => ({
+        productId: productId._id,
+        quantity,
+        variantId,
+      }));
+      await updateUserCart({ action: "add", items });
+    }
+
+    if (localWishlist.length) {
+      const items = localWishlist.map(({ productId, variantId }) => ({
+        productId: productId._id,
+        variantId,
+      }));
+      await updateUserWishlist({ action: "add", items });
+    }
+  } catch (error) {
+    console.error("Sync local to server failed:", error);
+  }
+};
+
+export const AddUserAddress = async (
+  data: AddAddressPayload
+): Promise<IAddress> => {
+  const response = await apiRequest("POST", "/users/address", { data });
+  if (!response.success) throw new Error(response.message);
+  return response.data.address;
+};
+
+export const getUserAddresses = async (): Promise<IAddress[]> => {
+  const response = await apiRequest("GET", "/users/address");
+  return response.data.addresses;
+};
+
+export const getUserAddress = async (addressId: string): Promise<IAddress> => {
+  const response = await apiRequest("GET", `/users/address/${addressId}`);
+  return response.data.address;
+};
+
+export const updateUserAddress = async ({
+  addressId,
+  ...data
+}: UpdateAddressPayload) => {
+  return await apiRequest("PUT", `/users/address/${addressId}`, { data });
+};
+
+export const deleteUserAddress = async (addressId: string) => {
+  return await apiRequest("DELETE", `/users/address/${addressId}`);
 };

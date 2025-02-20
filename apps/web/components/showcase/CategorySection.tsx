@@ -18,7 +18,7 @@ function CategorySection({
     <Carousel className={cn("flex flex-col gap-10", className)}>
       <SectionHeader {...headerProps} useCarousel={true} />
       <CarouselContent className="-ml-[24px]">
-        {items.map((item, index) => (
+        {items?.map((item, index) => (
           <CarouselItem
             key={index}
             className="basis-1/2 pl-[24px] sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"

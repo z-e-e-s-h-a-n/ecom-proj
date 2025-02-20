@@ -9,21 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@workspace/ui/components/sheet";
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
-import { ChevronDown, Heart, LogOut, Search, ShoppingCart } from "lucide-react";
+import { ChevronDown, Heart, LogOut, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { headerContent } from "@/constants/site";
 import TopHeader from "@/components/constant/TopHeader";
@@ -36,6 +28,7 @@ import { logoutUser } from "@/lib/actions/auth";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 import useStorage from "@/hooks/useStorage";
 import useAuth from "@/hooks/useAuth";
+import SearchDropdown from "@/components/showcase/SearchDropdown";
 
 function Header({ currentUser }: HeaderProps) {
   const pathname = usePathname();
@@ -54,6 +47,7 @@ function Header({ currentUser }: HeaderProps) {
       refetchCurrentUser();
     }
   };
+
   const isRouteActive = (route: string) => pathname.endsWith(route);
 
   return (
@@ -81,20 +75,7 @@ function Header({ currentUser }: HeaderProps) {
         </nav>
 
         <div className="flex-items-center gap-4">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Search />
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Are you absolutely sure?</SheetTitle>
-                <SheetDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </SheetDescription>
-              </SheetHeader>
-            </SheetContent>
-          </Sheet>
+          <SearchDropdown />
 
           <Link href="/wishlist" className="relative">
             <Heart />

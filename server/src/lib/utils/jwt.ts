@@ -6,7 +6,7 @@ import {
   createAuthSession,
   getDeviceInfo,
   calculateExpiryTime,
-} from "@/utils/helper";
+} from "@/lib/utils/helper";
 import { Request, Response } from "express";
 import RefreshTokenModel from "@/models/refreshToken";
 import envConfig from "@/config/env";
@@ -25,17 +25,18 @@ export interface IJwtTokens {
 export interface ITokenPayload {
   _id: string | mongoose.Types.ObjectId;
   role: UserRole;
+  isAuth: boolean;
 }
 
 export const generateTokens = async (
   req: Request,
-  { _id, role }: ITokenPayload
+  { _id, role, isAuth }: ITokenPayload
 ): Promise<IJwtTokens> => {
   if (!_id || !role) {
     throw new Error("Missing required parameters");
   }
 
-  const payload: JwtPayload = { _id: _id.toString(), role };
+  const payload: JwtPayload = { _id: _id.toString(), role, isAuth };
   const accessExp = "15m";
   const refreshExp = "7d";
 
@@ -84,10 +85,7 @@ export const verifyJwtToken = (
 };
 
 export const attachDecodedUser = (req: Request, decoded: JwtPayload): void => {
-  if (decoded) {
-    req.user = decoded as ISafeUser;
-    logger.info("User attached to request", { user: req.user });
-  }
+  if (decoded) req.user = decoded as ISafeUser;
 };
 
 export const refreshAccessToken = async (
@@ -121,18 +119,11 @@ export const refreshAccessToken = async (
     throw new Error("Invalid refresh token.");
   }
 
-  logger.info("Refresh token successfully verified", {
-    userId: decoded._id,
-  });
   return createAuthSession(req, res, decoded as ITokenPayload);
 };
 
 export const handleTokenRefresh = async (req: Request, res: Response) => {
   const tokenData = await refreshAccessToken(req, res);
-
-  logger.info("New tokens issued for the user", {
-    userId: req.user?._id,
-  });
 
   const decoded = verifyJwtToken(tokenData.accessToken, "JWT_ACCESS_SECRET");
   if (!decoded) throw new Error("Failed to decode new access token.");

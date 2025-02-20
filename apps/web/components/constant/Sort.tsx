@@ -1,5 +1,5 @@
-"use client";
-
+// Sort.tsx
+import React from "react";
 import {
   Select,
   SelectContent,
@@ -8,24 +8,25 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { sortTypes } from "@/constants/site";
-import { usePathname, useRouter } from "next/navigation";
 
-function Sort() {
-  const router = useRouter();
-  const path = usePathname();
+interface SortProps {
+  value: string;
+  onChange: (updates: IQueryParams) => void;
+}
 
-  const handleSort = (value: string) => {
-    router.push(`${path}?sort=${value}`);
+function Sort({ value, onChange }: SortProps) {
+  const handleSort = (selectedValue: string) => {
+    onChange({ sort: selectedValue });
   };
 
   return (
-    <Select onValueChange={handleSort} defaultValue={sortTypes[0]?.value}>
+    <Select value={value} onValueChange={handleSort}>
       <SelectTrigger className="sort-select">
-        <SelectValue placeholder={sortTypes[0]?.value} />
+        <SelectValue placeholder={sortTypes[0]?.label} />
       </SelectTrigger>
       <SelectContent className="sort-select-content">
         {sortTypes.map(({ label, value }) => (
-          <SelectItem key={label} value={value} className="shad-select-item">
+          <SelectItem key={value} value={value} className="shad-select-item">
             {label}
           </SelectItem>
         ))}

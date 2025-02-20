@@ -118,10 +118,10 @@
     @apply mx-auto max-w-[1440px] px-10;
   }
 
-  .scrollbar-hidden::-webkit-scrollbar {
+  .no-scrollbar::-webkit-scrollbar {
     @apply hidden;
   }
-  .scrollbar-hidden::-webkit-scrollbar {
+  .no-scrollbar::-webkit-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
@@ -156,14 +156,6 @@
   }
   .shad-input {
     @apply shad-no-focus border-none px-2 py-0 shadow-none !important;
-  }
-
-  .shad-input-item {
-    @apply flex-center rounded-xl border px-4 py-1;
-  }
-
-  .shad-form-item {
-    @apply flex-justify-center h-[78px] flex-col rounded-xl border px-4;
   }
   .shad-form-label {
     @apply w-full text-foreground !important;
@@ -227,4 +219,13 @@
     @apply shad-no-focus h-11 w-full rounded-[8px] border-transparent !shadow-sm sm:w-[210px] !important;
   }
   /* .sort-select-content {  } */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

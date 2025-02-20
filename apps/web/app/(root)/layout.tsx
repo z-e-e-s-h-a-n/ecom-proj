@@ -4,7 +4,7 @@ import Footer from "@/components/constant/Footer";
 import Header from "@/components/constant/Header";
 import useAuth from "@/hooks/useAuth";
 import { useCurrency } from "@/hooks/useCurrency";
-import { syncLocalToServer } from "@/hooks/useStorage";
+import { syncUserStorage } from "@/lib/actions/user";
 import React, { useEffect } from "react";
 
 function RootLayout({ children }: { children: React.ReactNode }) {
@@ -19,7 +19,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (currentUser && !sessionStorage.getItem("synced")) {
-      syncLocalToServer(currentUser).then(() => {
+      syncUserStorage(currentUser).then(() => {
         sessionStorage.setItem("synced", "true");
       });
     }
@@ -30,9 +30,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="space-y-12">
       <Header currentUser={currentUser} />
-      <main className="container min-h-screen space-y-16 pb-8 pt-16">
-        {children}
-      </main>
+      <main className="container min-h-screen space-y-16">{children}</main>
       <Footer />
     </div>
   );

@@ -1,27 +1,24 @@
 import CartModel from "@/models/cart";
 import OrderModel from "@/models/order";
-import PaymentModel from "@/models/payment";
 import UserModel from "@/models/user";
 import WishlistModel from "@/models/wishlist";
-import { sendResponse } from "@/utils/helper";
-import logger from "@/config/logger";
-import { formatUserResponse } from "@/utils/user";
+import { handleError, sendResponse } from "@/lib/utils/helper";
+import { formatUserResponse } from "@/lib/utils/helper";
 import { Request, Response } from "express";
+import AddressModel from "@/models/address";
 
 export const getUser = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
 
     const user = await UserModel.findById(userId);
-    if (!user) {
-      return sendResponse(res, 404, false, "User not found.");
-    }
-    sendResponse(res, 200, true, "User fetched successfully.", {
+    if (!user) return sendResponse(res, 404, "User not found.");
+
+    sendResponse(res, 200, "User fetched successfully.", {
       user: formatUserResponse(user),
     });
   } catch (error) {
-    logger.error("Error fetching user profile:", { error });
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Failed to fetch user", error);
   }
 };
 
@@ -29,25 +26,31 @@ export const getCart = async (req: Request, res: Response) => {
   const userId = req.user?._id;
 
   try {
-    const cart = await CartModel.findOne({ userId }).populate(
-      "items.productId"
-    );
+    const cart = await CartModel.findOne({ userId }).populate({
+      path: "items.productId",
+      populate: [
+        "category",
+        "reviews",
+        "specifications.id",
+        "attributes.id",
+        "variations.pricing.currencyId",
+      ],
+    });
 
-    sendResponse(res, 200, true, "Cart fetched successfully", {
+    sendResponse(res, 200, "Cart fetched successfully", {
       cart: cart || { userId, items: [] },
     });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to fetch cart");
+    handleError(res, "Failed to fetch cart", error);
   }
 };
 
 export const addToCart = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { items } = req.body;
+  const items = req.body;
 
-  if (!Array.isArray(items) || items.length === 0) {
-    return sendResponse(res, 400, false, "Invalid cart data.");
-  }
+  if (!Array.isArray(items) || items.length === 0)
+    return sendResponse(res, 400, "Invalid cart data.");
 
   try {
     const addOps = items.map((item: any) =>
@@ -68,9 +71,9 @@ export const addToCart = async (req: Request, res: Response) => {
       )
     );
     await Promise.all(addOps);
-    sendResponse(res, 200, true, "Unique items added to your cart");
+    sendResponse(res, 200, "Unique items added to your cart");
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to add items to cart");
+    handleError(res, "Failed to add items to cart", error);
   }
 };
 
@@ -85,13 +88,11 @@ export const updateCart = async (req: Request, res: Response) => {
       { new: true }
     );
 
-    if (!cart) {
-      return sendResponse(res, 404, false, "Item not found in cart");
-    }
+    if (!cart) return sendResponse(res, 404, "Item not found in cart");
 
-    sendResponse(res, 200, true, "Item updated in cart");
+    sendResponse(res, 200, "Item updated in cart");
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to update cart item");
+    handleError(res, "Failed to update item in cart", error);
   }
 };
 
@@ -105,9 +106,9 @@ export const removeFromCart = async (req: Request, res: Response) => {
       { $pull: { items: { productId, variantId } } },
       { new: true }
     );
-    sendResponse(res, 200, true, "Item removed from cart");
+    sendResponse(res, 200, "Item removed from cart");
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to remove item from cart");
+    handleError(res, "Failed to remove item from cart", error);
   }
 };
 
@@ -115,25 +116,31 @@ export const getWishlist = async (req: Request, res: Response) => {
   const userId = req.user?._id;
 
   try {
-    const wishlist = await WishlistModel.findOne({ userId }).populate(
-      "items.productId"
-    );
+    const wishlist = await WishlistModel.findOne({ userId }).populate({
+      path: "items.productId",
+      populate: [
+        "category",
+        "reviews",
+        "specifications.id",
+        "attributes.id",
+        "variations.pricing.currencyId",
+      ],
+    });
 
-    sendResponse(res, 200, true, "Wishlist fetched successfully", {
+    sendResponse(res, 200, "Wishlist fetched successfully", {
       wishlist: wishlist || { userId, items: [] },
     });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to fetch wishlist");
+    handleError(res, "Failed to fetch wishlist", error);
   }
 };
 
 export const addToWishlist = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { items } = req.body;
+  const items = req.body;
 
-  if (!Array.isArray(items) || items.length === 0) {
-    return sendResponse(res, 400, false, "Invalid wishlist data.");
-  }
+  if (!Array.isArray(items) || items.length === 0)
+    return sendResponse(res, 400, "Invalid wishlist data.");
 
   try {
     const addOps = items.map((item: any) =>
@@ -155,9 +162,9 @@ export const addToWishlist = async (req: Request, res: Response) => {
     );
     await Promise.all(addOps);
 
-    sendResponse(res, 200, true, "Unique items added to your wishlist");
+    sendResponse(res, 200, "Unique items added to your wishlist");
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to add items to wishlist");
+    handleError(res, "Failed to add items to wishlist", error);
   }
 };
 
@@ -171,47 +178,60 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
       { $pull: { items: { productId, variantId } } },
       { new: true }
     );
-    sendResponse(res, 200, true, "Item removed from wishlist");
+    sendResponse(res, 200, "Item removed from wishlist");
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to remove item from wishlist");
+    handleError(res, "Failed to remove item from wishlist", error);
   }
 };
 
 export const placeOrder = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { items, totalAmount, metadata } = req.body;
+  const { items, totalAmount, shipping, billing, payment, metadata } = req.body;
 
-  if (!items || !totalAmount) {
-    return sendResponse(res, 400, false, "Missing Fields are required.");
-  }
+  if (!items || !totalAmount || !shipping || !billing || !payment)
+    return sendResponse(res, 400, "Missing Fields are required.");
 
   try {
-    const order = new OrderModel({
+    const order = await OrderModel.create({
       userId,
       items,
       totalAmount,
-      paymentStatus: "Pending",
-      orderStatus: "Pending",
       metadata,
+      shipping,
+      billing,
+      payment,
     });
 
-    await order.save();
-    sendResponse(res, 201, true, "Order placed successfully", { order });
+    await order.populate([
+      {
+        path: "items.productId",
+        populate: ["category", "variations.pricing.currencyId"],
+      },
+      "shipping.addressId",
+      "billing.addressId",
+    ]);
+
+    sendResponse(res, 201, "Order placed successfully", { order });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to place order");
+    handleError(res, "Failed to place order", error);
   }
 };
 
-export const getUserOrders = async (req: Request, res: Response) => {
+export const getOrders = async (req: Request, res: Response) => {
   const userId = req.user?._id;
 
   try {
-    const orders = await OrderModel.find({ userId }).populate(
-      "products.productId"
-    );
-    sendResponse(res, 200, true, "Orders fetched successfully", { orders });
+    const orders = await OrderModel.find({ userId }).populate([
+      {
+        path: "items.productId",
+        populate: ["category", "variations.pricing.currencyId"],
+      },
+      { path: "shipping.addressId" },
+      { path: "billing.addressId" },
+    ]);
+    sendResponse(res, 200, "Orders fetched successfully", { orders });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to fetch orders");
+    handleError(res, "Failed to fetch orders", error);
   }
 };
 
@@ -220,49 +240,155 @@ export const getOrderById = async (req: Request, res: Response) => {
   const { orderId } = req.params;
 
   try {
-    const order = await OrderModel.findOne({ userId, _id: orderId }).populate(
-      "products.productId"
-    );
+    const order = await OrderModel.findOne({ userId, _id: orderId }).populate([
+      {
+        path: "items.productId",
+        populate: ["category", "variations.pricing.currencyId"],
+      },
+      { path: "shipping.addressId" },
+      { path: "billing.addressId" },
+    ]);
 
-    if (!order) {
-      return sendResponse(res, 404, false, "Order not found");
+    if (!order) return sendResponse(res, 404, "Order not found");
+
+    sendResponse(res, 200, "Order fetched successfully", { order });
+  } catch (error) {
+    handleError(res, "Failed to fetch order", error);
+  }
+};
+
+export const initiatePayment = async (_: Request, res: Response) => {
+  // const userId = req.user?._id;
+  try {
+    sendResponse(res, 201, "Payment initiated successfully");
+  } catch (error) {
+    handleError(res, "Failed to initiate payment", error);
+  }
+};
+
+export const verifyPayment = async (_: Request, res: Response) => {
+  // const { transactionId, status } = req.body;
+  try {
+    sendResponse(res, 200, "Payment status updated successfully", {});
+  } catch (error) {
+    handleError(res, "Failed to update payment status", error);
+  }
+};
+
+export const getAddresses = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    const addresses = await AddressModel.find({ userId });
+
+    if (!addresses) return sendResponse(res, 404, "Address Not Found");
+
+    sendResponse(res, 200, "Address Fetched Successfully", {
+      addresses,
+    });
+  } catch (error) {
+    handleError(res, "Failed to fetch Address", error);
+  }
+};
+
+export const getAddress = async (req: Request, res: Response) => {
+  try {
+    const { addressId } = req.params;
+
+    const address = await AddressModel.findById(addressId);
+
+    if (!address) return sendResponse(res, 404, "Address Not Found");
+
+    sendResponse(res, 200, "Address Fetch Successfully", {
+      address,
+    });
+  } catch (error) {
+    handleError(res, "Failed to fetch Address", error);
+  }
+};
+
+export const addAddress = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const {
+      firstName,
+      lastName,
+      phone,
+      street,
+      city,
+      state,
+      country,
+      zip,
+      isDefault,
+      type,
+      label = "home",
+    } = req.body;
+
+    if (
+      !firstName ||
+      !lastName ||
+      !phone ||
+      !street ||
+      !city ||
+      !state ||
+      !country ||
+      !zip ||
+      !type
+    ) {
+      return sendResponse(res, 400, "All address fields are required.");
     }
 
-    sendResponse(res, 200, true, "Order fetched successfully", { order });
-  } catch (error) {
-    sendResponse(res, 500, false, "Failed to fetch order");
-  }
-};
-
-export const initiatePayment = async (req: Request, res: Response) => {
-  const userId = req.user?._id;
-  const { orderId, amount, paymentMethod } = req.body;
-  try {
-    const payment = await PaymentModel.create({
+    const address = await AddressModel.create({
       userId,
-      orderId,
-      amount,
-      paymentMethod,
-      status: "Pending",
+      firstName,
+      lastName,
+      phone,
+      street,
+      city,
+      state,
+      country,
+      zip,
+      isDefault,
+      type,
+      label,
     });
-    sendResponse(res, 201, true, "Payment initiated successfully", { payment });
+
+    sendResponse(res, 200, "Address added successfully", { address });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to initiate payment");
+    handleError(res, "Failed to add address", error);
   }
 };
 
-export const verifyPayment = async (req: Request, res: Response) => {
-  const { transactionId, status } = req.body;
+export const updateAddress = async (req: Request, res: Response) => {
   try {
-    const payment = await PaymentModel.findOneAndUpdate(
-      { transactionId },
-      { status },
-      { new: true }
+    const updates = req.body;
+    const { addressId } = req.params;
+
+    const address = await AddressModel.findOneAndUpdate(
+      { _id: addressId },
+      updates,
+      {
+        new: true,
+      }
     );
-    sendResponse(res, 200, true, "Payment status updated successfully", {
-      payment,
+    if (!address) return sendResponse(res, 404, "Address Not Found");
+
+    sendResponse(res, 200, "Address Updated Successfully", {
+      address,
     });
   } catch (error) {
-    sendResponse(res, 500, false, "Failed to verify payment");
+    handleError(res, "Failed to update Address", error);
+  }
+};
+
+export const deleteAddress = async (req: Request, res: Response) => {
+  try {
+    const { addressId } = req.params;
+
+    await AddressModel.findByIdAndDelete(addressId);
+
+    sendResponse(res, 200, "Address Deleted Successfully");
+  } catch (error) {
+    handleError(res, "Failed to fetch Address", error);
   }
 };

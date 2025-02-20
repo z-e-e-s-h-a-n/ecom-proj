@@ -2,18 +2,17 @@ import mongoose, { Schema, Document, ObjectId, Model } from "mongoose";
 import crypto from "crypto";
 
 export interface IShipping {
-  weight?: number;
-  dimensions?: {
-    length: number;
-    width: number;
-    height: number;
-  };
+  distanceUnit: "cm" | "in";
+  massUnit: "kg" | "lb" | "g";
+  weight: number;
+  length: number;
+  width: number;
+  height: number;
 }
 
-export interface IVariant extends IShipping {
+export interface IVariant {
   pricing: {
-    currency: string;
-    symbol: string;
+    currencyId: ObjectId;
     original: number;
     sale?: number;
   }[];
@@ -21,6 +20,7 @@ export interface IVariant extends IShipping {
   stock: number;
   images: string[];
   attributes: Record<string, string>;
+  shipping: IShipping;
   isActive: boolean;
   isDefault: boolean;
 }
@@ -55,12 +55,11 @@ const variationSchema = new Schema<IVariant>({
   sku: { type: String, unique: true },
   pricing: [
     {
-      currency: {
-        type: String,
+      currencyId: {
+        type: Schema.Types.ObjectId,
+        ref: "CurrencyOption",
         required: true,
-        match: /^[A-Z]{3}$/,
       },
-      symbol: { type: String, required: true },
       original: { type: Number, required: true },
       sale: { type: Number },
     },
@@ -72,11 +71,13 @@ const variationSchema = new Schema<IVariant>({
     of: String,
     get: (val: any) => (val ? Object.fromEntries(val) : {}),
   },
-  weight: { type: Number },
-  dimensions: {
-    length: { type: Number },
-    width: { type: Number },
-    height: { type: Number },
+  shipping: {
+    massUnit: { type: String, enum: ["kg", "lb", "g"], require: true },
+    distanceUnit: { type: String, enum: ["cm", "in"], require: true },
+    weight: { type: Number, require: true },
+    length: { type: Number, require: true },
+    width: { type: Number, require: true },
+    height: { type: Number, require: true },
   },
   isActive: { type: Boolean, default: true },
   isDefault: { type: Boolean, default: false },
@@ -147,12 +148,6 @@ productSchema.pre("save", async function (next) {
 
     if (variant.isDefault) {
       defaultVariant = true;
-    }
-
-    const currencies = variant.pricing.map((p) => p.currency);
-    const uniqueCurrencies = new Set(currencies);
-    if (currencies.length !== uniqueCurrencies.size) {
-      throw new Error("Duplicate currency found in pricing array.");
     }
   });
 

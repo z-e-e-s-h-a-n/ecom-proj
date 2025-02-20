@@ -28,7 +28,7 @@ export const headerContent = {
     },
     {
       label: "Shop",
-      url: "#",
+      url: "/shop",
       items: [],
     },
     {
@@ -159,28 +159,28 @@ export const heroImages = Array.from({ length: 7 }, (_, index) => ({
 
 export const sortTypes = [
   {
-    label: "Date created (newest)",
-    value: "$createdAt-desc",
-  },
-  {
-    label: "Created Date (oldest)",
-    value: "$createdAt-asc",
-  },
-  {
     label: "Name (A-Z)",
-    value: "name-asc",
+    value: "name_asc",
   },
   {
     label: "Name (Z-A)",
-    value: "name-desc",
+    value: "name_desc",
   },
   {
-    label: "Size (Highest)",
-    value: "size-desc",
+    label: "Price (Lowest)",
+    value: "price_asc",
   },
   {
-    label: "Size (Lowest)",
-    value: "size-asc",
+    label: "Price (Highest)",
+    value: "price_desc",
+  },
+  {
+    label: "Newest Arrivals",
+    value: "createdAt_desc",
+  },
+  {
+    label: "Oldest Arrivals",
+    value: "createdAt_asc",
   },
 ];
 

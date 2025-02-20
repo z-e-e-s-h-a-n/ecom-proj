@@ -1,17 +1,14 @@
 // controllers/product.ts
 import { Request, Response } from "express";
 import ProductModel from "@/models/product";
-import { sendResponse } from "@/utils/helper";
-import logger from "@/config/logger";
+import { handleError, sendResponse } from "@/lib/utils/helper";
 
-// Create Product
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const { products } = req.body;
 
-    if (!Array.isArray(products) || products.length === 0) {
-      return sendResponse(res, 400, false, "Invalid products data.");
-    }
+    if (!Array.isArray(products) || products.length === 0)
+      return sendResponse(res, 400, "Invalid products data.");
 
     const savedProducts = await Promise.all(
       products.map(async (product: any) => {
@@ -20,16 +17,14 @@ export const createProduct = async (req: Request, res: Response) => {
       })
     );
 
-    sendResponse(res, 201, true, "Products created successfully.", {
+    sendResponse(res, 201, "Products created successfully.", {
       products: savedProducts,
     });
   } catch (error) {
-    logger.error("Error creating products: ", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error creating products:", error);
   }
 };
 
-// Update Product
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
@@ -38,73 +33,126 @@ export const updateProduct = async (req: Request, res: Response) => {
     const product = await ProductModel.findByIdAndUpdate(productId, updates, {
       new: true,
     });
-    if (!product) {
-      return sendResponse(res, 404, false, "Product not found.");
-    }
+    if (!product) return sendResponse(res, 404, "Product not found.");
 
-    sendResponse(res, 200, true, "Product updated successfully.", { product });
+    sendResponse(res, 200, "Product updated successfully.", { product });
   } catch (error) {
-    logger.error("Error updating product: ", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error updating product:", error);
   }
 };
 
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
-    if (!productId) {
-      return sendResponse(res, 400, false, "Product ID Requires");
-    }
+    if (!productId) return sendResponse(res, 400, "Product ID Requires");
 
     const product = await ProductModel.findById(productId).populate([
-      { path: "category" },
-      { path: "reviews" },
-      { path: "specifications.id" },
-      { path: "attributes.id" },
+      "category",
+      "reviews",
+      "specifications.id",
+      "attributes.id",
+      "variations.pricing.currencyId",
     ]);
 
-    if (!product) return sendResponse(res, 404, false, "Product not found.");
+    if (!product) return sendResponse(res, 404, "Product not found.");
 
-    sendResponse(res, 200, true, "Product fetched successfully.", { product });
+    sendResponse(res, 200, "Product fetched successfully.", { product });
   } catch (error) {
-    logger.error("Error fetching product:", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error fetching product:", error);
   }
 };
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
+    const {
+      page = 1,
+      limit = 10,
+      sort = "price_asc",
+      searchQuery = "",
+      ...filters
+    } = req.query;
+    const query: any = {};
 
-    const products = await ProductModel.find()
-      .populate("category")
-      .skip(skip)
-      .limit(limit)
-      .exec();
+    // Category filter
+    if (filters.categories) query.category = { $in: filters?.categories };
 
-    sendResponse(res, 200, true, "Products fetched successfully.", {
-      products,
+    // Search query
+    if (searchQuery) {
+      const regex = new RegExp(searchQuery as string, "i");
+      query.name = { $regex: regex };
+    }
+
+    // Attribute filters
+    const attributeFilters = Object.keys(filters)
+      .filter((key) => key.startsWith("attr_") && filters[key])
+      .map((key) => ({
+        attributes: {
+          $elemMatch: {
+            id: key.replace("attr_", ""),
+            options: { $in: filters[key] },
+          },
+        },
+      }));
+
+    if (attributeFilters.length > 0) query.$and = attributeFilters;
+
+    // Price filter
+    if (filters.minPrice || filters.maxPrice) {
+      const min = parseFloat(filters.minPrice as string) || 0;
+      const max = parseFloat(filters.maxPrice as string) || Infinity;
+      query.variations = {
+        $elemMatch: {
+          isDefault: true,
+          "pricing.0.original": { $gte: min, $lte: max },
+        },
+      };
+    }
+
+    // Sorting options
+    const sortOptions: Record<string, string> = {
+      price_asc: "variations.0.pricing.0.original",
+      price_desc: "-variations.0.pricing.0.original",
+      createdAt_asc: "createdAt",
+      createdAt_desc: "-createdAt",
+      name_asc: "name",
+      name_desc: "-name",
+    };
+    const sortQuery = sortOptions[sort as string] || sortOptions["price_asc"];
+
+    // Fetch products with pagination and population
+    const products = await ProductModel.find(query)
+      .populate([
+        "category",
+        "reviews",
+        "specifications.id",
+        "attributes.id",
+        "variations.pricing.currencyId",
+      ])
+      .sort(sortQuery)
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit));
+
+    const total = await ProductModel.countDocuments(query);
+
+    sendResponse(res, 200, "Products fetched successfully.", {
+      products: products.map((product) => ({ product })),
+      total,
+      page,
+      limit,
     });
   } catch (error) {
-    logger.error("Error fetching products:", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error fetching products:", error);
   }
 };
 
-// Delete Product
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
     const product = await ProductModel.findByIdAndDelete(productId);
-    if (!product) {
-      return sendResponse(res, 404, false, "Product not found.");
-    }
+    if (!product) return sendResponse(res, 404, "Product not found.");
 
-    sendResponse(res, 200, true, "Product deleted successfully.");
+    sendResponse(res, 200, "Product deleted successfully.");
   } catch (error) {
-    logger.error("Error deleting product: ", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error deleting product:", error);
   }
 };

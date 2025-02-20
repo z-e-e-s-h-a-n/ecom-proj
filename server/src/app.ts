@@ -14,8 +14,9 @@ import attributeRoutes from "@/routes/attribute";
 import specsRoutes from "@/routes/specification";
 import currencyRoutes from "@/routes/currency";
 import reviewRoutes from "@/routes/review";
-import errorHandler from "@/middlewares/errorHandler";
-import { sendResponse } from "@/utils/helper";
+import errorHandler from "@/middlewares/error";
+import shippingRoutes from "@/routes/shipping";
+import { sendResponse } from "@/lib/utils/helper";
 import { authGuard } from "@/middlewares/auth";
 
 const app: Application = express();
@@ -30,7 +31,8 @@ app.use(compression());
 app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
-app.use("/users", authGuard(), userRoutes);
+app.use("/users", authGuard("customer"), userRoutes);
+app.use("/shipping", shippingRoutes);
 app.use("/products/categories", categoryRoutes);
 app.use("/products/attributes", attributeRoutes);
 app.use("/products/specifications", specsRoutes);
@@ -39,11 +41,11 @@ app.use("/products/currency", currencyRoutes);
 app.use("/products", productRoutes);
 
 app.get("/", (_, res) => {
-  sendResponse(res, 200, true, "Welcome to NoSha e-commerce API!");
+  sendResponse(res, 200, "Welcome to NoSha e-commerce API!");
 });
 
 app.use((_req, res) => {
-  sendResponse(res, 404, false, "Route not found.");
+  sendResponse(res, 404, "Route not found.");
 });
 
 app.use(errorHandler);

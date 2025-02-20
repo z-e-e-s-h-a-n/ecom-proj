@@ -1,16 +1,13 @@
 import { Request, Response } from "express";
-import logger from "@/config/logger";
 import AttributeModel from "@/models/attribute";
-import { sendResponse } from "@/utils/helper";
+import { handleError, sendResponse } from "@/lib/utils/helper";
 
-// create product Attributes
 export const createAttributes = async (req: Request, res: Response) => {
   try {
     const { items } = req.body;
 
-    if (!Array.isArray(items) || items.length === 0) {
-      return sendResponse(res, 400, false, "Items array is required.");
-    }
+    if (!Array.isArray(items) || items.length === 0)
+      return sendResponse(res, 400, "Items array is required.");
 
     const addOps = items.map((item: any) => {
       if (!item.name) {
@@ -22,60 +19,55 @@ export const createAttributes = async (req: Request, res: Response) => {
     });
 
     await Promise.all(addOps);
-    sendResponse(res, 201, true, "Attributes created successfully");
+    sendResponse(res, 201, "Attributes created successfully");
   } catch (error) {
-    logger.error("Error creating Attributes: ", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error creating attributes: ", error);
   }
 };
 
-// Get All Attributes
-export const getAttributes = async (_: Request, res: Response) => {
+export const getAttributes = async (req: Request, res: Response) => {
   try {
-    const attributes = await AttributeModel.find().populate("categories");
-    sendResponse(res, 200, true, "Attributes fetched successfully.", {
+    const { categories } = req.query;
+
+    const query =
+      categories && Array.isArray(categories)
+        ? { categories: { $in: categories } }
+        : {};
+
+    const attributes = await AttributeModel.find(query).populate("categories");
+    sendResponse(res, 200, "Attributes fetched successfully.", {
       attributes,
     });
   } catch (error) {
-    logger.error("Error fetching attributes: ", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error fetching attributes: ", error);
   }
 };
 
-// Get Attribute by ID
 export const getAttribute = async (req: Request, res: Response) => {
   try {
     const { attrId } = req.params;
-    if (!attrId)
-      return sendResponse(res, 400, false, "Attribute ID is required.");
+    if (!attrId) return sendResponse(res, 400, "Attribute ID is required.");
 
     const attribute =
       await AttributeModel.findById(attrId).populate("categories");
-    if (!attribute) {
-      return sendResponse(res, 404, false, "Attribute not found.");
-    }
+    if (!attribute) return sendResponse(res, 404, "Attribute not found.");
 
-    sendResponse(res, 200, true, "Attribute fetched successfully.", {
+    sendResponse(res, 200, "Attribute fetched successfully.", {
       attribute,
     });
   } catch (error) {
-    logger.error("Error fetching attribute: ", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error fetching attribute: ", error);
   }
 };
 
-// Delete Attribute by ID
 export const deleteAttribute = async (req: Request, res: Response) => {
   try {
     const { attrId } = req.params;
     const attribute = await AttributeModel.findByIdAndDelete(attrId);
-    if (!attribute) {
-      return sendResponse(res, 404, false, "Attribute not found.");
-    }
+    if (!attribute) return sendResponse(res, 404, "Attribute not found.");
 
-    sendResponse(res, 200, true, "Attribute deleted successfully.");
+    sendResponse(res, 200, "Attribute deleted successfully.");
   } catch (error) {
-    logger.error("Error deleting attribute: ", error);
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error deleting attribute: ", error);
   }
 };

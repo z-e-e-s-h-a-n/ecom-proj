@@ -1,5 +1,4 @@
 import { Button } from "@workspace/ui/components/button";
-import { cn } from "@workspace/ui/lib/utils";
 import Image from "next/image";
 import React from "react";
 
@@ -15,19 +14,18 @@ function VariantInput({
   handleAttributeChange,
 }: IVariantInput) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {product.attributes.map(({ id: attr, options }) => {
         const { name, type } = attr;
 
         return (
-          <div
-            key={name}
-            className={cn(
-              "flex gap-2",
-              options.length < 2 ? "items-center" : "flex-col"
-            )}
-          >
-            <label className="font-medium text-lg">{name}:</label>
+          <div key={name} className="flex flex-col gap-2">
+            <label className="font-medium flex-items-center gap-2">
+              {name}:
+              <span className="text-sm text-muted-foreground font-normal">
+                {selectedAttributes[name]}
+              </span>
+            </label>
             <div className="flex flex-wrap gap-4">
               {type === "color" && (
                 <div className="flex gap-2">

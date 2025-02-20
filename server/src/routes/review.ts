@@ -8,9 +8,9 @@ const router: Router = Router();
 // Review routes
 router
   .route("/:productId")
-  .post(authGuard(), controller.addReview)
+  .post(authGuard("customer"), controller.addReview)
   .get(controller.getReviews);
 
-router.delete("/:reviewId", authGuard(), controller.deleteReview);
+router.delete("/:reviewId", authGuard("customer"), controller.deleteReview);
 
 export default router;

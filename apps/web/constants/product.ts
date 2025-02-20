@@ -1,11 +1,4 @@
 import { BannerCardProps } from "@/components/showcase/BannerCard";
-import { SmartphoneCharging } from "lucide-react";
-
-export const categoryList = Array.from({ length: 10 }).map((_, index) => ({
-  label: `Category ${index + 1} `,
-  Icon: SmartphoneCharging,
-  url: "/",
-}));
 
 export const bannerCardsList: BannerCardProps[] = [
   {

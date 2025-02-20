@@ -1,7 +1,14 @@
 import nodemailer from "nodemailer";
 import envConfig from "@/config/env";
+import { getTemplate, TemplateTypes } from "@/config/template";
 
-const sendEmail = async (email: string, subject: string, html: string) => {
+export interface ISendEmail {
+  purpose: TemplateTypes;
+  email: string;
+  secret?: string;
+}
+
+export const sendEmail = async ({ purpose, email, secret }: ISendEmail) => {
   const transporter = nodemailer.createTransport({
     host: envConfig.nodemailer.host,
     port: envConfig.nodemailer.port,
@@ -12,6 +19,8 @@ const sendEmail = async (email: string, subject: string, html: string) => {
     },
   });
 
+  const { html, subject } = getTemplate({ purpose, identifier: email, secret });
+
   const mailOptions = {
     from: envConfig.nodemailer.from,
     to: email,
@@ -21,5 +30,3 @@ const sendEmail = async (email: string, subject: string, html: string) => {
 
   await transporter.sendMail(mailOptions);
 };
-
-export default sendEmail;

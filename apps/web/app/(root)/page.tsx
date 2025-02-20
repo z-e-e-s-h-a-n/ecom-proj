@@ -3,12 +3,14 @@ import HeroSection from "@/components/showcase/HeroSection";
 import CategorySection from "@/components/showcase/CategorySection";
 import ProductSection from "@/components/showcase/ProductSection";
 import { Separator } from "@workspace/ui/components/separator";
-import { categoryList, bannerCardsList } from "@/constants/product";
+import { bannerCardsList } from "@/constants/product";
 import BannerCardSection from "@/components/showcase/BannerCardSection";
-import useStorage from "@/hooks/useStorage";
+import { useProducts } from "@/hooks/useStorage";
+import useCategories from "@/hooks/useCategories";
 
 function Home() {
-  const { products } = useStorage();
+  const { products } = useProducts();
+  const { categories } = useCategories();
 
   return (
     <>
@@ -29,7 +31,7 @@ function Home() {
       />
       <Separator />
       <CategorySection
-        items={categoryList}
+        items={categories}
         useCarousel={true}
         headerProps={{
           title: "Browse By Category",

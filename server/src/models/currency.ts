@@ -1,4 +1,4 @@
-import { getExchangeRates } from "@/utils/helper";
+import { getExchangeRates } from "@/lib/utils/helper";
 import getSymbolFromCurrency from "currency-symbol-map";
 import mongoose, { Schema, Document } from "mongoose";
 
@@ -7,7 +7,9 @@ export interface ICurrencyOption extends Document {
   symbol: string;
   multiplier: number;
   isDefault: boolean;
-  countries: { name: string; code: string }[];
+  countries: string[];
+  decimalSeparator: string;
+  thousandSeparator: string;
 }
 
 const CurrencyOptionSchema = new Schema<ICurrencyOption>({
@@ -21,11 +23,10 @@ const CurrencyOptionSchema = new Schema<ICurrencyOption>({
   multiplier: { type: Number, required: true },
   isDefault: { type: Boolean, default: false },
   countries: [
-    {
-      name: { type: String, required: true, unique: true },
-      code: { type: String, required: true, unique: true },
-    },
+    { type: String, required: true, match: /^[A-Z]{2}$/, unique: true },
   ],
+  decimalSeparator: { type: String, required: true, default: "." },
+  thousandSeparator: { type: String, required: true, default: "," },
 });
 
 CurrencyOptionSchema.pre<ICurrencyOption>("save", async function (next) {

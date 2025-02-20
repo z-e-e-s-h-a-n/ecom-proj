@@ -1,5 +1,5 @@
 import React from "react";
-import CustomInput from "@/components/form/CustomInput";
+import CustomInput from "@/components/form/CustomInputV1";
 import { Button } from "@workspace/ui/components/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,11 @@ import {
   loginWithFacebook,
 } from "@/lib/actions/auth";
 
-export const RenderAuthInputs = ({ type, control }: RenderAuthInputs) => {
+export const RenderAuthInputs = ({
+  type,
+  control,
+  isAuth,
+}: RenderAuthInputs) => {
   return (
     <>
       {type === "sign-up" && (
@@ -31,28 +35,64 @@ export const RenderAuthInputs = ({ type, control }: RenderAuthInputs) => {
         </div>
       )}
 
-      <CustomInput
-        name="email"
-        type="email"
-        label="Email Address"
-        placeholder="Enter your email"
-        control={control}
-      />
-
-      {type !== "reset-password" && (
+      {type !== "set-password" && !isAuth && (
         <CustomInput
-          name="password"
-          type="password"
-          label="Password"
-          placeholder="Minimum 8 characters"
+          name="identifier"
+          type="text"
+          label="Email or Phone"
+          placeholder="Enter your Email or Phone"
           control={control}
         />
+      )}
+
+      {type.includes("password") && isAuth ? (
+        <>
+          <CustomInput
+            name="password"
+            type="password"
+            label="New Password"
+            control={control}
+          />
+          <CustomInput
+            name="confirmPassword"
+            type="password"
+            label="Confirm Password"
+            control={control}
+          />
+        </>
+      ) : (
+        !type.includes("password") && (
+          <CustomInput
+            name="password"
+            type="password"
+            label="Password"
+            placeholder="Minimum 8 characters"
+            control={control}
+          />
+        )
+      )}
+
+      {type === "sign-in" && (
+        <div className="flex items-center">
+          <CustomInput
+            name="rememberMe"
+            type="checkbox"
+            label="Remember Me"
+            control={control}
+          />
+          <Link
+            href="/reset-password"
+            className="ml-auto min-w-max text-sm underline-offset-2 hover:underline"
+          >
+            Forgot Password?
+          </Link>
+        </div>
       )}
     </>
   );
 };
 
-export const AuthFormNavigation = ({ type }: AuthFormType) => {
+export const AuthFormNavigation = ({ type }: { type: AuthFormType }) => {
   return (
     <div className="text-center text-sm">
       {type === "sign-in"

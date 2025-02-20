@@ -1,71 +1,89 @@
 import mongoose, { Schema, Document, ObjectId } from "mongoose";
-import { PaymentStatus } from "./payment";
 
-export type OrderStatus = "Pending" | "Shipped" | "Delivered" | "Canceled";
+export type TOrderStatus = "pending" | "shipped" | "delivered" | "canceled";
+export type TPaymentMethod = "cod" | "card" | "wallet" | "gPay" | "applePay";
+export type TPaymentStatus = "pending" | "completed" | "failed";
+export type TBillingMethod = "same" | "different";
+export type TShippingMethod = "standard" | "express" | "free";
+
 export interface IOrderItem {
   productId: ObjectId;
   variantId: ObjectId;
   quantity: number;
-  pricing: {
-    price: number;
-    symbol: string;
-    currency: string;
-  };
+  price: number;
 }
 
 export interface IOrder extends Document {
   userId: ObjectId;
   items: IOrderItem[];
   totalAmount: number;
-  paymentStatus: PaymentStatus;
-  paymentId: ObjectId;
-  orderStatus: OrderStatus;
+  orderStatus: TOrderStatus;
+  transactionId?: string;
   metadata: Map<string, any>;
+  shipping: { method: TShippingMethod; addressId: ObjectId; cost: number };
+  billing: { method: TBillingMethod; addressId?: ObjectId };
+  payment: {
+    method: TPaymentMethod;
+    status: TPaymentStatus;
+    currency: string;
+    symbol: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
 
 const orderSchema = new Schema<IOrder>(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     items: [
       {
         productId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: Schema.Types.ObjectId,
           ref: "Product",
           required: true,
         },
-        variantId: {
-          type: mongoose.Schema.Types.ObjectId,
-          required: true,
-        },
+        variantId: { type: Schema.Types.ObjectId, required: true },
         quantity: { type: Number, required: true, min: 1 },
-        pricing: {
-          price: { type: Number, required: true },
-          symbol: { type: String, require: true },
-          currency: { type: String, required: true },
-        },
+        price: { type: Number, required: true },
       },
     ],
     totalAmount: { type: Number, required: true },
-    paymentStatus: {
-      type: String,
-      enum: ["Pending", "Completed", "Failed"],
-      default: "Pending",
-    },
-    paymentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Payment",
-      required: true,
-    },
     orderStatus: {
       type: String,
-      enum: ["Pending", "Shipped", "Delivered", "Cancelled"],
-      default: "Pending",
+      enum: ["pending", "shipped", "delivered", "canceled"],
+      default: "pending",
+    },
+    transactionId: { type: String },
+    shipping: {
+      method: {
+        type: String,
+        required: true,
+        enum: ["free", "standard", "express"],
+      },
+      cost: { type: Number, required: true },
+      addressId: {
+        type: Schema.Types.ObjectId,
+        ref: "Address",
+        required: true,
+      },
+    },
+    billing: {
+      method: { type: String, required: true, enum: ["same", "different"] },
+      addressId: { type: Schema.Types.ObjectId, ref: "Address" },
+    },
+    payment: {
+      method: {
+        type: String,
+        enum: ["cod", "card", "wallet", "gPay", "applePay"],
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ["pending", "completed", "failed"],
+        default: "pending",
+      },
+      currency: { type: String, required: true, match: /^[A-Z]{3}$/ },
+      symbol: { type: String, required: true },
     },
     metadata: { type: Map, of: Schema.Types.Mixed },
   },

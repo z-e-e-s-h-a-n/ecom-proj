@@ -1,8 +1,9 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
-import UserModel from "@/models/user";
+import UserModel, { TProviderKeys } from "@/models/user";
 import envConfig from "@/config/env";
+import { sendOtp } from "@/lib/actions/user";
 
 const normalizeProfile = ({
   id,
@@ -13,29 +14,45 @@ const normalizeProfile = ({
 }: any) => {
   const { email: jsonEmail, first_name, last_name, name: jsonName } = _json;
   const email = jsonEmail || emails?.[0]?.value;
-  const name =
-    jsonName || displayName || `${first_name || ""} ${last_name || ""}`.trim();
 
   if (!email) {
     throw new Error(`${provider} profile is missing an email address.`);
   }
 
-  return { id, name, email };
+  return {
+    id,
+    firstName:
+      first_name || ((displayName || jsonName) as string).split(" ")[0],
+    lastName: last_name,
+    email,
+  };
 };
 
 const findOrCreateUser = async ({ provider, ...profile }: any) => {
-  const { id, name, email } = normalizeProfile(profile);
+  const { id, firstName, lastName, email } = normalizeProfile(profile);
+  const providerKey = `${provider.toLowerCase()}Id` as TProviderKeys;
 
   const existingUser = await UserModel.findOne({ email });
-  if (existingUser) return existingUser;
-
-  const password = `${name.slice(-2)}${id.slice(-6)}`;
-  return UserModel.create({
-    name,
+  if (existingUser) {
+    if (!existingUser[providerKey]) {
+      existingUser[providerKey] = id;
+      await existingUser.save();
+    }
+    return existingUser;
+  }
+  const newUser = await UserModel.create({
+    firstName,
+    lastName,
     email,
-    password,
-    [`${provider}Id`]: id,
+    isAuth: true,
+    [providerKey]: id,
   });
+
+  if (newUser._id) {
+    await sendOtp({ userId: newUser._id, email, purpose: "setPassword" });
+  }
+
+  return newUser;
 };
 
 const handleOAuth = (profile: any, done: Function) => {

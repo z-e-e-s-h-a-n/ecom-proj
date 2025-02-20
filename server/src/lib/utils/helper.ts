@@ -1,12 +1,13 @@
 import envConfig from "@/config/env";
 import { CookieOptions, Request, Response } from "express";
 import { generateTokens, ITokenPayload, manageTokensCookies } from "./jwt";
-import { IUser } from "@/models/user";
+import { ISafeUser, IUser } from "@/models/user";
 import { UAParser } from "ua-parser-js";
 import axios from "axios";
 import logger from "@/config/logger";
 import ms from "ms";
 import { ILookupIPInfo } from "@/types/global";
+import { sendOtp } from "@/lib/actions/user";
 
 export const getEnv = (key: string, fallback?: string): string => {
   const value = process.env[key];
@@ -35,11 +36,16 @@ export const calculateExpiryTime = (time: number, isInSec = true): Date => {
 export const sendResponse = (
   res: Response,
   status: number,
-  success: boolean,
   message: string,
   data = {}
 ) => {
-  res.status(status).json({ success, message, data });
+  const success = status >= 200 && status < 300;
+  res.status(status).json({ status, success, message, data });
+};
+
+export const handleError = (res: Response, message: string, error: any) => {
+  logger.error("error", { message: error.message ?? message });
+  sendResponse(res, 500, message);
 };
 
 export const setCookie = (
@@ -86,6 +92,49 @@ export const createAuthSession = async (
   const tokenData = await generateTokens(req, user as ITokenPayload);
   manageTokensCookies(res, "add", tokenData);
   return tokenData;
+};
+
+export const formatUserResponse = (
+  user: IUser,
+  additionalInfo: Record<string, any> = {}
+): ISafeUser & Record<string, any> => {
+  const name = `${user.firstName} ${user.lastName}`;
+  return {
+    _id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    name,
+    email: user.email,
+    role: user.role,
+    isAuth: user.isAuth,
+    ...additionalInfo,
+  };
+};
+
+export const prepareUserResponse = async (
+  req: Request,
+  res: Response,
+  user: IUser,
+  status: number,
+  message: string
+) => {
+  try {
+    const success = status === 200 || status === 201;
+    if (success) await createAuthSession(req, res, user);
+    const { _id: userId, email, phone, password, isAuth } = user || {};
+
+    if (!password)
+      await sendOtp({ userId, email, phone, purpose: "setPassword" });
+
+    if (!isAuth)
+      await sendOtp({ userId, email, phone, purpose: "verifyEmail" });
+
+    sendResponse(res, status, message, {
+      user: formatUserResponse(user),
+    });
+  } catch (error) {
+    sendResponse(res, 500, "Error processing user response.");
+  }
 };
 
 export const lookupIPInfo = async <T>(
@@ -142,4 +191,32 @@ export const getExchangeRates = async (
     logger.error("Error fetching exchange rates:", error);
     return fallback;
   }
+};
+
+export const parseIdentifier = (identifier: string) => {
+  const isEmail = identifier.includes("@");
+
+  return {
+    key: isEmail ? "email" : "phone",
+    email: isEmail ? identifier : undefined,
+    phone: isEmail ? undefined : identifier,
+    query: {
+      $or: [
+        { email: isEmail ? identifier : undefined },
+        { phone: !isEmail ? identifier : undefined },
+      ],
+    },
+  };
+};
+
+export const getQueryParams = <T extends Record<string, any>>(
+  query: T
+): Record<keyof T, string | undefined> => {
+  const result: Partial<Record<keyof T, string | undefined>> = {};
+
+  for (const key in query) {
+    result[key] = typeof query[key] === "string" ? query[key] : undefined;
+  }
+
+  return result as Record<keyof T, string | undefined>;
 };

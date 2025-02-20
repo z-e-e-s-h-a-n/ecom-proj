@@ -1,53 +1,28 @@
 import { apiRequest } from "@/config/axios";
-import envConfig from "@/config/envConfig";
+import envConfig from "@/config/env";
 
-export interface ILoginData {
-  email: string;
-  password: string;
-}
-
-export interface IRegisterData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface IRequestOtpData {
-  email: string;
-  purpose: "email_verification" | "password_reset";
-}
-
-export interface IVerifyOtpData extends IRequestOtpData {
-  otp: string;
-}
-
-export interface IResetPasswordData {
-  token: string;
-  newPassword: string;
-}
-
-export const loginUser = async (credentials: ILoginData) => {
-  return apiRequest("POST", "/auth/login", credentials);
+export const loginUser = async (data: ILoginPayload) => {
+  return apiRequest("POST", "/auth/login", { data });
 };
 
-export const registerUser = async (userData: IRegisterData) => {
-  return apiRequest("POST", "/auth/signup", userData);
+export const registerUser = async (data: IRegisterPayload) => {
+  return apiRequest("POST", "/auth/signup", { data });
 };
 
 export const logoutUser = async () => {
   return apiRequest("POST", "/auth/logout");
 };
 
-export const requestOtp = async (data: IRequestOtpData) => {
-  return apiRequest("POST", "/auth/request-otp", data);
+export const requestOtp = async (data: IRequestOtpPayload) => {
+  return apiRequest("POST", "/auth/request-otp", { data });
 };
 
-export const validateOtp = async (data: IVerifyOtpData) => {
-  return apiRequest("POST", "/auth/validate-otp", data);
+export const validateOtp = async (params: IVerifyOtpPayload) => {
+  return apiRequest("GET", "/auth/validate-otp", { params });
 };
 
-export const resetPassword = async (data: IResetPasswordData) => {
-  return apiRequest("POST", "/auth/reset-password", data);
+export const resetPassword = async (data: IResetPasswordPayload) => {
+  return apiRequest("POST", "/auth/reset-password", { data });
 };
 
 export const loginWithGoogle = async () => {

@@ -1,4 +1,4 @@
-import { getEnv } from "@/utils/helper";
+import { getEnv } from "@/lib/utils/helper";
 
 const envConfig = {
   env: getEnv("NODE_ENV", "development"),
@@ -16,6 +16,11 @@ const envConfig = {
     clientSecret: getEnv("FACEBOOK_CLIENT_SECRET"),
     callbackURL: "/auth/facebook/callback",
   },
+  twilio: {
+    accountSid: getEnv("TWILIO_ACCOUNT_SID"),
+    authToken: getEnv("TWILIO_AUTH_TOKEN"),
+    phone: getEnv("TWILIO_PHONE_NUMBER"),
+  },
   nodemailer: {
     host: getEnv("EMAIL_HOST"),
     port: Number(getEnv("EMAIL_PORT")),
@@ -28,6 +33,10 @@ const envConfig = {
   },
   db: {
     uri: getEnv("MONGO_URI"),
+  },
+  shippo: {
+    key: getEnv("SHIPPO_API_KEY"),
+    endpoint: getEnv("SHIPPO_ENDPOINT"),
   },
   app: {
     port: Number(getEnv("APP_PORT", "5000")),

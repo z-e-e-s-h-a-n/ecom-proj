@@ -7,7 +7,11 @@ import {
 import { getLocalStorage, updateLocalStorage } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useAuth from "@/hooks/useAuth";
-import { getProduct, getProducts } from "@/lib/actions/product";
+import {
+  FilteredProductsResponse,
+  getProduct,
+  getProducts,
+} from "@/lib/actions/product";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 
 export const useCart = () => {
@@ -20,7 +24,7 @@ export const useCart = () => {
     queryClient.setQueryData(["cart"], updatedCart);
   };
 
-  const syncCartToServer = async (payload: UpdateCartPayload) => {
+  const syncStorage = async (payload: UpdateCartPayload) => {
     try {
       await updateUserCart(payload);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
@@ -50,27 +54,19 @@ export const useCart = () => {
     quantity = 1
   ) => {
     const localCart = getLocalStorage<ICartItem[]>("cart", []);
-    let updatedCart: ICartItem[] = [];
+    let updatedCart: ICartItem[] = [...localCart];
 
-    if (action === "add" || action === "update") {
-      if (quantity == null) {
-        throw new Error(`"quantity" is required for action "${action}"`);
-      }
+    const existingIndex = localCart.findIndex(
+      (item) =>
+        item.productId._id === product._id && item.variantId === variantId
+    );
 
-      if (action === "add") {
-        updatedCart = [
-          ...localCart,
-          { productId: product, quantity, variantId },
-        ];
-      } else {
-        updatedCart = localCart.map((item) =>
-          item.productId._id === product._id && item.variantId === variantId
-            ? { ...item, quantity }
-            : item
-        );
-      }
-    } else if (action === "remove") {
-      updatedCart = localCart.filter(
+    if (action === "add" && existingIndex === -1) {
+      updatedCart.push({ productId: product, quantity, variantId });
+    } else if (action === "update" && existingIndex !== -1) {
+      updatedCart[existingIndex]!.quantity = quantity;
+    } else if (action === "remove" && existingIndex !== -1) {
+      updatedCart = updatedCart.filter(
         (item) =>
           item.productId._id !== product._id || item.variantId !== variantId
       );
@@ -80,15 +76,13 @@ export const useCart = () => {
 
     if (currentUser?._id) {
       const items = [{ productId: product._id, quantity, variantId }];
-      syncCartToServer({ action, items });
+      syncStorage({ action, items });
     }
 
-    if (action !== "update") {
-      toast({
-        title: `Product ${action === "add" ? "added to" : "removed from"} cart successfully`,
-        description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your cart.`,
-      });
-    }
+    toast({
+      title: `Product ${action === "add" ? "added to" : "removed from"} cart successfully`,
+      description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your cart.`,
+    });
   };
 
   const isInCart = (product: IProduct, variantId: string) =>
@@ -124,7 +118,7 @@ export const useWishlist = () => {
     queryClient.setQueryData(["wishlist"], updatedWishlist);
   };
 
-  const syncWishlistToServer = async (payload: UpdateWishlistPayload) => {
+  const syncStorage = async (payload: UpdateWishlistPayload) => {
     try {
       await updateUserWishlist(payload);
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
@@ -153,24 +147,27 @@ export const useWishlist = () => {
     variantId: string
   ) => {
     const localWishlist = getLocalStorage<IWishlistItem[]>("wishlist", []);
-    let updatedWishlist: IWishlistItem[];
+    let updatedWishlist: IWishlistItem[] = [...localWishlist];
 
-    if (action === "add") {
-      updatedWishlist = [...localWishlist, { productId: product, variantId }];
-    } else if (action === "remove") {
-      updatedWishlist = localWishlist.filter(
+    const existingIndex = localWishlist.findIndex(
+      (item) =>
+        item.productId._id === product._id && item.variantId === variantId
+    );
+
+    if (action === "add" && existingIndex === -1) {
+      updatedWishlist.push({ productId: product, variantId });
+    } else if (action === "remove" && existingIndex !== -1) {
+      updatedWishlist = updatedWishlist.filter(
         (item) =>
           item.productId._id !== product._id || item.variantId !== variantId
       );
-    } else {
-      throw new Error("Invalid action for wishlist.");
     }
 
     updateWishlistLocal(updatedWishlist);
 
     if (currentUser?._id) {
       const items = [{ productId: product._id, variantId }];
-      syncWishlistToServer({ action, items });
+      syncStorage({ action, items });
     }
 
     toast({
@@ -202,14 +199,14 @@ export const useWishlist = () => {
   };
 };
 
-export const useProducts = () => {
-  const { data, isLoading, error } = useQuery<IProduct[]>({
-    queryKey: ["products"],
-    queryFn: getProducts,
-    initialData: [],
+export const useProducts = (params?: TSearchParams) => {
+  const { data, isLoading, error } = useQuery<FilteredProductsResponse>({
+    queryKey: ["products", params],
+    queryFn: () => getProducts(params),
+    initialData: { products: [], total: 0, page: 1, limit: 12 },
   });
 
-  return { products: data.map((product) => ({ product })), isLoading, error };
+  return { ...data, isLoading, error };
 };
 
 export const useProduct = (productId: string) => {
@@ -220,49 +217,6 @@ export const useProduct = (productId: string) => {
   });
 
   return { product: data, isLoading, error };
-};
-
-export const syncLocalToServer = async (currentUser: TCurrentUser) => {
-  if (!currentUser) return;
-
-  try {
-    const localCart = getLocalStorage<ICartItem[]>("cart", []);
-    const localWishlist = getLocalStorage<IWishlistItem[]>("wishlist", []);
-
-    if (localCart.length) {
-      const items = localCart.map(({ productId, quantity, variantId }) => ({
-        productId: productId._id,
-        quantity,
-        variantId,
-      }));
-      await updateUserCart({ action: "add", items });
-    }
-
-    if (localWishlist.length) {
-      const items = localWishlist.map(({ productId, variantId }) => ({
-        productId: productId._id,
-        variantId,
-      }));
-      await updateUserWishlist({ action: "add", items });
-    }
-  } catch (error) {
-    console.error("Sync local to server failed:", error);
-    // toast.error("Failed to sync your local data to the server.");
-  }
-};
-
-export const useStorageUtils = () => {
-  const { isInCart, toggleCart, updateCart } = useCart();
-  const { isInWishlist, toggleWishlist, updateWishlist } = useWishlist();
-
-  return {
-    isInCart,
-    toggleCart,
-    updateCart,
-    isInWishlist,
-    toggleWishlist,
-    updateWishlist,
-  };
 };
 
 const useStorage = () => {

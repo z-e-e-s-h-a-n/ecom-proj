@@ -2,7 +2,7 @@ import { Router } from "express";
 import passport from "passport";
 import envConfig from "@/config/env";
 import * as controller from "@/controllers/auth";
-import { createAuthSession, sendResponse } from "@/utils/helper";
+import { createAuthSession, sendResponse } from "@/lib/utils/helper";
 
 const router: Router = Router();
 const failureRedirect = `${envConfig.client.endpoint}/login`;
@@ -12,7 +12,7 @@ router.post("/login", controller.login);
 router.post("/signup", controller.signup);
 router.post("/logout", controller.logout);
 router.post("/request-otp", controller.requestOtp);
-router.post("/validate-otp", controller.validateOtp);
+router.get("/validate-otp", controller.validateOtp);
 router.post("/reset-password", controller.resetPassword);
 
 // Google Auth Routes
@@ -31,7 +31,7 @@ router.get(
       const tokenData = await createAuthSession(req, res, req.user);
       if (tokenData) res.redirect(successRedirect);
     } else {
-      sendResponse(res, 404, false, "Authentication failed.");
+      sendResponse(res, 404, "Authentication failed.");
     }
   }
 );
@@ -51,7 +51,7 @@ router.get(
       const tokenData = await createAuthSession(req, res, req.user);
       if (tokenData) res.redirect(successRedirect);
     } else {
-      sendResponse(res, 404, false, "Authentication failed.");
+      sendResponse(res, 404, "Authentication failed.");
     }
   }
 );

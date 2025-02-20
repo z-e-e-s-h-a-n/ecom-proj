@@ -21,14 +21,22 @@ router
   .delete(controller.removeFromWishlist);
 
 // Order routes
-router
-  .route("/orders")
-  .get(controller.getUserOrders)
-  .post(controller.placeOrder);
+router.route("/orders").get(controller.getOrders).post(controller.placeOrder);
 router.get("/orders/:orderId", controller.getOrderById);
 
 // Payment routes
 router.post("/payment/initiate", controller.initiatePayment);
 router.post("/payment/verify", controller.verifyPayment);
+
+router
+  .route("/address")
+  .get(controller.getAddresses)
+  .post(controller.addAddress);
+
+router
+  .route("/address/:addressId")
+  .get(controller.getAddress)
+  .put(controller.updateAddress)
+  .delete(controller.deleteAddress);
 
 export default router;

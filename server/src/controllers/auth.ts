@@ -1,229 +1,216 @@
 import logger from "@/config/logger";
 import UserModel from "@/models/user";
 import { Request, Response } from "express";
-import { manageTokensCookies } from "@/utils/jwt";
+import { manageTokensCookies } from "@/lib/utils/jwt";
 import RefreshTokenModel from "@/models/refreshToken";
 import {
   formatUserResponse,
+  getQueryParams,
   prepareUserResponse,
-  sendOtp,
-  verifyOtp,
-} from "@/utils/user";
-import { sendResponse } from "@/utils/helper";
-import TempSessionModel from "@/models/tempSession";
+} from "@/lib/utils/helper";
+import { sendOtp, verifyOtp } from "@/lib/actions/user";
+import { parseIdentifier, sendResponse, handleError } from "@/lib/utils/helper";
+import { OtpPurpose } from "@/models/otpSession";
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return sendResponse(res, 400, false, "Missing required fields.");
-    }
-    if (await UserModel.exists({ email })) {
-      return sendResponse(res, 400, false, "Email is already registered.");
-    }
-    const newUser = await UserModel.create({ name, email, password });
-    await sendOtp({
-      userId: newUser._id,
+    logger.info("req.body", { body: req.body });
+
+    const { firstName, lastName, identifier, password } = req.body;
+    if (!firstName || !identifier)
+      return sendResponse(res, 400, "Missing required fields.");
+
+    const { email, phone, query, key } = parseIdentifier(identifier);
+
+    const existingUser = await UserModel.findOne(query);
+    if (existingUser) return sendResponse(res, 409, "User already exists.");
+
+    const newUser = await UserModel.create({
+      firstName,
+      lastName,
       email,
-      purpose: "email_verification",
-      subject: "Verify Your Email",
-      message: "Click the link below to verify your email.",
+      phone,
+      password,
     });
 
-    sendResponse(res, 201, true, "User registered. Verify email.");
+    await prepareUserResponse(
+      req,
+      res,
+      newUser,
+      201,
+      `User Registered, please verify your ${key}`
+    );
   } catch (error) {
-    logger.error("Signup Error: ", { error });
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error signing up", error);
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return sendResponse(res, 400, false, "Missing required fields.");
-    }
+    const { identifier, password } = req.body;
+    if (!identifier || !password)
+      return sendResponse(res, 400, "Missing required fields.");
 
-    const user = await UserModel.findOne({ email });
-    if (!user) {
-      return sendResponse(res, 404, false, "User not found.");
-    }
+    const { query, email, phone, key } = parseIdentifier(identifier);
 
-    if (!(await user.comparePassword(password))) {
-      return sendResponse(res, 401, false, "Invalid email or password.");
-    }
+    const user = await UserModel.findOne(query);
+    if (!user) return sendResponse(res, 404, "User not found.");
 
-    if (!user.isVerified) {
-      return sendResponse(res, 401, false, "Please verify your email first.", {
+    if (!user.password)
+      return sendResponse(res, 400, "Please Set Your Password First");
+
+    if (!(await user.comparePassword(password)))
+      return sendResponse(res, 401, "Invalid email or password.");
+
+    if (!user.isAuth) {
+      await sendOtp({ userId: user._id, email, phone, purpose: "verifyEmail" });
+      return sendResponse(res, 401, "Please verify your email first.", {
         user: formatUserResponse(user),
       });
     }
 
-    await prepareUserResponse(req, res, user, "Login successful.");
+    await prepareUserResponse(
+      req,
+      res,
+      user,
+      user.isAuth ? 200 : 400,
+      user.isAuth ? "Signin Successful" : `please verify your ${key}`
+    );
   } catch (error) {
-    logger.error("Error during login", { error });
-    sendResponse(res, 500, false, "Internal server error during login.");
+    handleError(res, "Error logging in", error);
   }
 };
 
 export const requestOtp = async (req: Request, res: Response) => {
   try {
-    const { email, purpose } = req.body;
+    const { identifier, purpose } = req.body;
+    if (!identifier || !purpose)
+      return sendResponse(res, 400, "Missing required fields.");
+    const { email, phone, query } = parseIdentifier(identifier);
 
-    if (!email || !purpose) {
-      return sendResponse(res, 400, false, "Email and purpose are required.");
-    }
-
-    const user = await UserModel.findOne({ email });
-    if (!user) {
-      return sendResponse(res, 404, false, "User not found.");
-    }
+    const user = await UserModel.findOne(query);
+    if (!user) return sendResponse(res, 404, "User not found.");
 
     // Handle specific purposes
-    if (purpose === "email_verification") {
-      if (user.isVerified) {
-        return sendResponse(res, 400, false, "Email is already verified.");
-      }
+    if (purpose === "verifyEmail") {
+      if (user.isAuth)
+        return sendResponse(res, 400, "Email is already verified.");
 
-      await sendOtp({
-        userId: user._id,
-        email,
-        purpose: "email_verification",
-        subject: "Verify Your Email",
-        message: "Click the link below to verify your email.",
-      });
-      return sendResponse(res, 200, true, "Verification email sent.");
+      await sendOtp({ userId: user._id, email, phone, purpose });
+      return sendResponse(res, 200, "Verification OTP sent.");
     }
 
-    if (purpose === "password_reset") {
-      await sendOtp({
-        userId: user._id,
-        email,
-        purpose: "password_reset",
-        subject: "Reset Your Password",
-        message: "Click the link below to reset your password.",
-      });
-      return sendResponse(res, 200, true, "Password reset email sent.");
+    if (["setPassword", "resetPassword"].includes(purpose)) {
+      await sendOtp({ userId: user._id, email, phone, purpose });
+      return sendResponse(res, 200, "Password reset OTP sent.");
     }
 
-    // Invalid purpose
-    sendResponse(res, 400, false, "Invalid purpose.");
+    sendResponse(res, 400, "Invalid purpose.");
   } catch (error) {
-    logger.error("Error in requestOtp:", { error });
-    sendResponse(res, 500, false, "Internal server error.");
+    handleError(res, "Error requesting OTP", error);
   }
 };
 
 export const validateOtp = async (req: Request, res: Response) => {
   try {
-    const { otp, email, purpose } = req.body;
+    let { identifier, secret, purpose, verifyOnly } = getQueryParams(req.query);
 
-    if (!otp || !email || !purpose) {
-      return sendResponse(
-        res,
-        400,
-        false,
-        "OTP, email, and purpose are required."
-      );
-    }
+    if (!identifier || !secret || !purpose)
+      return sendResponse(res, 400, "Missing required fields.");
+    const { query, email, phone } = parseIdentifier(identifier);
 
-    const user = await UserModel.findOne({ email });
-    if (!user) {
-      return sendResponse(res, 404, false, "User not found.");
-    }
+    const user = await UserModel.findOne(query);
+    if (!user) return sendResponse(res, 404, "User not found.");
 
-    // Verify the OTP
-    await verifyOtp({ userId: user._id, otp, purpose });
+    const session = await verifyOtp({
+      userId: user._id,
+      secret,
+      purpose: purpose as OtpPurpose,
+      verifyOnly: verifyOnly === "true",
+    });
 
-    // Handle specific purposes
-    if (purpose === "email_verification") {
-      if (user.isVerified) {
-        return sendResponse(res, 400, false, "Email is already verified.");
-      }
+    if (verifyOnly === "true" && session)
+      return sendResponse(res, 200, "Otp Successfully Verified", {
+        secret: session.secret,
+      });
 
-      user.isVerified = true;
+    if (purpose === "verifyEmail") {
+      if (user.isAuth)
+        return sendResponse(res, 400, "Email is already verified.");
+
+      user.isAuth = true;
       await user.save();
 
-      return sendResponse(res, 200, true, "Email verified successfully.", {
+      return sendResponse(res, 200, "Email verified successfully.", {
         user: formatUserResponse(user),
       });
     }
 
-    if (purpose === "password_reset") {
-      const session = new TempSessionModel({
+    if (["setPassword", "resetPassword"].includes(purpose)) {
+      const session = await sendOtp({
         userId: user._id,
-        purpose: "password_reset",
+        email,
+        phone,
+        purpose: purpose as OtpPurpose,
+        type: "token",
+        sendSecret: false,
       });
 
-      const token = session.generateToken();
-      await session.save();
-
-      return sendResponse(res, 200, true, "OTP verified for password reset.", {
-        token,
+      return sendResponse(res, 200, "OTP verified Add New Password.", {
+        secret: session.secret,
       });
     }
 
-    sendResponse(res, 400, false, "Invalid purpose.");
-  } catch (error) {
-    logger.error("OTP Verification Error:", { error });
-    sendResponse(res, 500, false, "Internal server error.");
+    sendResponse(res, 400, "Invalid purpose.");
+  } catch (error: any) {
+    handleError(res, "Error validating OTP", error);
   }
 };
 
 export const logout = async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    const deviceId = req.cookies.deviceId;
+    const tokenId = req.cookies.tokenId;
 
-    if (!refreshToken || !deviceId) {
+    if (!refreshToken || !tokenId) {
       logger.warn("Logout attempted without refreshToken or deviceId.");
       manageTokensCookies(res, "remove");
-      return sendResponse(res, 200, true, "Logged out (no active session).");
+      return sendResponse(res, 200, "Logged out (no active session).");
     }
 
     const result = await RefreshTokenModel.findOneAndUpdate(
-      { token: refreshToken, "deviceInfo.id": deviceId },
+      { token: refreshToken, _id: tokenId },
       { $set: { blacklisted: true } }
     );
 
-    if (!result) {
-      logger.warn("No matching refreshToken found for logout.");
-    }
+    if (!result) logger.warn("No matching refreshToken found for logout.");
 
     manageTokensCookies(res, "remove");
-    sendResponse(res, 200, true, "Logged out successfully.");
+    sendResponse(res, 200, "Logged out successfully.");
   } catch (error) {
-    logger.error("Error during logout", { error });
-    sendResponse(res, 500, false, "Internal server error during logout.");
+    handleError(res, "Error during logout", error);
   }
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { token, newPassword } = req.body;
+    const { identifier, password, secret, purpose } = req.body;
+    if (!secret || !identifier || !password || !purpose)
+      return sendResponse(res, 400, "Missing Fields are required.");
 
-    if (!token || !newPassword) {
-      return sendResponse(res, 400, false, "Missing Fields are required.");
-    }
+    if (!["setPassword", "resetPassword"].includes(purpose))
+      return sendResponse(res, 400, "Invalid purpose.");
 
-    const session = await TempSessionModel.findOne({ token });
-    if (!session || !session.verifyToken(token)) {
-      return sendResponse(res, 401, false, "Invalid or expired session token.");
-    }
+    const { query } = parseIdentifier(identifier);
+    const user = await UserModel.findOne(query);
+    if (!user) return sendResponse(res, 404, "User not found.");
+    await verifyOtp({ userId: user._id, secret, purpose });
 
-    const user = await UserModel.findById(session.userId);
-    if (!user) {
-      return sendResponse(res, 404, false, "User not found.");
-    }
-
-    // Reset the password
-    user.password = newPassword;
+    user.password = password;
     await user.save();
-    await session.deleteOne();
 
-    sendResponse(res, 200, true, "Password reset successful.");
+    sendResponse(res, 200, "Password reset successful.");
   } catch (error) {
-    logger.error("Error resetting password:", { error });
-    sendResponse(res, 500, false, "Internal server error ");
+    handleError(res, "Error resetting password", error);
   }
 };

@@ -1,11 +1,11 @@
 import Link from "next/link";
 
-function CategoryCard({ label, Icon, url }: CategoryCardProps) {
+function CategoryCard({ name }: ICategory) {
   return (
-    <Link href={url} className="flex-center h-[145px] rounded border">
+    <Link href={"/"} className="flex-center h-[145px] rounded border">
       <div className="flex-center flex-col gap-4">
-        <Icon className="size-10" />
-        <span className="subtitle-1">{label}</span>
+        {/* <Icon className="size-10" /> */}
+        <span className="subtitle-1">{name}</span>
       </div>
     </Link>
   );

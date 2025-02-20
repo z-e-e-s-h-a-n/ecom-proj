@@ -36,7 +36,7 @@ export const useCurrency = () => {
   });
 
   return {
-    currencyInfo,
+    currencyInfo: currencyInfo!,
     isLoadingCurrency,
     currencyList,
     isLoadingList,
