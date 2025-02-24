@@ -1,6 +1,5 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import {
-  getEnv,
   setCookie,
   durationToTime,
   createAuthSession,
@@ -9,7 +8,7 @@ import {
 } from "@/lib/utils/helper";
 import { Request, Response } from "express";
 import RefreshTokenModel from "@/models/refreshToken";
-import envConfig from "@/config/env";
+import envConfig, { getEnv } from "@/config/env";
 import mongoose from "mongoose";
 import logger from "@/config/logger";
 import { ISafeUser, UserRole } from "@/models/user";

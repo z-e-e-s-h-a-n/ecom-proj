@@ -1,4 +1,9 @@
-import { getEnv } from "@/lib/utils/helper";
+export const getEnv = (key: string, fallback?: string): string => {
+  const value = process.env[key];
+  if (!value && !fallback)
+    throw new Error(`Missing environment variable: ${key}`);
+  return value || fallback!;
+};
 
 const envConfig = {
   env: getEnv("NODE_ENV", "development"),

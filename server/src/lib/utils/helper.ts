@@ -1,6 +1,10 @@
 import envConfig from "@/config/env";
 import { CookieOptions, Request, Response } from "express";
-import { generateTokens, ITokenPayload, manageTokensCookies } from "./jwt";
+import {
+  generateTokens,
+  ITokenPayload,
+  manageTokensCookies,
+} from "@/lib/utils/jwt";
 import { ISafeUser, IUser } from "@/models/user";
 import { UAParser } from "ua-parser-js";
 import axios from "axios";
@@ -8,13 +12,6 @@ import logger from "@/config/logger";
 import ms from "ms";
 import { ILookupIPInfo } from "@/types/global";
 import { sendOtp } from "@/lib/actions/user";
-
-export const getEnv = (key: string, fallback?: string): string => {
-  const value = process.env[key];
-  if (!value && !fallback)
-    throw new Error(`Missing environment variable: ${key}`);
-  return value || fallback!;
-};
 
 export const durationToTime = (
   duration: ms.StringValue,
