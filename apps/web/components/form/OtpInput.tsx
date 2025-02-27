@@ -18,7 +18,7 @@ import {
 } from "@workspace/ui/components/input-otp";
 import { Button } from "@workspace/ui/components/button";
 import { requestOtp, validateOtp } from "@/lib/actions/auth";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useToast } from "@workspace/ui/hooks/use-toast";
 import Image from "next/image";
 import { X } from "lucide-react";
@@ -37,7 +37,6 @@ interface IOtpInputProps {
   identifier: string;
   purpose: OtpPurpose;
   redirectUrl?: string;
-  callback?: () => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
@@ -48,10 +47,8 @@ function OtpInput({
   redirectUrl,
   isOpen,
   setIsOpen,
-  callback,
 }: IOtpInputProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const { toastHandler } = useToast();
 
   const form = useForm<TOtpFormSchema>({
@@ -69,11 +66,10 @@ function OtpInput({
       if (!response?.success) throw new Error(response.message);
       if (response.data.secret) {
         toastHandler({ message: response.message });
-        redirectUrl = `${pathname.split("?")[0]}?secret=${response.data.secret}&identifier=${identifier}&purpose=${purpose}`;
+        redirectUrl = `?secret=${response.data.secret}&identifier=${identifier}&purpose=${purpose}&redirectUrl=${redirectUrl ?? ""}`;
       } else toastHandler({ message: "Email verified successfully." });
       setIsOpen(false);
-      if (callback) callback();
-      else if (redirectUrl) router.push(redirectUrl);
+      if (redirectUrl) router.push(redirectUrl);
     } catch (error: any) {
       form.setValue("response.errorMessage", error.message);
       toastHandler({ message: error.message, variant: "destructive" });

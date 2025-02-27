@@ -1,50 +1,44 @@
-import { Schema, model, Document, ObjectId, Model } from "mongoose";
+import { Schema, model } from "mongoose";
 import crypto from "crypto";
+import { InferMongooseSchema } from "@/types/global";
 
-export type OtpType = "token" | "otp";
-export type OtpPurpose = "verifyEmail" | "resetPassword" | "setPassword";
-
-export interface IOtpSession extends Document {
-  userId: ObjectId;
-  purpose: OtpPurpose;
-  secret: string;
-  expireAt: Date;
-  verifySecret(secret: string): boolean;
-}
-
-export interface IOtpSessionModel extends Model<IOtpSession> {
-  generateSecret(type: OtpType): string;
-}
-
-const otpSessionSchema = new Schema<IOtpSession>({
-  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  purpose: {
-    type: String,
-    enum: ["verifyEmail", "resetPassword", "setPassword"],
-    required: true,
+const otpSessionSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    type: { type: String, enum: ["token", "otp"], required: true },
+    purpose: {
+      type: String,
+      enum: ["verifyEmail", "resetPassword", "setPassword"],
+      required: true,
+    },
+    secret: { type: String, required: true },
+    expireAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 10 * 60 * 1000),
+    },
   },
-  secret: { type: String, required: true },
-  expireAt: {
-    type: Date,
-    default: () => new Date(Date.now() + 10 * 60 * 1000),
-  },
-});
+  {
+    methods: {
+      verifySecret(secret): boolean {
+        return this.secret === secret;
+      },
+    },
+    statics: {
+      generateSecret(type): string {
+        return type === "token"
+          ? crypto.randomBytes(32).toString("hex")
+          : crypto.randomInt(100000, 999999).toString();
+      },
+    },
+    timestamps: true,
+  }
+);
 
 otpSessionSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
-otpSessionSchema.statics.generateSecret = function (type: OtpType): string {
-  return type === "token"
-    ? crypto.randomBytes(32).toString("hex")
-    : crypto.randomInt(100000, 999999).toString();
-};
-
-otpSessionSchema.methods.verifySecret = function (secret: string): boolean {
-  return this.secret === secret;
-};
-
-const OtpSessionModel = model<IOtpSession, IOtpSessionModel>(
-  "OtpSession",
-  otpSessionSchema
-);
+export type TOtpSessionSchema = InferMongooseSchema<typeof otpSessionSchema>;
+export type OtpType = TOtpSessionSchema["type"];
+export type OtpPurpose = TOtpSessionSchema["purpose"];
+const OtpSessionModel = model("OtpSession", otpSessionSchema);
 
 export default OtpSessionModel;

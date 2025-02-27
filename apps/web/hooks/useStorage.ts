@@ -9,7 +9,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useAuth from "@/hooks/useAuth";
 import {
   FilteredProductsResponse,
-  getProduct,
+  getAttributes,
+  getCategories,
   getProducts,
 } from "@/lib/actions/product";
 import { useToast } from "@workspace/ui/hooks/use-toast";
@@ -51,7 +52,8 @@ export const useCart = () => {
     action: "add" | "update" | "remove",
     product: IProduct,
     variantId: string,
-    quantity = 1
+    quantity = 1,
+    toasts = true
   ) => {
     const localCart = getLocalStorage<ICartItem[]>("cart", []);
     let updatedCart: ICartItem[] = [...localCart];
@@ -79,10 +81,11 @@ export const useCart = () => {
       syncStorage({ action, items });
     }
 
-    toast({
-      title: `Product ${action === "add" ? "added to" : "removed from"} cart successfully`,
-      description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your cart.`,
-    });
+    if (toasts)
+      toast({
+        title: `Product ${action === "add" ? "added to" : "removed from"} cart successfully`,
+        description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your cart.`,
+      });
   };
 
   const isInCart = (product: IProduct, variantId: string) =>
@@ -101,7 +104,7 @@ export const useCart = () => {
 
   return {
     cart: data || [],
-    isLoading,
+    isCartLoading: isLoading,
     isInCart,
     toggleCart,
     updateCart,
@@ -144,7 +147,8 @@ export const useWishlist = () => {
   const updateWishlist = (
     action: "add" | "remove",
     product: IProduct,
-    variantId: string
+    variantId: string,
+    toasts = true
   ) => {
     const localWishlist = getLocalStorage<IWishlistItem[]>("wishlist", []);
     let updatedWishlist: IWishlistItem[] = [...localWishlist];
@@ -169,11 +173,11 @@ export const useWishlist = () => {
       const items = [{ productId: product._id, variantId }];
       syncStorage({ action, items });
     }
-
-    toast({
-      title: `Product ${action === "add" ? "added to" : "removed from"} wishlist successfully`,
-      description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your wishlist.`,
-    });
+    if (toasts)
+      toast({
+        title: `Product ${action === "add" ? "added to" : "removed from"} wishlist successfully`,
+        description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your wishlist.`,
+      });
   };
 
   const isInWishlist = (product: IProduct, variantId: string) =>
@@ -192,7 +196,7 @@ export const useWishlist = () => {
 
   return {
     wishlist: data || [],
-    isLoading,
+    isWishlistLoading: isLoading,
     toggleWishlist,
     isInWishlist,
     updateWishlist,
@@ -200,31 +204,44 @@ export const useWishlist = () => {
 };
 
 export const useProducts = (params?: TSearchParams) => {
-  const { data, isLoading, error } = useQuery<FilteredProductsResponse>({
+  const { data, isLoading } = useQuery<FilteredProductsResponse>({
     queryKey: ["products", params],
     queryFn: () => getProducts(params),
     initialData: { products: [], total: 0, page: 1, limit: 12 },
   });
 
-  return { ...data, isLoading, error };
+  return { ...data, isProductsLoading: isLoading };
 };
 
-export const useProduct = (productId: string) => {
-  const { data, isLoading, error } = useQuery<IProduct>({
-    queryKey: ["product", productId],
-    queryFn: () => getProduct(productId),
-    enabled: !!productId,
+export const useAttributes = (categories?: string[]) => {
+  const { data, isLoading } = useQuery<IAttribute[]>({
+    queryKey: ["attributes", categories],
+    queryFn: () => getAttributes(categories),
+    initialData: [],
+    // staleTime: 1000 * 60 * 60 * 24,
   });
 
-  return { product: data, isLoading, error };
+  return { attributes: data, isAttributesLoading: isLoading };
+};
+
+export const useCategories = () => {
+  const { data, isLoading } = useQuery<ICategory[]>({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+    initialData: [],
+    // staleTime: 1000 * 60 * 60 * 24,
+  });
+
+  return { categories: data, isCategoriesLoading: isLoading };
 };
 
 const useStorage = () => {
-  const { cart } = useCart();
-  const { wishlist } = useWishlist();
-  const { products } = useProducts();
-
-  return { cart, wishlist, products };
+  const cart = useCart();
+  const wishlist = useWishlist();
+  const products = useProducts();
+  const attributes = useAttributes();
+  const categories = useCategories();
+  return { ...cart, ...wishlist, ...products, ...categories, ...attributes };
 };
 
 export default useStorage;

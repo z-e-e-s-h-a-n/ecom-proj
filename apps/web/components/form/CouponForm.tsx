@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 
 export interface ICouponFormProps {
   className?: string;
-  onSubmit: (values: TCouponSchema) => void;
+  onSubmit: (coupon: string) => void;
 }
 
 function CouponForm({ onSubmit }: ICouponFormProps) {
@@ -24,12 +24,16 @@ function CouponForm({ onSubmit }: ICouponFormProps) {
     resolver: zodResolver(couponSchema),
   });
 
+  const onCouponSubmit = (values: TCouponSchema) => {
+    onSubmit(values.coupon);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onCouponSubmit)}>
         <FormField
           control={form.control}
-          name={"code"}
+          name={"coupon"}
           render={({ field }) => (
             <FormItem className="space-y-2">
               <FormLabel className="flex items-center text-foreground font-normal text-sm gap-2 underline">

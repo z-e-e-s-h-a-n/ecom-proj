@@ -1,34 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getProducts } from "@/lib/actions/product";
 import { getVariant } from "@/lib/utils";
 import useDebounce from "@/hooks/useDebounce";
 import { cn } from "@workspace/ui/lib/utils";
 import SearchBar from "@/components/form/SearchBar";
 import { useRouter } from "next/navigation";
+import { useProducts } from "@/hooks/useStorage";
 
 const SearchDropdown = ({ className }: { className?: string }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<{ product: IProduct }[]>(
-    []
-  );
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const debouncedQuery = useDebounce(searchQuery, 300);
+  const debouncedQuery = useDebounce(searchQuery, 300).trim();
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (!debouncedQuery.trim()) return setSearchResults([]);
-      const { products } = await getProducts({
-        limit: 6,
-        searchQuery: debouncedQuery,
-      });
-      setSearchResults(products);
-    };
-
-    fetchProducts();
-  }, [debouncedQuery]);
+  const { products, isProductsLoading } = useProducts({
+    limit: "6",
+    searchQuery: debouncedQuery,
+  });
 
   return (
     <div className={cn("relative", className)}>
@@ -38,10 +26,10 @@ const SearchDropdown = ({ className }: { className?: string }) => {
         onFocus={() => setIsSearchOpen(true)}
         onBlur={() => setIsSearchOpen(false)}
       />
-      {isSearchOpen && debouncedQuery.trim() && (
+      {isSearchOpen && !isProductsLoading && debouncedQuery && (
         <ul className="absolute top-10 bg-secondary p-4 rounded w-[220px] z-10 grid gap-4">
-          {searchResults.length > 0 ? (
-            searchResults.map(({ product }) => {
+          {products.length > 0 ? (
+            products.map(({ product }) => {
               const variant = getVariant(product);
               return (
                 <Link

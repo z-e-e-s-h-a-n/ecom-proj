@@ -17,3 +17,39 @@
 {"level":"error","message":"User not authorized.","service":"user-service","timestamp":"2025-02-20 08:56:18"}
 {"level":"error","message":"User not authorized.","service":"user-service","timestamp":"2025-02-20 08:56:18"}
 {"level":"error","message":"User not authorized.","service":"user-service","timestamp":"2025-02-20 08:58:12","user":{"_id":"67b6a22308f11d5b3d2cf976","exp":1740024273,"iat":1740023373,"role":"customer"}}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-24 15:53:47"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-24 15:53:47"}
+{"level":"error","message":"Invalid or expired OTP.","service":"user-service","timestamp":"2025-02-25 14:51:45"}
+{"level":"error","message":"Invalid or expired OTP.","service":"user-service","timestamp":"2025-02-25 14:52:13"}
+{"level":"error","message":"Invalid or expired OTP.","service":"user-service","timestamp":"2025-02-25 15:05:59"}
+{"errorMsg":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"items\",\n      0,\n      \"categoryId\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"type\": \"number\",\n    \"inclusive\": false,\n    \"exact\": false,\n    \"message\": \"Number must be greater than 0\",\n    \"path\": [\n      \"items\",\n      0,\n      \"price\"\n    ]\n  }\n]","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:49:39"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Number must be greater than 0","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:53:44"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 16:55:45"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 16:55:45"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Number must be greater than 0","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:55:54"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Number must be greater than 0","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:57:04"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:57:33"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:58:16"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:01:10"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:02:56"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:03:38"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:03:46"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:05:00"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:09:50"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 17:13:41"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:13:42"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:14:18"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:15:04"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:18:21"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:18:27"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:18:37"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:19:11"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:19:17"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:22:44"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:24:20"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:24:39"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:25:07"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 17:45:28"}
+{"errorMsg":"items: min one item is required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 18:53:31"}
+{"errorMsg":"items: min one item is required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 18:55:29"}
+{"errorMsg":"items: min one item is required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 18:56:15"}

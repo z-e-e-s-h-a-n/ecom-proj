@@ -2,23 +2,16 @@
 import { Request, Response } from "express";
 import ProductModel from "@/models/product";
 import { handleError, sendResponse } from "@/lib/utils/helper";
+import { validateRequest } from "@/config/zod";
+import { productSchema } from "@/schemas/product";
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const { products } = req.body;
-
-    if (!Array.isArray(products) || products.length === 0)
-      return sendResponse(res, 400, "Invalid products data.");
-
-    const savedProducts = await Promise.all(
-      products.map(async (product: any) => {
-        const newProduct = await ProductModel.create(product);
-        return newProduct;
-      })
-    );
+    const productData = validateRequest(productSchema, req.body);
+    const product = await ProductModel.create(productData);
 
     sendResponse(res, 201, "Products created successfully.", {
-      products: savedProducts,
+      product,
     });
   } catch (error) {
     handleError(res, "Error creating products:", error);
@@ -28,11 +21,16 @@ export const createProduct = async (req: Request, res: Response) => {
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
-    const updates = req.body;
+    if (!productId) return sendResponse(res, 400, "Product ID is required.");
+    const productData = validateRequest(productSchema, req.body);
 
-    const product = await ProductModel.findByIdAndUpdate(productId, updates, {
-      new: true,
-    });
+    const product = await ProductModel.findByIdAndUpdate(
+      productId,
+      productData,
+      {
+        new: true,
+      }
+    );
     if (!product) return sendResponse(res, 404, "Product not found.");
 
     sendResponse(res, 200, "Product updated successfully.", { product });
@@ -41,7 +39,7 @@ export const updateProduct = async (req: Request, res: Response) => {
   }
 };
 
-export const getProductById = async (req: Request, res: Response) => {
+export const getProduct = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
     if (!productId) return sendResponse(res, 400, "Product ID Requires");
@@ -117,7 +115,7 @@ export const getProducts = async (req: Request, res: Response) => {
       name_asc: "name",
       name_desc: "-name",
     };
-    const sortQuery = sortOptions[sort as string] || sortOptions["price_asc"];
+    const sortQuery = sortOptions[sort as string];
 
     // Fetch products with pagination and population
     const products = await ProductModel.find(query)

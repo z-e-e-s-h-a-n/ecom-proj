@@ -13,6 +13,7 @@ export const RenderAuthInputs = ({
   type,
   control,
   isAuth,
+  redirectQuery,
 }: RenderAuthInputs) => {
   return (
     <>
@@ -81,7 +82,7 @@ export const RenderAuthInputs = ({
             control={control}
           />
           <Link
-            href="/reset-password"
+            href={`/reset-password${redirectQuery}`}
             className="ml-auto min-w-max text-sm underline-offset-2 hover:underline"
           >
             Forgot Password?
@@ -92,7 +93,10 @@ export const RenderAuthInputs = ({
   );
 };
 
-export const AuthFormNavigation = ({ type }: { type: AuthFormType }) => {
+export const AuthFormNavigation = ({
+  type,
+  redirectQuery = "",
+}: AuthFormNavigationProps) => {
   return (
     <div className="text-center text-sm">
       {type === "sign-in"
@@ -101,7 +105,7 @@ export const AuthFormNavigation = ({ type }: { type: AuthFormType }) => {
           ? "Already have an account?"
           : "Back to"}{" "}
       <Link
-        href={type === "sign-in" ? "/sign-up" : "/sign-in"}
+        href={`${type === "sign-in" ? "/sign-up" : "/sign-in"}${redirectQuery}`}
         className="underline underline-offset-4"
       >
         {type === "sign-in" ? "Sign Up" : "Sign In"}
@@ -110,7 +114,9 @@ export const AuthFormNavigation = ({ type }: { type: AuthFormType }) => {
   );
 };
 
-export function RenderSocialAuthButton() {
+export function RenderSocialAuthButton({
+  redirectQuery,
+}: SocialAuthButtonProps) {
   const providerList = [
     {
       provider: "google",

@@ -1,49 +1,24 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export interface IUserAddress {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-}
-
-export interface IAddressModel extends Document, IUserAddress {
-  userId: mongoose.Types.ObjectId;
-  isDefault: boolean;
-  type: "shipping" | "billing";
-  label: "home" | "work";
-}
-
-const AddressSchema = new Schema<IAddressModel>(
+const addressSchema = new Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    phone: { type: String, required: true },
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
     zip: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
-    type: {
-      type: String,
-      enum: ["shipping", "billing"],
-      default: "shipping",
-    },
-    label: { type: String, enum: ["home", "work"], default: "home" },
+    type: { type: String, enum: ["shipping", "billing"], default: "shipping" },
+    label: { type: String, default: "Home" },
   },
   { timestamps: true }
 );
 
-const AddressModel = mongoose.model<IAddressModel>("Address", AddressSchema);
+export type TAddressSchema = InferMongooseSchema<typeof addressSchema>;
+const AddressModel = model("Address", addressSchema);
 
 export default AddressModel;

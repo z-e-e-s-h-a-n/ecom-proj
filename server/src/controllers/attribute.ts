@@ -1,24 +1,14 @@
 import { Request, Response } from "express";
 import AttributeModel from "@/models/attribute";
 import { handleError, sendResponse } from "@/lib/utils/helper";
+import { validateRequest } from "@/config/zod";
+import { attributeSchema } from "@/schemas/attribute";
 
-export const createAttributes = async (req: Request, res: Response) => {
+export const createAttribute = async (req: Request, res: Response) => {
   try {
-    const { items } = req.body;
+    const attribute = validateRequest(attributeSchema, req.body);
+    await AttributeModel.create(attribute);
 
-    if (!Array.isArray(items) || items.length === 0)
-      return sendResponse(res, 400, "Items array is required.");
-
-    const addOps = items.map((item: any) => {
-      if (!item.name) {
-        throw new Error("Each item must have a name.");
-      }
-      return AttributeModel.updateOne({ name: item.name }, item, {
-        upsert: true,
-      });
-    });
-
-    await Promise.all(addOps);
     sendResponse(res, 201, "Attributes created successfully");
   } catch (error) {
     handleError(res, "Error creating attributes: ", error);
@@ -27,7 +17,7 @@ export const createAttributes = async (req: Request, res: Response) => {
 
 export const getAttributes = async (req: Request, res: Response) => {
   try {
-    const { categories } = req.query;
+    const categories = req.query.categories;
 
     const query =
       categories && Array.isArray(categories)
@@ -63,6 +53,8 @@ export const getAttribute = async (req: Request, res: Response) => {
 export const deleteAttribute = async (req: Request, res: Response) => {
   try {
     const { attrId } = req.params;
+    if (!attrId) return sendResponse(res, 400, "Attribute ID is required.");
+
     const attribute = await AttributeModel.findByIdAndDelete(attrId);
     if (!attribute) return sendResponse(res, 404, "Attribute not found.");
 

@@ -1,17 +1,7 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export interface ICartItem {
-  productId: ObjectId;
-  variantId: ObjectId;
-  quantity: number;
-}
-
-export interface ICart extends Document {
-  userId: ObjectId;
-  items: ICartItem[];
-}
-
-const cartSchema = new Schema<ICart>(
+const cartSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -36,5 +26,7 @@ const cartSchema = new Schema<ICart>(
   { timestamps: true }
 );
 
-const CartModel = mongoose.model<ICart>("Cart", cartSchema);
+export type TCartSchema = InferMongooseSchema<typeof cartSchema>;
+const CartModel = model("Cart", cartSchema);
+
 export default CartModel;

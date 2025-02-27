@@ -5,12 +5,10 @@ import ProductSection from "@/components/showcase/ProductSection";
 import { Separator } from "@workspace/ui/components/separator";
 import { bannerCardsList } from "@/constants/product";
 import BannerCardSection from "@/components/showcase/BannerCardSection";
-import { useProducts } from "@/hooks/useStorage";
-import useCategories from "@/hooks/useCategories";
+import useStorage from "@/hooks/useStorage";
 
 function Home() {
-  const { products } = useProducts();
-  const { categories } = useCategories();
+  const { products, categories } = useStorage();
 
   return (
     <>

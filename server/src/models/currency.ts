@@ -1,18 +1,9 @@
 import { getExchangeRates } from "@/lib/utils/helper";
+import { InferMongooseSchema } from "@/types/global";
 import getSymbolFromCurrency from "currency-symbol-map";
-import mongoose, { Schema, Document } from "mongoose";
+import { Schema, model } from "mongoose";
 
-export interface ICurrencyOption extends Document {
-  currency: string;
-  symbol: string;
-  multiplier: number;
-  isDefault: boolean;
-  countries: string[];
-  decimalSeparator: string;
-  thousandSeparator: string;
-}
-
-const CurrencyOptionSchema = new Schema<ICurrencyOption>({
+const currencyOptionSchema = new Schema({
   currency: {
     type: String,
     required: true,
@@ -29,7 +20,7 @@ const CurrencyOptionSchema = new Schema<ICurrencyOption>({
   thousandSeparator: { type: String, required: true, default: "," },
 });
 
-CurrencyOptionSchema.pre<ICurrencyOption>("save", async function (next) {
+currencyOptionSchema.pre<TCurrencyOptionSchema>("save", async function (next) {
   if (!this.symbol) {
     this.symbol = getSymbolFromCurrency(this.currency) || "$";
   }
@@ -39,9 +30,9 @@ CurrencyOptionSchema.pre<ICurrencyOption>("save", async function (next) {
   next();
 });
 
-const CurrencyOptionModel = mongoose.model<ICurrencyOption>(
-  "CurrencyOption",
-  CurrencyOptionSchema
-);
+export type TCurrencyOptionSchema = InferMongooseSchema<
+  typeof currencyOptionSchema
+>;
+const CurrencyOptionModel = model("CurrencyOption", currencyOptionSchema);
 
 export default CurrencyOptionModel;

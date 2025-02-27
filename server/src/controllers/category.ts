@@ -1,25 +1,15 @@
 import { Request, Response } from "express";
 import CategoryModel from "@/models/category";
 import { handleError, sendResponse } from "@/lib/utils/helper";
+import { categorySchema } from "@/schemas/category";
+import { validateRequest } from "@/config/zod";
 
 // create or Update Categories
-export const createCategories = async (req: Request, res: Response) => {
+export const createCategory = async (req: Request, res: Response) => {
   try {
-    const { items } = req.body;
+    const attribute = validateRequest(categorySchema, req.body);
+    await CategoryModel.create(attribute);
 
-    if (!Array.isArray(items) || items.length === 0)
-      return sendResponse(res, 400, "Items array is required.");
-
-    const addOps = items.map((item: any) => {
-      if (!item.name) {
-        throw new Error("Each item must have a name.");
-      }
-      return CategoryModel.updateOne({ name: item.name }, item, {
-        upsert: true,
-      });
-    });
-
-    await Promise.all(addOps);
     sendResponse(res, 201, "Categories created successfully");
   } catch (error) {
     handleError(res, "Error creating categories: ", error);
@@ -39,7 +29,7 @@ export const getCategories = async (_: Request, res: Response) => {
 };
 
 // Get Category by ID
-export const getCategoryById = async (req: Request, res: Response) => {
+export const getCategory = async (req: Request, res: Response) => {
   try {
     const { categoryId } = req.params;
     if (!categoryId) return sendResponse(res, 400, "Category ID is required.");

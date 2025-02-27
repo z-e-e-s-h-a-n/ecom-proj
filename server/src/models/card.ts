@@ -1,16 +1,7 @@
-import mongoose, { Document, ObjectId, Schema } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { model, Schema } from "mongoose";
 
-export interface ICard extends Document {
-  userId: ObjectId;
-  name: string;
-  number: string;
-  expiry: string;
-  cvv: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const cardSchema = new Schema<ICard>(
+const cardSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true },
@@ -21,5 +12,7 @@ const cardSchema = new Schema<ICard>(
   { timestamps: true }
 );
 
-const CardModel = mongoose.model<ICard>("Card", cardSchema);
+export type TCardSchema = InferMongooseSchema<typeof cardSchema>;
+const CardModel = model("Card", cardSchema);
+
 export default CardModel;

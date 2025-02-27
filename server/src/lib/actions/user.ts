@@ -1,22 +1,24 @@
 import OtpSessionModel, { OtpPurpose, OtpType } from "@/models/otpSession";
 import { sendEmail } from "@/config/nodemailer";
 import { sendSms } from "@/config/twilio";
-import { ObjectId } from "@/types/global";
+import { Nullable } from "@/types/global";
+import { Types } from "mongoose";
 
 export interface SendOtpPayload {
-  userId: string | ObjectId;
-  email?: string;
-  phone?: string;
+  userId: Types.ObjectId;
+  email?: Nullable<string>;
+  phone?: Nullable<string>;
   purpose: OtpPurpose;
   sendSecret?: boolean;
   type?: OtpType;
 }
 
 export interface verifyOtpPayload {
-  userId: string | ObjectId;
+  userId: Types.ObjectId;
   secret: string;
   purpose: OtpPurpose;
   verifyOnly?: boolean;
+  type?: OtpType;
 }
 
 export const sendOtp = async ({
@@ -27,11 +29,11 @@ export const sendOtp = async ({
   sendSecret = true,
   type = "otp",
 }: SendOtpPayload) => {
-  let session = await OtpSessionModel.findOne({ userId, purpose });
+  let session = await OtpSessionModel.findOne({ userId, purpose, type });
 
   if (!session) {
     const secret = OtpSessionModel.generateSecret(type);
-    session = await OtpSessionModel.create({ userId, purpose, secret });
+    session = await OtpSessionModel.create({ userId, purpose, secret, type });
   }
 
   if (sendSecret) {
@@ -48,8 +50,9 @@ export const verifyOtp = async ({
   purpose,
   secret,
   verifyOnly = false,
+  type = "otp",
 }: verifyOtpPayload) => {
-  const session = await OtpSessionModel.findOne({ userId, purpose });
+  const session = await OtpSessionModel.findOne({ userId, purpose, type });
   if (!session || !session.verifySecret(secret))
     throw new Error("Invalid or expired OTP.");
   if (verifyOnly) return session;

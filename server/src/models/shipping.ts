@@ -1,57 +1,58 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model, Types } from "mongoose";
 
-export interface IShippingMethod extends Document {
-  zone: string;
-  enabled: boolean;
-  description: string;
-  countries: string[];
-  methods: {
-    name: string;
-    type: "flatRate" | "freeShipping";
-    cost: string;
-    categories: ObjectId[];
-    require: "none" | "coupon" | "min" | "either";
-    calcType: "perClass" | "perOrder";
-  }[];
-}
+const pricingSchema = new Schema({
+  type: {
+    type: String,
+    enum: ["fixed", "formula"],
+    default: "fixed",
+  },
+  value: { type: String, required: true },
+});
 
-const shippingMethodSchema = new Schema<IShippingMethod>(
+const categoryOverrideSchema = new Schema({
+  category: { type: Types.ObjectId, ref: "Category", required: true },
+  pricing: pricingSchema,
+});
+
+const requirementsSchema = new Schema({
+  type: {
+    type: String,
+    enum: ["none", "minAmount", "coupon", "either"],
+    default: "none",
+  },
+  minAmount: Number,
+  couponId: { type: Types.ObjectId, ref: "Coupon" },
+});
+
+const shippingMethodSchema = new Schema({
+  name: { type: String, required: true },
+  type: {
+    type: String,
+    enum: ["flatRate", "freeShipping"],
+    required: true,
+  },
+  pricing: pricingSchema,
+  categoryOverrides: [categoryOverrideSchema],
+  requirements: requirementsSchema,
+});
+
+const shippingZoneSchema = new Schema(
   {
-    zone: { type: String, required: true },
-    enabled: { type: Boolean, default: true },
-    description: { type: String, require: true },
+    zoneName: { type: String, required: true },
+    description: { type: String },
     countries: [{ type: String, required: true }],
-    methods: [
-      {
-        name: { type: String, required: true },
-        type: {
-          type: String,
-          enum: ["flatRate", "freeShipping"],
-          required: true,
-        },
-        cost: { type: String, required: true },
-        categories: [
-          { type: Schema.Types.ObjectId, ref: "Category", require: true },
-        ],
-        require: {
-          type: String,
-          enum: ["none", "coupon", "min", "either"],
-          default: "none",
-        },
-        calcType: {
-          type: String,
-          enum: ["perClass", "perOrder"],
-          default: "perOrder",
-        },
-      },
-    ],
+    isDefault: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
+    shippingMethods: [shippingMethodSchema],
   },
   { timestamps: true }
 );
 
-const ShippingMethodModel = mongoose.model<IShippingMethod>(
-  "ShippingMethod",
-  shippingMethodSchema
-);
-
-export default ShippingMethodModel;
+export type TShippingZoneSchema = InferMongooseSchema<
+  typeof shippingZoneSchema
+>;
+export type TShippingMethod = InferMongooseSchema<typeof shippingMethodSchema>;
+export type TShippingMethodPricing = TShippingMethod["pricing"];
+const ShippingZoneModel = model("ShippingZone", shippingZoneSchema);
+export default ShippingZoneModel;

@@ -1,4 +1,5 @@
 import envConfig from "@/config/env";
+import logger from "@/config/logger";
 import { sendResponse } from "@/lib/utils/helper";
 import { NextFunction, Request, Response } from "express";
 
@@ -18,7 +19,7 @@ const errorHandler = (
 
   const isOperational = err.isOperational ?? false;
 
-  console.error(`[ERROR] ${req.method} ${req.url}: ${message}`, {
+  logger.error(`[ERROR] ${req.method} ${req.url}: ${message}`, {
     stack: err.stack,
     isOperational,
   });

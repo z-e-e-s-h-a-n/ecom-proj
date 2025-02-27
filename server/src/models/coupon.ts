@@ -1,18 +1,7 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export interface ICoupon extends Document {
-  code: string;
-  type: "Percentage" | "Fixed";
-  value: number;
-  expires: Date;
-  usageLimit?: number;
-  usedCount: number;
-  isActive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-const couponSchema = new Schema<ICoupon>(
+const couponSchema = new Schema(
   {
     code: { type: String, required: true, unique: true },
     type: {
@@ -29,5 +18,7 @@ const couponSchema = new Schema<ICoupon>(
   { timestamps: true }
 );
 
-const CouponModel = mongoose.model<ICoupon>("Coupon", couponSchema);
+export type TCouponSchema = InferMongooseSchema<typeof couponSchema>;
+const CouponModel = model("Coupon", couponSchema);
+
 export default CouponModel;

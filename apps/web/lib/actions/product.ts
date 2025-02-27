@@ -1,11 +1,21 @@
 import { apiRequest } from "@/config/axios";
-import { getVariant } from "@/lib/utils";
 
 export interface FilteredProductsResponse {
   products: { product: IProduct }[];
   total: number;
   page: number;
   limit: number;
+}
+
+export interface CalcShippingPayload {
+  items: {
+    categoryId: string;
+    price: number;
+    quantity: number;
+  }[];
+  country: string;
+  subtotal: number;
+  couponId?: string;
 }
 
 export const getProducts = async (
@@ -47,37 +57,20 @@ export const getAllCurrencies = async (): Promise<ICurrencyOption[]> => {
 };
 
 export const getShippingMethods = async (
-  countries: ICurrencyOption["countries"]
+  country: string
 ): Promise<IShippingMethod> => {
   const response = await apiRequest("GET", `/shipping/method`, {
-    data: countries,
+    data: { country },
   });
   return response.data.shippingMethod;
 };
 
-export const calculateShipping = async (
-  items: ICartItem[],
-  currencyInfo: ICurrencyOption
-): Promise<number> => {
-  const payload = items.map(({ productId, quantity, variantId }) => {
-    const variant = getVariant(productId, variantId);
-    const pricing = variant.pricing.find(
-      (p) => p.currencyId.currency === currencyInfo.currency
-    )!;
-
-    return {
-      name: productId.name,
-      quantity,
-      price: (pricing?.sale ?? pricing?.original) || 0,
-      category: productId.category,
-    };
-  });
-
+export const calculateShipping = async ({
+  items,
+  country,
+}: CalcShippingPayload): Promise<number> => {
   const response = await apiRequest("POST", `/shipping/calculate`, {
-    data: {
-      items: payload,
-      countries: currencyInfo.countries,
-    },
+    data: { items, country },
   });
   return response.data.shippingCost;
 };

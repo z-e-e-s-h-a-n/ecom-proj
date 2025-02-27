@@ -6,8 +6,10 @@ import {
   sendResponse,
   handleError,
 } from "@/lib/utils/helper";
+import { validateRequest } from "@/config/zod";
+import { currencySchema } from "@/schemas/currency";
 
-export const getAllCurrencies = async (_req: Request, res: Response) => {
+export const getCurrencies = async (_req: Request, res: Response) => {
   try {
     const currencies = await CurrencyOptionModel.find();
     sendResponse(res, 200, "Currency options retrieved.", { currencies });
@@ -17,19 +19,13 @@ export const getAllCurrencies = async (_req: Request, res: Response) => {
 };
 
 export const createCurrency = async (req: Request, res: Response) => {
-  const { currencies } = req.body;
-
-  if (!Array.isArray(currencies) || currencies.length === 0)
-    return sendResponse(res, 400, "Invalid input data.");
-
   try {
-    for (const data of currencies) {
-      if (data.isDefault)
-        await CurrencyOptionModel.updateMany({}, { isDefault: false });
+    const currency = validateRequest(currencySchema, req.body);
 
-      const newCurrency = new CurrencyOptionModel(data);
-      await newCurrency.save();
-    }
+    if (currency.isDefault)
+      await CurrencyOptionModel.updateMany({}, { isDefault: false });
+
+    await CurrencyOptionModel.create(currency);
 
     sendResponse(res, 201, "Multiple currency options created.");
   } catch (error) {
@@ -39,14 +35,16 @@ export const createCurrency = async (req: Request, res: Response) => {
 
 export const updateCurrency = async (req: Request, res: Response) => {
   try {
-    const updates = req.body;
+    const currencyId = req.params.currencyId;
+    if (!currencyId) return sendResponse(res, 400, "Currency ID is required.");
+    const currency = validateRequest(currencySchema, req.body);
 
-    if (updates.isDefault)
+    if (currency.isDefault)
       await CurrencyOptionModel.updateMany({}, { isDefault: false });
 
     const updatedCurrency = await CurrencyOptionModel.findByIdAndUpdate(
-      req.params.id,
-      updates,
+      currencyId,
+      currency,
       { new: true }
     );
 
@@ -61,9 +59,11 @@ export const updateCurrency = async (req: Request, res: Response) => {
 
 export const deleteCurrency = async (req: Request, res: Response) => {
   try {
-    const deletedCurrency = await CurrencyOptionModel.findByIdAndDelete(
-      req.params.id
-    );
+    const currencyId = req.params.currencyId;
+    if (!currencyId) return sendResponse(res, 400, "Currency ID is required.");
+
+    const deletedCurrency =
+      await CurrencyOptionModel.findByIdAndDelete(currencyId);
     if (!deletedCurrency)
       return sendResponse(res, 404, "Currency option not found.");
 
@@ -73,9 +73,11 @@ export const deleteCurrency = async (req: Request, res: Response) => {
   }
 };
 
-export const getCurrencyInfo = async (req: Request, res: Response) => {
+export const getCurrency = async (req: Request, res: Response) => {
   try {
-    const { currency } = req.params;
+    const currency = req.params.currency;
+    if (!currency) return sendResponse(res, 400, "Currency is required.");
+
     let currencyInfo;
 
     if (currency && currency !== "undefined") {
@@ -88,10 +90,7 @@ export const getCurrencyInfo = async (req: Request, res: Response) => {
       currencyInfo = await CurrencyOptionModel.findOne(query).lean();
     }
 
-    if (!currencyInfo)
-      currencyInfo = await CurrencyOptionModel.findOne({
-        isDefault: true,
-      }).lean();
+    if (!currencyInfo) return sendResponse(res, 404, "Currency Not Found.");
 
     setCookie(res, "currencyInfo", currencyInfo, {
       httpOnly: false,

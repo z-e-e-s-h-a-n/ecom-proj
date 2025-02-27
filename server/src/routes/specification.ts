@@ -5,11 +5,14 @@ import * as controller from "@/controllers/specification";
 const router: Router = Router();
 
 // Specification routes
-router.route("/").get(controller.getSpecs).post(controller.createSpecs);
+router
+  .route("/")
+  .get(controller.getSpecifications)
+  .post(controller.createSpecification);
 
 router
   .route("/:specsId")
-  .get(controller.getSpecsById)
-  .delete(controller.deleteSpecs);
+  .get(controller.getSpecification)
+  .delete(controller.deleteSpecification);
 
 export default router;

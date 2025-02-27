@@ -1,18 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
+import React, { useMemo } from "react";
 import AddressForm from "@/components/form/AddressForm";
-import React, { useEffect, useMemo, useState } from "react";
-
-import { useToast } from "@workspace/ui/hooks/use-toast";
-import { useCart } from "@/hooks/useStorage";
-import {
-  getLocalStorage,
-  getVariant,
-  removeLocalStorage,
-  updateLocalStorage,
-} from "@/lib/utils";
-import { useCurrency } from "@/hooks/useCurrency";
+import { getVariant } from "@/lib/utils";
 import usePricing from "@/hooks/usePricing";
 import { Separator } from "@workspace/ui/components/separator";
 import Image from "next/image";
@@ -25,151 +14,35 @@ import {
   DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import CartTable from "@/components/showcase/CartTable";
-import {
-  checkoutFormSchema,
-  TCouponSchema,
-  type TCheckoutFormSchema,
-} from "@/schemas/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+
 import CustomInput from "@/components/form/CustomInputV2";
 import { Form, FormMessage } from "@workspace/ui/components/form";
-import { calculateShipping } from "@/lib/actions/product";
 import RadioInput from "@/components/form/RadioInputV2";
-import PaymentForm from "@/components/form/PaymentForm";
 import CouponForm from "@/components/form/CouponForm";
-import { AddUserAddress, placeUserOrder } from "@/lib/actions/user";
-import useAuth from "@/hooks/useAuth";
-import useStorageUtils from "@/hooks/useStorageUtils";
 import OrderDetails from "@/components/showcase/OrderDetails";
-import OtpInput from "@/components/form/OtpInput";
-import { registerUser } from "@/lib/actions/auth";
-import { useRouter } from "next/navigation";
+import useCheckout from "@/hooks/useCheckout";
+import useAuth from "@/hooks/useAuth";
+import PaymentForm from "@/components/form/PaymentForm";
+import { useCurrency } from "@/hooks/useCurrency";
 
 function Checkout({ searchParams }: PageProps) {
-  const router = useRouter();
-  const { toastHandler } = useToast();
-  const { cart, updateCart } = useCart();
-  const { currentUser } = useAuth();
-  const { formatOrderItems } = useStorageUtils();
-  const [editCart, setEditCart] = useState(false);
-  const [order, setOrder] = useState<IOrder | undefined>(undefined);
-  const [isOtpModelOpen, setIsOtpModelOpen] = useState(false);
   const cartSource = (React.use(searchParams)?.cartSource as string) || "";
-  const { formatProductPrice, calcCartSubtotal } = usePricing();
+  const { currentUser } = useAuth();
+  const { formatProductPrice } = usePricing();
   const { currencyInfo } = useCurrency();
-  const subtotal = calcCartSubtotal(cart).toFixed(2);
-  const PENDING_ORDER_KEY = "pendingOrder";
-  const pendingOrder = getLocalStorage<TCheckoutFormSchema | null>(
-    PENDING_ORDER_KEY,
-    null
-  );
-  const items = useMemo(
-    () => (cartSource === "cartItem" && cart.length ? [cart.at(-1)!] : cart),
-    [cart, cartSource]
-  );
+  const { form, onSubmit, items, order, subtotal } = useCheckout(cartSource);
 
-  const form = useForm<TCheckoutFormSchema>({
-    resolver: zodResolver(checkoutFormSchema),
-    defaultValues: pendingOrder ?? {
-      identifier: currentUser?.email ?? currentUser?.phone,
-      saveInfo: true,
-      subscribe: true,
-      billing: { method: "same" },
-      payment: { method: "card" },
-    },
-  });
-
-  const { isLoading, errorMessage } = form.watch("response") ?? {};
-
-  const onSubmit = async (values: TCheckoutFormSchema) => {
-    try {
-      form.setValue("response.isLoading", true);
-      if (!currentUser) {
-        updateLocalStorage<TCheckoutFormSchema>(PENDING_ORDER_KEY, values);
-        const response = await registerUser({
-          identifier: values.identifier,
-          firstName: values.shipping.address.firstName,
-          lastName: values.shipping.address.lastName,
-        });
-
-        if (!response.success) {
-          if (response.status === 409) {
-            toastHandler({
-              title: "User already exists, Your details are saved.",
-              message: "Please login to place your order.",
-            });
-            setTimeout(() => {
-              router.push("/sign-in?redirectUrl=/checkout");
-            }, 2000);
-          } else throw new Error(response.message);
-        } else {
-          toastHandler({ message: response.message });
-          setIsOtpModelOpen(true);
-        }
-      } else {
-        const shippingAddress = await AddUserAddress({
-          ...values.shipping.address,
-          type: "shipping",
-        });
-        let billingAddress = undefined;
-        if (values.billing.method === "different") {
-          billingAddress = await AddUserAddress({
-            ...values.billing.address,
-            type: "billing",
-          });
-        }
-
-        const response = await placeUserOrder({
-          items: formatOrderItems(items),
-          totalAmount: parseFloat(subtotal),
-          shipping: {
-            method: values.shipping.method,
-            cost: values.shipping.cost,
-            addressId: shippingAddress._id,
-          },
-          billing: {
-            method: values.billing.method,
-            addressId: billingAddress?._id,
-          },
-          payment: {
-            method: values.payment.method,
-            status: "pending",
-            currency: currencyInfo?.currency,
-            symbol: currencyInfo?.symbol,
-          },
-        });
-
-        if (!response.success) throw new Error("Failed to place order");
-        toastHandler({ message: "Order placed successfully." });
-        removeLocalStorage(PENDING_ORDER_KEY);
-        setOrder(response.data.order);
-        items.map(({ productId, variantId }) =>
-          updateCart("remove", productId, variantId)
-        );
-      }
-    } catch (error: any) {
-      removeLocalStorage(PENDING_ORDER_KEY);
-      form.setValue("response.errorMessage", error.message);
-      toastHandler({ message: error?.message, variant: "destructive" });
-    } finally {
-      form.setValue("response.isLoading", false);
-    }
+  const setEditCart = (value: boolean) => {
+    form.setValue("editCart", value);
   };
 
-  const onCouponSubmit = async (values: TCouponSchema) => {};
-  const shippingCost = form.watch("shipping.cost");
+  const setCouponValue = (value: string) => {
+    form.setValue("coupon", value);
+  };
 
-  useEffect(() => {
-    if (!items.length || !currencyInfo) return;
-    calculateShipping(items, currencyInfo).then((shipping) => {
-      if (shipping) {
-        form.setValue("shipping.cost", shipping);
-        form.setValue("shipping.method", "standard");
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, currencyInfo]);
+  const shippingCost = form.watch("shipping.cost");
+  const editCart = form.watch("editCart");
+  const { isLoading, errorMessage } = form.watch("response") || {};
 
   const paymentMethodOptions = useMemo(
     () => [
@@ -240,7 +113,7 @@ function Checkout({ searchParams }: PageProps) {
                     name="identifier"
                     label="Email or Phone"
                     control={form.control}
-                    disabled={!!currentUser}
+                    disabled={!!currentUser && !!currentUser.phone}
                   />
                   <CustomInput
                     name="subscribe"
@@ -359,7 +232,7 @@ function Checkout({ searchParams }: PageProps) {
               })}
             </ul>
             <Separator />
-            <CouponForm onSubmit={onCouponSubmit} />
+            <CouponForm onSubmit={setCouponValue} />
             <Separator />
             <div className="flex flex-col gap-4">
               <ul className="space-y-2">
@@ -390,16 +263,6 @@ function Checkout({ searchParams }: PageProps) {
             </div>
           </div>
         </div>
-      )}
-
-      {isOtpModelOpen && (
-        <OtpInput
-          identifier={form.getValues("identifier")}
-          purpose={"verifyEmail"}
-          isOpen={isOtpModelOpen}
-          setIsOpen={setIsOtpModelOpen}
-          callback={form.handleSubmit(onSubmit)}
-        />
       )}
     </>
   );

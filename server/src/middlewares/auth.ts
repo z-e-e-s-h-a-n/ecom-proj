@@ -8,7 +8,7 @@ import logger from "@/config/logger";
 import { sendResponse } from "@/lib/utils/helper";
 import { UserRole } from "@/models/user";
 
-export const authGuard = (role: UserRole, isAuth = true) => {
+export const authGuard = (role: UserRole) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const accessToken = req.cookies.accessToken;
@@ -23,7 +23,7 @@ export const authGuard = (role: UserRole, isAuth = true) => {
 
       if (!req.user) return sendResponse(res, 404, "User not found");
 
-      if (isAuth && !req?.user?.isAuth) {
+      if (!req?.user?.isAuth) {
         logger.error("User not authorized.", { user: req?.user });
         return sendResponse(res, 403, "Access denied.");
       }

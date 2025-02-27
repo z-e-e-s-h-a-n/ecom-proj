@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import useStorageUtils from "@/hooks/useStorageUtils";
 import { Button } from "@workspace/ui/components/button";
 import { Heart, ShoppingCart } from "lucide-react";
 import Image from "next/image";
@@ -10,6 +9,7 @@ import VariantInput from "@/components/form/VariantInput";
 import { useRouter } from "next/navigation";
 import usePricing from "@/hooks/usePricing";
 import ProductRating from "./ProductRating";
+import useStorage from "@/hooks/useStorage";
 
 export interface IProductDetails {
   product: IProduct;
@@ -25,7 +25,7 @@ function ProductDetails({ product, currentVariant }: IProductDetails) {
     Record<string, string>
   >({});
   const { isInCart, isInWishlist, toggleCart, toggleWishlist, updateCart } =
-    useStorageUtils();
+    useStorage();
 
   const handleAttributeChange = useCallback(
     (name: string, value: string) => {
@@ -69,7 +69,7 @@ function ProductDetails({ product, currentVariant }: IProductDetails) {
   };
 
   const handleBuyNow = () => {
-    updateCart("add", product, selectedVariant._id, quantity);
+    updateCart("add", product, selectedVariant._id, quantity, false);
     router.push("/checkout?cartSource=cartItem");
   };
 

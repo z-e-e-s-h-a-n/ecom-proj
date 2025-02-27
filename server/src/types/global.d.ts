@@ -1,5 +1,9 @@
-import mongoose from "mongoose";
+import { InferSchemaType, Types } from "mongoose";
 
+export type Nullable<T> = T | null | undefined;
+export type InferMongooseSchema<T extends Schema> = InferSchemaType<T> & {
+  _id: Types.ObjectId;
+};
 export interface ILookupIPInfo<T> {
   data?: {
     query: string;
@@ -30,5 +34,3 @@ export interface ILookupIPInfo<T> {
 
   fallback: T;
 }
-
-export type ObjectId = mongoose.Types.ObjectId;

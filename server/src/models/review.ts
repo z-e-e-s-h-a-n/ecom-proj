@@ -1,17 +1,7 @@
-import mongoose, { ObjectId, Schema } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { model, Schema } from "mongoose";
 
-// Review Schema
-export interface IReview extends Document {
-  userId: ObjectId;
-  productId: ObjectId;
-  variantId: ObjectId;
-  rating: number;
-  comment: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const reviewSchema = new Schema<IReview>(
+const reviewSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -33,5 +23,7 @@ const reviewSchema = new Schema<IReview>(
   { timestamps: true }
 );
 
-const ReviewModel = mongoose.model<IReview>("Review", reviewSchema);
+export type TReviewSchema = InferMongooseSchema<typeof reviewSchema>;
+const ReviewModel = model("Review", reviewSchema);
+
 export default ReviewModel;

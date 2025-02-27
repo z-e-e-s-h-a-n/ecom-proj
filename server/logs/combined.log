@@ -29,3 +29,84 @@
 {"level":"error","message":"User not authorized.","service":"user-service","timestamp":"2025-02-20 08:56:18"}
 {"level":"error","message":"User not authorized.","service":"user-service","timestamp":"2025-02-20 08:56:18"}
 {"level":"error","message":"User not authorized.","service":"user-service","timestamp":"2025-02-20 08:58:12","user":{"_id":"67b6a22308f11d5b3d2cf976","exp":1740024273,"iat":1740023373,"role":"customer"}}
+{"body":{"firstName":"Zeeshan","identifier":"mzeeshanff10@gmail.com","lastName":"Asghar"},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 12:27:16"}
+{"level":"warn","message":"Invalid or blacklisted refresh token.","service":"user-service","timestamp":"2025-02-24 15:53:46"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-24 15:53:47"}
+{"level":"warn","message":"Invalid or blacklisted refresh token.","service":"user-service","timestamp":"2025-02-24 15:53:47"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-24 15:53:47"}
+{"body":{"firstName":"Zeeshan","identifier":"mzeeshanff10@gmail.com","lastName":"Asghar","password":"MShan&10"},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 16:40:13"}
+{"body":{"firstName":"Zeeshan","identifier":"mzeeshanff10@gmail.com","lastName":"Asghar","password":"MShan&10"},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:13"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:19"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:22"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:22"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:23"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:23"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:23"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:23"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:23"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:23"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:24"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:24"}
+{"body":{"firstName":"Zeeshan","identifier":"kingzeeshanff07@gmail.com","lastName":"Asghar","password":"MShan&10","response":{"errorMessage":"User already exists.","isLoading":false}},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-24 17:13:33"}
+{"body":{"firstName":"Zeeshan","identifier":"mzeeshanff10@gmail.com","lastName":"Asghar","password":"MShan&10"},"level":"info","message":"req.body","service":"user-service","timestamp":"2025-02-25 13:31:21"}
+{"level":"error","message":"Invalid or expired OTP.","service":"user-service","timestamp":"2025-02-25 14:51:45"}
+{"level":"error","message":"Invalid or expired OTP.","service":"user-service","timestamp":"2025-02-25 14:52:13"}
+{"level":"error","message":"Invalid or expired OTP.","service":"user-service","timestamp":"2025-02-25 15:05:59"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 15:50:41"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 15:52:09"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 15:52:09"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timeStamp":false,"timestamp":"2025-02-26 15:53:03"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 15:53:03"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 15:53:58"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 15:53:58"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 15:54:58"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 15:54:58"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 16:48:23"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 16:48:23"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 16:49:18"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 16:49:18"}
+{"errorMsg":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"items\",\n      0,\n      \"categoryId\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"type\": \"number\",\n    \"inclusive\": false,\n    \"exact\": false,\n    \"message\": \"Number must be greater than 0\",\n    \"path\": [\n      \"items\",\n      0,\n      \"price\"\n    ]\n  }\n]","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:49:39"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 16:53:13"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 16:53:13"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Number must be greater than 0","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:53:44"}
+{"level":"warn","message":"Invalid or blacklisted refresh token.","service":"user-service","timestamp":"2025-02-26 16:55:45"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 16:55:45"}
+{"level":"warn","message":"Invalid or blacklisted refresh token.","service":"user-service","timestamp":"2025-02-26 16:55:45"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 16:55:45"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Number must be greater than 0","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:55:54"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Number must be greater than 0","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:57:04"}
+{"errorMsg":"items.0.categoryId: Required; items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:57:33"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 16:58:16"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:01:10"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:02:56"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:03:38"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:03:46"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:05:00"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:09:50"}
+{"level":"warn","message":"Invalid or blacklisted refresh token.","service":"user-service","timestamp":"2025-02-26 17:13:41"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 17:13:41"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:13:42"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:14:18"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:15:04"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:18:21"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:18:27"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:18:37"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:19:11"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:19:17"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:22:44"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:24:20"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:24:39"}
+{"errorMsg":"items.0.price: Required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 17:25:07"}
+{"level":"warn","message":"Invalid or blacklisted refresh token.","service":"user-service","timestamp":"2025-02-26 17:45:28"}
+{"error":"Invalid or expired refresh token.","level":"error","message":"Authentication failed","service":"user-service","timestamp":"2025-02-26 17:45:28"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 18:40:26"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 18:40:26"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 18:51:06"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 18:51:06"}
+{"errorMsg":"items: min one item is required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 18:53:31"}
+{"errorMsg":"items: min one item is required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 18:55:29"}
+{"errorMsg":"items: min one item is required","level":"error","message":"error","service":"user-service","timestamp":"2025-02-26 18:56:15"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 19:02:02"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 19:02:02"}
+{"level":"info","message":"Server running on http://localhost:4000","service":"user-service","timestamp":"2025-02-26 19:06:44"}
+{"level":"info","message":"MongoDB connected","service":"user-service","timestamp":"2025-02-26 19:06:44"}

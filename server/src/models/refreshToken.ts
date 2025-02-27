@@ -1,24 +1,7 @@
-import mongoose, { Schema, ObjectId } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export interface IRefreshToken extends Document {
-  token: string;
-  userId: ObjectId;
-  deviceInfo: {
-    name: string;
-    ip: string;
-    location?: string;
-    lastUsed: Date;
-    userAgent?: string;
-    os?: string;
-    browser?: string;
-  };
-  createdAt: Date;
-  expiresAt: Date;
-  isActive: boolean;
-  blacklisted: boolean;
-}
-
-const refreshTokenSchema = new Schema<IRefreshToken>({
+const refreshTokenSchema = new Schema({
   token: { type: String, required: true },
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   deviceInfo: {
@@ -36,12 +19,11 @@ const refreshTokenSchema = new Schema<IRefreshToken>({
   blacklisted: { type: Boolean, default: false },
 });
 
-// Index to automatically delete expired tokens
 refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-const RefreshTokenModel = mongoose.model<IRefreshToken>(
-  "RefreshToken",
-  refreshTokenSchema
-);
+export type TRefreshTokenSchema = InferMongooseSchema<
+  typeof refreshTokenSchema
+>;
+const RefreshTokenModel = model("RefreshToken", refreshTokenSchema);
 
 export default RefreshTokenModel;

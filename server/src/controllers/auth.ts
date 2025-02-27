@@ -1,24 +1,26 @@
-import logger from "@/config/logger";
 import UserModel from "@/models/user";
 import { Request, Response } from "express";
 import { manageTokensCookies } from "@/lib/utils/jwt";
 import RefreshTokenModel from "@/models/refreshToken";
-import {
-  formatUserResponse,
-  getQueryParams,
-  prepareUserResponse,
-} from "@/lib/utils/helper";
+import { prepareUserResponse } from "@/lib/utils/helper";
 import { sendOtp, verifyOtp } from "@/lib/actions/user";
 import { parseIdentifier, sendResponse, handleError } from "@/lib/utils/helper";
-import { OtpPurpose } from "@/models/otpSession";
+import { OtpPurpose, OtpType } from "@/models/otpSession";
+import { validateRequest } from "@/config/zod";
+import {
+  loginSchema,
+  requestOtpSchema,
+  resetPasswordSchema,
+  signupSchema,
+  validateOtpSchema,
+} from "@/schemas/auth";
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    logger.info("req.body", { body: req.body });
-
-    const { firstName, lastName, identifier, password } = req.body;
-    if (!firstName || !identifier)
-      return sendResponse(res, 400, "Missing required fields.");
+    const { firstName, lastName, identifier, password } = validateRequest(
+      signupSchema,
+      req.body
+    );
 
     const { email, phone, query, key } = parseIdentifier(identifier);
 
@@ -47,11 +49,8 @@ export const signup = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { identifier, password } = req.body;
-    if (!identifier || !password)
-      return sendResponse(res, 400, "Missing required fields.");
-
-    const { query, email, phone, key } = parseIdentifier(identifier);
+    const { identifier, password } = validateRequest(loginSchema, req.body);
+    const { query, key } = parseIdentifier(identifier);
 
     const user = await UserModel.findOne(query);
     if (!user) return sendResponse(res, 404, "User not found.");
@@ -61,13 +60,6 @@ export const login = async (req: Request, res: Response) => {
 
     if (!(await user.comparePassword(password)))
       return sendResponse(res, 401, "Invalid email or password.");
-
-    if (!user.isAuth) {
-      await sendOtp({ userId: user._id, email, phone, purpose: "verifyEmail" });
-      return sendResponse(res, 401, "Please verify your email first.", {
-        user: formatUserResponse(user),
-      });
-    }
 
     await prepareUserResponse(
       req,
@@ -83,9 +75,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const requestOtp = async (req: Request, res: Response) => {
   try {
-    const { identifier, purpose } = req.body;
-    if (!identifier || !purpose)
-      return sendResponse(res, 400, "Missing required fields.");
+    const { identifier, purpose } = validateRequest(requestOtpSchema, req.body);
     const { email, phone, query } = parseIdentifier(identifier);
 
     const user = await UserModel.findOne(query);
@@ -100,7 +90,7 @@ export const requestOtp = async (req: Request, res: Response) => {
       return sendResponse(res, 200, "Verification OTP sent.");
     }
 
-    if (["setPassword", "resetPassword"].includes(purpose)) {
+    if (purpose.includes("password")) {
       await sendOtp({ userId: user._id, email, phone, purpose });
       return sendResponse(res, 200, "Password reset OTP sent.");
     }
@@ -113,23 +103,24 @@ export const requestOtp = async (req: Request, res: Response) => {
 
 export const validateOtp = async (req: Request, res: Response) => {
   try {
-    let { identifier, secret, purpose, verifyOnly } = getQueryParams(req.query);
+    const { identifier, secret, purpose, verifyOnly, type } = validateRequest(
+      validateOtpSchema,
+      req.body
+    );
 
-    if (!identifier || !secret || !purpose)
-      return sendResponse(res, 400, "Missing required fields.");
     const { query, email, phone } = parseIdentifier(identifier);
-
     const user = await UserModel.findOne(query);
     if (!user) return sendResponse(res, 404, "User not found.");
 
     const session = await verifyOtp({
       userId: user._id,
       secret,
+      type: type as OtpType,
       purpose: purpose as OtpPurpose,
-      verifyOnly: verifyOnly === "true",
+      verifyOnly,
     });
 
-    if (verifyOnly === "true" && session)
+    if (verifyOnly && session)
       return sendResponse(res, 200, "Otp Successfully Verified", {
         secret: session.secret,
       });
@@ -141,19 +132,23 @@ export const validateOtp = async (req: Request, res: Response) => {
       user.isAuth = true;
       await user.save();
 
-      return sendResponse(res, 200, "Email verified successfully.", {
-        user: formatUserResponse(user),
-      });
+      return await prepareUserResponse(
+        req,
+        res,
+        user,
+        200,
+        "Email verified successfully."
+      );
     }
 
-    if (["setPassword", "resetPassword"].includes(purpose)) {
+    if (purpose.includes("password")) {
       const session = await sendOtp({
         userId: user._id,
         email,
         phone,
         purpose: purpose as OtpPurpose,
-        type: "token",
         sendSecret: false,
+        type: "token",
       });
 
       return sendResponse(res, 200, "OTP verified Add New Password.", {
@@ -172,18 +167,10 @@ export const logout = async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
     const tokenId = req.cookies.tokenId;
 
-    if (!refreshToken || !tokenId) {
-      logger.warn("Logout attempted without refreshToken or deviceId.");
-      manageTokensCookies(res, "remove");
-      return sendResponse(res, 200, "Logged out (no active session).");
-    }
-
-    const result = await RefreshTokenModel.findOneAndUpdate(
+    await RefreshTokenModel.findOneAndUpdate(
       { token: refreshToken, _id: tokenId },
       { $set: { blacklisted: true } }
     );
-
-    if (!result) logger.warn("No matching refreshToken found for logout.");
 
     manageTokensCookies(res, "remove");
     sendResponse(res, 200, "Logged out successfully.");
@@ -194,17 +181,15 @@ export const logout = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { identifier, password, secret, purpose } = req.body;
-    if (!secret || !identifier || !password || !purpose)
-      return sendResponse(res, 400, "Missing Fields are required.");
-
-    if (!["setPassword", "resetPassword"].includes(purpose))
-      return sendResponse(res, 400, "Invalid purpose.");
+    const { identifier, password, secret, purpose } = validateRequest(
+      resetPasswordSchema,
+      req.body
+    );
 
     const { query } = parseIdentifier(identifier);
     const user = await UserModel.findOne(query);
     if (!user) return sendResponse(res, 404, "User not found.");
-    await verifyOtp({ userId: user._id, secret, purpose });
+    await verifyOtp({ userId: user._id, secret, purpose, type: "token" });
 
     user.password = password;
     await user.save();

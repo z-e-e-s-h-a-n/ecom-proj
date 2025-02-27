@@ -107,7 +107,6 @@ export const resetPasswordSchema = z
 export const addressSchema = z.object({
   firstName: nameField,
   lastName: nameField,
-  phone: mobileField,
   street: requiredString("Address is Required"),
   city: requiredString("City is Required"),
   state: requiredString("State is Required"),
@@ -124,7 +123,7 @@ export const paymentFormSchema = z.object({
 });
 
 export const couponSchema = z.object({
-  code: requiredString("Coupon Code is required").min(
+  coupon: requiredString("Coupon Code is required").min(
     3,
     "Coupon Code must be at least 3 characters"
   ),
@@ -137,7 +136,7 @@ export const checkoutFormSchema = z.object({
   shipping: z.object({
     method: z.enum(["standard", "express", "free"]),
     address: addressSchema,
-    cost: z.number().default(0),
+    cost: z.number(),
   }),
   billing: z.discriminatedUnion("method", [
     z.object({
@@ -158,6 +157,8 @@ export const checkoutFormSchema = z.object({
     }),
   ]),
   response: serverResponseSchema,
+  editCart: z.boolean().default(false),
+  coupon: z.string().optional(),
 });
 
 export const validateSubSchema = (

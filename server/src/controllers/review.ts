@@ -1,26 +1,24 @@
 import { Request, Response } from "express";
 import ReviewModel from "@/models/review";
 import { handleError, sendResponse } from "@/lib/utils/helper";
+import { reviewSchema } from "@/schemas/review";
+import { validateRequest } from "@/config/zod";
 
 // Add Review For a product
 export const addReview = async (req: Request, res: Response) => {
-  const userId = req.user?._id;
-  const { productId } = req.params;
-  const { rating, comment, variantId } = req.body;
-
   try {
-    const existingReview = await ReviewModel.findOne({ userId, productId });
+    const userId = req.user?._id;
+    const productId = req.params.productId;
+    const reviewData = validateRequest(reviewSchema, {
+      productId,
+      ...req.body,
+    });
 
+    const existingReview = await ReviewModel.findOne({ userId, productId });
     if (existingReview)
       return sendResponse(res, 400, "You have already reviewed this product.");
 
-    const review = await ReviewModel.create({
-      userId,
-      productId,
-      variantId,
-      rating,
-      comment,
-    });
+    const review = await ReviewModel.create(reviewData);
 
     sendResponse(res, 201, "Review added successfully", { review });
   } catch (error) {
@@ -30,7 +28,8 @@ export const addReview = async (req: Request, res: Response) => {
 
 // Get Reviews for a Product
 export const getReviews = async (req: Request, res: Response) => {
-  const { productId } = req.params;
+  const productId = req.params.currencyId;
+  if (!productId) return sendResponse(res, 400, "product ID is required.");
 
   try {
     const reviews = await ReviewModel.find({ productId })
@@ -47,6 +46,8 @@ export const getReviews = async (req: Request, res: Response) => {
 export const deleteReview = async (req: Request, res: Response) => {
   try {
     const { reviewId } = req.params;
+    if (!reviewId) return sendResponse(res, 400, "review ID is required.");
+
     const Review = await ReviewModel.findByIdAndDelete(reviewId);
     if (!Review) return sendResponse(res, 404, "Review not found.");
 

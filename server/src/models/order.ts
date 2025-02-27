@@ -1,38 +1,7 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export type TOrderStatus = "pending" | "shipped" | "delivered" | "canceled";
-export type TPaymentMethod = "cod" | "card" | "wallet" | "gPay" | "applePay";
-export type TPaymentStatus = "pending" | "completed" | "failed";
-export type TBillingMethod = "same" | "different";
-export type TShippingMethod = "standard" | "express" | "free";
-
-export interface IOrderItem {
-  productId: ObjectId;
-  variantId: ObjectId;
-  quantity: number;
-  price: number;
-}
-
-export interface IOrder extends Document {
-  userId: ObjectId;
-  items: IOrderItem[];
-  totalAmount: number;
-  orderStatus: TOrderStatus;
-  transactionId?: string;
-  metadata: Map<string, any>;
-  shipping: { method: TShippingMethod; addressId: ObjectId; cost: number };
-  billing: { method: TBillingMethod; addressId?: ObjectId };
-  payment: {
-    method: TPaymentMethod;
-    status: TPaymentStatus;
-    currency: string;
-    symbol: string;
-  };
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const orderSchema = new Schema<IOrder>(
+const orderSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     items: [
@@ -90,5 +59,7 @@ const orderSchema = new Schema<IOrder>(
   { timestamps: true }
 );
 
-const OrderModel = mongoose.model<IOrder>("Order", orderSchema);
+export type TOrderSchema = InferMongooseSchema<typeof orderSchema>;
+const OrderModel = model("Order", orderSchema);
+
 export default OrderModel;

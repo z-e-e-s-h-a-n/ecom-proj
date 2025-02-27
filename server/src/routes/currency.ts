@@ -3,15 +3,12 @@ import * as controller from "@/controllers/currency";
 
 const router: Router = Router();
 
-router
-  .route("/")
-  .get(controller.getAllCurrencies)
-  .post(controller.createCurrency);
+router.route("/").get(controller.getCurrencies).post(controller.createCurrency);
 
-router.get("/:currency", controller.getCurrencyInfo);
+router.get("/:currency", controller.getCurrency);
 
 router
-  .route("/:id")
+  .route("/:currencyId")
   .put(controller.updateCurrency)
   .delete(controller.deleteCurrency);
 

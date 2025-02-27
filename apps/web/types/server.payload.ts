@@ -18,6 +18,7 @@ declare global {
 
   interface IVerifyOtpPayload extends IRequestOtpPayload {
     secret: string;
+    type?: OtpType;
     verifyOnly?: boolean;
   }
 

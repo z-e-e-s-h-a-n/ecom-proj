@@ -37,8 +37,8 @@ const usePricing = () => {
     };
   };
 
-  const calcCartSubtotal = (data: ICartItem[]) =>
-    data?.reduce((sum, item) => {
+  const calcCartSubtotal = (items: ICartItem[]) =>
+    items?.reduce((sum, item) => {
       const pricing = getVariant(item.productId, item.variantId).pricing;
       const { price } = formatProductPrice(pricing);
       return sum + price * item.quantity;

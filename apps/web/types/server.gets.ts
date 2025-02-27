@@ -18,13 +18,12 @@ declare global {
   export type TShippingMethod = "standard" | "express" | "free";
   export type AttrTypes = "color" | "select" | "radio" | "button" | "image";
   export type OtpPurpose = "verifyEmail" | "resetPassword" | "setPassword";
-
+  export type OtpType = "token" | "otp";
   export interface IAddress {
     _id: string;
     userId: string;
     firstName: string;
     lastName: string;
-    phone: string;
     street: string;
     city: string;
     state: string;

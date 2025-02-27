@@ -8,8 +8,7 @@ import {
   AccordionTrigger,
 } from "@workspace/ui/components/accordion";
 import { Slider } from "@workspace/ui/components/slider";
-import useCategories from "@/hooks/useCategories";
-import useAttributes from "@/hooks/useAttributes";
+import useStorage from "@/hooks/useStorage";
 
 interface FilterSidebarProps {
   filters?: IQueryParams;
@@ -21,8 +20,7 @@ function FilterSidebar({ filters = {}, onChange }: FilterSidebarProps) {
   const minPrice = filters.minPrice || 0;
   const maxPrice = filters.maxPrice || Infinity;
 
-  const { categories } = useCategories();
-  const { attributes } = useAttributes(selectedCategories);
+  const { categories, attributes } = useStorage();
 
   const handleFilterUpdate = (key: string, value: string) => {
     const currentValue = filters[key] ?? [value];

@@ -5,7 +5,7 @@ import {
   ITokenPayload,
   manageTokensCookies,
 } from "@/lib/utils/jwt";
-import { ISafeUser, IUser } from "@/models/user";
+import { TSafeUser, TUserSchema } from "@/models/user";
 import { UAParser } from "ua-parser-js";
 import axios from "axios";
 import logger from "@/config/logger";
@@ -41,8 +41,9 @@ export const sendResponse = (
 };
 
 export const handleError = (res: Response, message: string, error: any) => {
-  logger.error("error", { message: error.message ?? message });
-  sendResponse(res, 500, message);
+  const [status, errorMsg] = [error?.status ?? 500, error?.message ?? message];
+  logger.error("error", { errorMsg });
+  sendResponse(res, status, errorMsg);
 };
 
 export const setCookie = (
@@ -84,7 +85,7 @@ export const clearCookie = (
 export const createAuthSession = async (
   req: Request,
   res: Response,
-  user: IUser | ITokenPayload
+  user: TUserSchema | ITokenPayload
 ) => {
   const tokenData = await generateTokens(req, user as ITokenPayload);
   manageTokensCookies(res, "add", tokenData);
@@ -92,9 +93,9 @@ export const createAuthSession = async (
 };
 
 export const formatUserResponse = (
-  user: IUser,
+  user: TUserSchema,
   additionalInfo: Record<string, any> = {}
-): ISafeUser & Record<string, any> => {
+): TSafeUser & Record<string, any> => {
   const name = `${user.firstName} ${user.lastName}`;
   return {
     _id: user._id,
@@ -111,17 +112,23 @@ export const formatUserResponse = (
 export const prepareUserResponse = async (
   req: Request,
   res: Response,
-  user: IUser,
+  user: TUserSchema,
   status: number,
   message: string
 ) => {
   try {
-    const success = status === 200 || status === 201;
+    const success = status === 200;
     if (success) await createAuthSession(req, res, user);
     const { _id: userId, email, phone, password, isAuth } = user || {};
 
     if (!password)
-      await sendOtp({ userId, email, phone, purpose: "setPassword" });
+      await sendOtp({
+        userId,
+        email,
+        phone,
+        type: "token",
+        purpose: "setPassword",
+      });
 
     if (!isAuth)
       await sendOtp({ userId, email, phone, purpose: "verifyEmail" });
@@ -190,30 +197,16 @@ export const getExchangeRates = async (
   }
 };
 
-export const parseIdentifier = (identifier: string) => {
+export const parseIdentifier = (identifier?: string) => {
+  if (!identifier) throw new Error("Identifier is required.");
+
   const isEmail = identifier.includes("@");
+  const key = isEmail ? "email" : "phone";
 
   return {
-    key: isEmail ? "email" : "phone",
-    email: isEmail ? identifier : undefined,
+    key,
+    email: isEmail ? identifier.toLowerCase() : undefined,
     phone: isEmail ? undefined : identifier,
-    query: {
-      $or: [
-        { email: isEmail ? identifier : undefined },
-        { phone: !isEmail ? identifier : undefined },
-      ],
-    },
+    query: { [key]: { $exists: true, $eq: identifier } },
   };
-};
-
-export const getQueryParams = <T extends Record<string, any>>(
-  query: T
-): Record<keyof T, string | undefined> => {
-  const result: Partial<Record<keyof T, string | undefined>> = {};
-
-  for (const key in query) {
-    result[key] = typeof query[key] === "string" ? query[key] : undefined;
-  }
-
-  return result as Record<keyof T, string | undefined>;
 };

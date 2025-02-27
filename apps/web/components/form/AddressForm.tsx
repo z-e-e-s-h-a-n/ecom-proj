@@ -30,11 +30,6 @@ function AddressForm({
 
   const renderInputFields = (form: any) => (
     <>
-      <CustomInput
-        name={`${basename}country`}
-        label="Country"
-        control={form.control}
-      />
       <div className="grid gap-4 md:grid-cols-2">
         <CustomInput
           name={`${basename}firstName`}
@@ -48,14 +43,14 @@ function AddressForm({
         />
       </div>
       <CustomInput
-        name={`${basename}phone`}
-        label="Phone Number"
+        name={`${basename}street`}
+        label="Address"
         control={form.control}
       />
       <div className="grid gap-4 md:grid-cols-2">
         <CustomInput
-          name={`${basename}street`}
-          label="Address"
+          name={`${basename}country`}
+          label="Country"
           control={form.control}
         />
         <CustomInput

@@ -12,6 +12,16 @@ declare global {
     type: AuthFormType;
     control: any;
     isAuth?: boolean;
+    redirectQuery?: string;
+  }
+
+  interface AuthFormNavigationProps {
+    type: AuthFormType;
+    redirectQuery?: string;
+  }
+
+  interface SocialAuthButtonProps {
+    redirectQuery?: string;
   }
 
   export interface RadioInputProps {

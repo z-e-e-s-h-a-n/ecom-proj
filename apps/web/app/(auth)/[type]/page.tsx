@@ -64,7 +64,6 @@ const getSchema = (type: string) => {
 const AuthForm = ({ params, searchParams }: PageProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const cleanPath = pathname.split("?")[0]!;
   const { toastHandler } = useToast();
   const [isOtpModelOpen, setIsOtpModelOpen] = useState(false);
 
@@ -76,10 +75,12 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
   let purpose = React.use(searchParams)?.purpose as OtpPurpose;
   if (!purpose) purpose = formatOtpPurpose(type);
   let redirectUrl = React.use(searchParams)?.redirectUrl as string;
+  const redirectQuery = redirectUrl ? `?redirectUrl=${redirectUrl}` : "";
+  const queryPath = `${pathname}${redirectQuery}`;
   const secret = React.use(searchParams)?.secret as string;
 
   const form = useForm<TSignUpSchema | TSignInSchema | TResetPassSchema>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues: { identifier, isAuth: false },
   });
 
@@ -91,10 +92,16 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
   useEffect(() => {
     if (identifier) form.setValue("identifier", identifier);
     if (secret && identifier) {
-      validateOtp({ identifier, secret, purpose, verifyOnly: true })
+      validateOtp({
+        identifier,
+        secret,
+        purpose,
+        type: "token",
+        verifyOnly: true,
+      })
         .then((response) => {
           if (response.success) form.setValue("isAuth", true);
-          else router.push(cleanPath);
+          else router.push(queryPath);
         })
         .catch(() => {});
     } else if (isAuth) {
@@ -109,6 +116,7 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
       if (type === "sign-up") {
         response = await registerUser(values);
         if (!response.success) throw new Error(response.message);
+        if (!redirectUrl) redirectUrl = "/";
         setIsOtpModelOpen(true);
       } else if (type === "sign-in") {
         response = await loginUser(values);
@@ -117,14 +125,15 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
           throw new Error(response.message);
         }
         if (!redirectUrl) redirectUrl = "/";
+        router.push(redirectUrl);
       } else {
         if (isAuth && values.password) {
           response = await resetPassword({ ...values, secret, purpose });
           if (!response.success) {
-            router.push(cleanPath);
+            router.push(queryPath);
             throw new Error(response.message);
           }
-          router.push("/sign-in");
+          router.push(`/sign-in${redirectQuery}`);
         } else if (!secret) {
           response = await requestOtp({
             identifier: values.identifier,
@@ -135,7 +144,6 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
         }
       }
       toastHandler({ message: response!.message });
-      router.push(redirectUrl);
     } catch (error: any) {
       form.setValue("response.errorMessage", error.message);
       toastHandler({ message: error.message, variant: "destructive" });
@@ -167,6 +175,7 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
               type={type}
               control={form.control}
               isAuth={isAuth}
+              redirectQuery={redirectQuery}
             />
             {errorMessage && <FormMessage>{errorMessage}</FormMessage>}
 
@@ -179,9 +188,9 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
             </Button>
 
             {type !== "reset-password" && type !== "set-password" && (
-              <RenderSocialAuthButton />
+              <RenderSocialAuthButton redirectQuery={redirectQuery} />
             )}
-            <AuthFormNavigation type={type} />
+            <AuthFormNavigation type={type} redirectQuery={redirectQuery} />
           </div>
         </form>
       </Form>
@@ -192,6 +201,7 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
           purpose={purpose}
           isOpen={isOtpModelOpen}
           setIsOpen={setIsOtpModelOpen}
+          redirectUrl={redirectUrl}
         />
       )}
     </>

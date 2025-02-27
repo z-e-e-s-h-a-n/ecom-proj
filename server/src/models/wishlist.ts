@@ -1,20 +1,10 @@
-// models/wishlist.ts
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export interface IWishlistItem {
-  productId: ObjectId;
-  variantId: ObjectId;
-}
-
-export interface IWishlist extends Document {
-  userId: ObjectId;
-  items: IWishlistItem[];
-}
-
-const wishlistSchema = new Schema<IWishlist>(
+const wishlistSchema = new Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -35,6 +25,7 @@ const wishlistSchema = new Schema<IWishlist>(
   { timestamps: true }
 );
 
-const WishlistModel = mongoose.model<IWishlist>("Wishlist", wishlistSchema);
+export type TWishlistSchema = InferMongooseSchema<typeof wishlistSchema>;
+const WishlistModel = model("Wishlist", wishlistSchema);
 
 export default WishlistModel;

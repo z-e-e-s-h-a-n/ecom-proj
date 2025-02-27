@@ -6,6 +6,11 @@ import { handleError, sendResponse } from "@/lib/utils/helper";
 import { formatUserResponse } from "@/lib/utils/helper";
 import { Request, Response } from "express";
 import AddressModel from "@/models/address";
+import { addressSchema } from "@/schemas/address";
+import { validateRequest } from "@/config/zod";
+import { cartItemSchema, cartSchema } from "@/schemas/cart";
+import { wishlistItemSchema, wishlistSchema } from "@/schemas/wishlist";
+import { orderSchema } from "@/schemas/order";
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -47,10 +52,7 @@ export const getCart = async (req: Request, res: Response) => {
 
 export const addToCart = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const items = req.body;
-
-  if (!Array.isArray(items) || items.length === 0)
-    return sendResponse(res, 400, "Invalid cart data.");
+  const items = validateRequest(cartSchema, req.body);
 
   try {
     const addOps = items.map((item: any) =>
@@ -79,7 +81,10 @@ export const addToCart = async (req: Request, res: Response) => {
 
 export const updateCart = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { productId, variantId, quantity } = req.body;
+  const { productId, variantId, quantity } = validateRequest(
+    cartItemSchema,
+    req.body
+  );
 
   try {
     const cart = await CartModel.findOneAndUpdate(
@@ -98,7 +103,7 @@ export const updateCart = async (req: Request, res: Response) => {
 
 export const removeFromCart = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { productId, variantId } = req.body;
+  const { productId, variantId } = validateRequest(cartItemSchema, req.body);
 
   try {
     await CartModel.findOneAndUpdate(
@@ -137,10 +142,7 @@ export const getWishlist = async (req: Request, res: Response) => {
 
 export const addToWishlist = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const items = req.body;
-
-  if (!Array.isArray(items) || items.length === 0)
-    return sendResponse(res, 400, "Invalid wishlist data.");
+  const items = validateRequest(wishlistSchema, req.body);
 
   try {
     const addOps = items.map((item: any) =>
@@ -170,7 +172,10 @@ export const addToWishlist = async (req: Request, res: Response) => {
 
 export const removeFromWishlist = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { productId, variantId } = req.body;
+  const { productId, variantId } = validateRequest(
+    wishlistItemSchema,
+    req.body
+  );
 
   try {
     await WishlistModel.findOneAndUpdate(
@@ -186,21 +191,10 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
 
 export const placeOrder = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { items, totalAmount, shipping, billing, payment, metadata } = req.body;
-
-  if (!items || !totalAmount || !shipping || !billing || !payment)
-    return sendResponse(res, 400, "Missing Fields are required.");
+  const orderData = validateRequest(orderSchema, req.body);
 
   try {
-    const order = await OrderModel.create({
-      userId,
-      items,
-      totalAmount,
-      metadata,
-      shipping,
-      billing,
-      payment,
-    });
+    const order = await OrderModel.create({ userId, ...orderData });
 
     await order.populate([
       {
@@ -237,7 +231,8 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getOrderById = async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { orderId } = req.params;
+  const orderId = req.params.orderId;
+  if (!orderId) return sendResponse(res, 400, "Order Id is Required");
 
   try {
     const order = await OrderModel.findOne({ userId, _id: orderId }).populate([
@@ -258,7 +253,6 @@ export const getOrderById = async (req: Request, res: Response) => {
 };
 
 export const initiatePayment = async (_: Request, res: Response) => {
-  // const userId = req.user?._id;
   try {
     sendResponse(res, 201, "Payment initiated successfully");
   } catch (error) {
@@ -267,7 +261,6 @@ export const initiatePayment = async (_: Request, res: Response) => {
 };
 
 export const verifyPayment = async (_: Request, res: Response) => {
-  // const { transactionId, status } = req.body;
   try {
     sendResponse(res, 200, "Payment status updated successfully", {});
   } catch (error) {
@@ -278,7 +271,6 @@ export const verifyPayment = async (_: Request, res: Response) => {
 export const getAddresses = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
-
     const addresses = await AddressModel.find({ userId });
 
     if (!addresses) return sendResponse(res, 404, "Address Not Found");
@@ -294,9 +286,9 @@ export const getAddresses = async (req: Request, res: Response) => {
 export const getAddress = async (req: Request, res: Response) => {
   try {
     const { addressId } = req.params;
+    if (!addressId) return sendResponse(res, 400, "Address ID is required");
 
     const address = await AddressModel.findById(addressId);
-
     if (!address) return sendResponse(res, 404, "Address Not Found");
 
     sendResponse(res, 200, "Address Fetch Successfully", {
@@ -310,50 +302,18 @@ export const getAddress = async (req: Request, res: Response) => {
 export const addAddress = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
-    const {
-      firstName,
-      lastName,
-      phone,
-      street,
-      city,
-      state,
-      country,
-      zip,
-      isDefault,
-      type,
-      label = "home",
-    } = req.body;
+    const addressData = validateRequest(addressSchema, req.body);
 
-    if (
-      !firstName ||
-      !lastName ||
-      !phone ||
-      !street ||
-      !city ||
-      !state ||
-      !country ||
-      !zip ||
-      !type
-    ) {
-      return sendResponse(res, 400, "All address fields are required.");
-    }
+    const address =
+      addressData.type === "billing"
+        ? await AddressModel.findOneAndUpdate(
+            { userId, type: "billing" },
+            addressData,
+            { new: true, upsert: true }
+          )
+        : await AddressModel.create(addressData);
 
-    const address = await AddressModel.create({
-      userId,
-      firstName,
-      lastName,
-      phone,
-      street,
-      city,
-      state,
-      country,
-      zip,
-      isDefault,
-      type,
-      label,
-    });
-
-    sendResponse(res, 200, "Address added successfully", { address });
+    sendResponse(res, 200, "Address saved successfully", { address });
   } catch (error) {
     handleError(res, "Failed to add address", error);
   }
@@ -361,21 +321,19 @@ export const addAddress = async (req: Request, res: Response) => {
 
 export const updateAddress = async (req: Request, res: Response) => {
   try {
-    const updates = req.body;
-    const { addressId } = req.params;
+    const addressId = req.params.addressId;
+    if (!addressId) return sendResponse(res, 400, "Address ID is required");
+    const addressData = validateRequest(addressSchema, req.body);
 
     const address = await AddressModel.findOneAndUpdate(
       { _id: addressId },
-      updates,
-      {
-        new: true,
-      }
+      addressData,
+      { new: true }
     );
+
     if (!address) return sendResponse(res, 404, "Address Not Found");
 
-    sendResponse(res, 200, "Address Updated Successfully", {
-      address,
-    });
+    sendResponse(res, 200, "Address Updated Successfully", { address });
   } catch (error) {
     handleError(res, "Failed to update Address", error);
   }
@@ -384,11 +342,13 @@ export const updateAddress = async (req: Request, res: Response) => {
 export const deleteAddress = async (req: Request, res: Response) => {
   try {
     const { addressId } = req.params;
+    if (!addressId) return sendResponse(res, 400, "Address ID is required");
 
-    await AddressModel.findByIdAndDelete(addressId);
+    const address = await AddressModel.findByIdAndDelete(addressId);
+    if (!address) return sendResponse(res, 404, "Address Not Found");
 
     sendResponse(res, 200, "Address Deleted Successfully");
   } catch (error) {
-    handleError(res, "Failed to fetch Address", error);
+    handleError(res, "Failed to delete Address", error);
   }
 };

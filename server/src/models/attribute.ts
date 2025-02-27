@@ -1,17 +1,7 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export type AttrTypes = "color" | "select" | "radio" | "button" | "image";
-
-export interface IAttribute extends Document {
-  name: string;
-  type: AttrTypes;
-  options: string[];
-  categories: ObjectId[];
-  isRequired: boolean;
-  isDefault: boolean;
-}
-
-const attributeSchema = new Schema<IAttribute>({
+const attributeSchema = new Schema({
   name: { type: String, required: true, unique: true },
   type: {
     type: String,
@@ -26,5 +16,8 @@ const attributeSchema = new Schema<IAttribute>({
   isDefault: { type: Boolean, default: false },
 });
 
-const AttributeModel = mongoose.model<IAttribute>("Attribute", attributeSchema);
+export type TAttributeSchema = InferMongooseSchema<typeof attributeSchema>;
+export type AttrTypes = TAttributeSchema["type"];
+const AttributeModel = model("Attribute", attributeSchema);
+
 export default AttributeModel;

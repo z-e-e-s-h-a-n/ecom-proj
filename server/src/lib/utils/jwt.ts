@@ -11,7 +11,7 @@ import RefreshTokenModel from "@/models/refreshToken";
 import envConfig, { getEnv } from "@/config/env";
 import mongoose from "mongoose";
 import logger from "@/config/logger";
-import { ISafeUser, UserRole } from "@/models/user";
+import { TSafeUser, UserRole } from "@/models/user";
 
 export interface IJwtTokens {
   refreshToken: string;
@@ -84,7 +84,7 @@ export const verifyJwtToken = (
 };
 
 export const attachDecodedUser = (req: Request, decoded: JwtPayload): void => {
-  if (decoded) req.user = decoded as ISafeUser;
+  if (decoded) req.user = decoded as TSafeUser;
 };
 
 export const refreshAccessToken = async (

@@ -1,14 +1,7 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export interface ISpecification extends Document {
-  name: string;
-  options: string[];
-  categories: ObjectId[];
-  isRequired: boolean;
-  isDefault: boolean;
-}
-
-const specificationSchema = new Schema<ISpecification>({
+const specificationSchema = new Schema({
   name: { type: String, required: true, unique: true },
   options: { type: [String], required: true },
   categories: [
@@ -18,8 +11,9 @@ const specificationSchema = new Schema<ISpecification>({
   isDefault: { type: Boolean, default: false },
 });
 
-const SpecificationModel = mongoose.model<ISpecification>(
-  "Specification",
-  specificationSchema
-);
+export type TSpecificationSchema = InferMongooseSchema<
+  typeof specificationSchema
+>;
+const SpecificationModel = model("Specification", specificationSchema);
+
 export default SpecificationModel;

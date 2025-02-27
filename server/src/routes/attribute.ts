@@ -8,7 +8,7 @@ const router: Router = Router();
 router
   .route("/")
   .get(controller.getAttributes)
-  .post(controller.createAttributes);
+  .post(controller.createAttribute);
 
 router
   .route("/:attrId")

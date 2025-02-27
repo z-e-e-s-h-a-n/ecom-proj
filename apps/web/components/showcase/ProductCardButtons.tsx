@@ -7,7 +7,7 @@ import {
   ArrowLeftRight,
 } from "lucide-react";
 import { Button, ButtonVariant } from "@workspace/ui/components/button";
-import useStorageUtils from "@/hooks/useStorageUtils";
+import useStorage from "@/hooks/useStorage";
 
 interface IProductActions {
   Icon: LucideIcon;
@@ -27,8 +27,7 @@ function ProductCardButtons({
   variant,
   setOpenQuickView,
 }: ProductButtonsProps) {
-  const { toggleWishlist, isInWishlist, toggleCart, isInCart } =
-    useStorageUtils();
+  const { toggleWishlist, isInWishlist, toggleCart, isInCart } = useStorage();
   const variantId = variant._id;
 
   const isItemInCart = isInCart(product, variantId);

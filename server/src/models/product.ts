@@ -1,57 +1,8 @@
-import mongoose, { Schema, Document, ObjectId, Model } from "mongoose";
+import { Schema, model } from "mongoose";
 import crypto from "crypto";
+import { InferMongooseSchema } from "@/types/global";
 
-export interface IShipping {
-  distanceUnit: "cm" | "in";
-  massUnit: "kg" | "lb" | "g";
-  weight: number;
-  length: number;
-  width: number;
-  height: number;
-}
-
-export interface IVariant {
-  pricing: {
-    currencyId: ObjectId;
-    original: number;
-    sale?: number;
-  }[];
-  sku?: string;
-  stock: number;
-  images: string[];
-  attributes: Record<string, string>;
-  shipping: IShipping;
-  isActive: boolean;
-  isDefault: boolean;
-}
-
-export interface IProduct extends Document {
-  _id: mongoose.Types.ObjectId;
-  name: string;
-  slug?: string;
-  highlights?: string[];
-  description: string;
-  images: string[];
-  video?: string;
-  tags: string[];
-  rating: number;
-  category: ObjectId;
-  variations: IVariant[];
-  attributes: { id: ObjectId; options: string[] }[];
-  specifications: { id: ObjectId; value: string }[];
-  reviews: ObjectId[];
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface IProductModel extends Model<IProduct> {
-  findByCategory(categoryId: ObjectId): Promise<IProduct[]>;
-  findByRating(rating: number): Promise<IProduct[]>;
-  searchByName(searchTerm: string): Promise<IProduct[]>;
-}
-
-const variationSchema = new Schema<IVariant>({
+const variationSchema = new Schema({
   sku: { type: String, unique: true },
   pricing: [
     {
@@ -83,11 +34,11 @@ const variationSchema = new Schema<IVariant>({
   isDefault: { type: Boolean, default: false },
 });
 
-const productSchema = new Schema<IProduct>(
+const productSchema = new Schema(
   {
     name: { type: String, required: true },
     slug: { type: String, unique: true },
-    highlights: { type: [String], default: [] },
+    highlights: { type: String },
     description: { type: String, required: true },
     images: { type: [String], required: true },
     video: { type: String },
@@ -97,10 +48,10 @@ const productSchema = new Schema<IProduct>(
     variations: {
       type: [variationSchema],
       validate: {
-        validator: function (v: IVariant[]) {
+        validator: function (v: TVariation) {
           return v && v.length > 0;
         },
-        message: "Product must have at least one variation.",
+        message: "Product must have at least one variant.",
       },
     },
     attributes: [
@@ -131,14 +82,14 @@ const productSchema = new Schema<IProduct>(
   { timestamps: true }
 );
 
-productSchema.pre("save", async function (next) {
+productSchema.pre<TProductSchema>("save", async function (next) {
   if (this.name && !this.slug) {
     this.slug = this.name.toLowerCase().replace(/\s+/g, "-");
   }
 
   let defaultVariant = false;
 
-  this.variations.forEach((variant: IVariant) => {
+  this.variations.forEach((variant) => {
     const skuPrefix = this.name.substring(0, 3).toUpperCase();
     const uniqueSuffix = crypto.randomBytes(4).toString("hex");
 
@@ -161,24 +112,8 @@ productSchema.index({ name: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ isActive: 1 });
 
-productSchema.statics = {
-  findByCategory: function (categoryId: ObjectId) {
-    return this.find({ category: categoryId });
-  },
-
-  findByRating: function (rating: number) {
-    return this.find({ rating: { $gte: rating } }).sort({ rating: -1 });
-  },
-
-  searchByName: function (searchTerm: string) {
-    const regex = new RegExp(searchTerm, "i");
-    return this.find({ name: { $regex: regex } });
-  },
-};
-
-const ProductModel = mongoose.model<IProduct, IProductModel>(
-  "Product",
-  productSchema
-);
+export type TProductSchema = InferMongooseSchema<typeof productSchema>;
+export type TVariation = TProductSchema["variations"];
+const ProductModel = model("Product", productSchema);
 
 export default ProductModel;

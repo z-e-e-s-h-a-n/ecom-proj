@@ -1,31 +1,25 @@
-import mongoose, { Schema } from "mongoose";
+import { InferMongooseSchema } from "@/types/global";
+import { Schema, model } from "mongoose";
 
-export interface ICategory extends Document {
-  name: string;
-  slug: string;
-  description?: string;
-  image?: string;
-  parent?: mongoose.Types.ObjectId;
-}
-
-const CategorySchema = new Schema<ICategory>(
+const categorySchema = new Schema(
   {
     name: { type: String, required: true, unique: true },
     slug: { type: String, required: true, unique: true },
-    description: { type: String },
+    desc: { type: String },
     image: { type: String },
     parent: { type: Schema.Types.ObjectId, ref: "Category" },
   },
   { timestamps: true }
 );
 
-CategorySchema.pre("save", function (next) {
+categorySchema.pre("save", function (next) {
   if (this.name && !this.slug) {
     this.slug = this.name.toLowerCase().replace(/\s+/g, "-");
   }
   next();
 });
 
-const Category = mongoose.model<ICategory>("Category", CategorySchema);
+export type TCategorySchema = InferMongooseSchema<typeof categorySchema>;
+const CategoryModel = model("Category", categorySchema);
 
-export default Category;
+export default CategoryModel;
