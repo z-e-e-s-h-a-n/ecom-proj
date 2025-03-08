@@ -131,12 +131,12 @@ export const couponSchema = z.object({
 
 export const checkoutFormSchema = z.object({
   identifier: identifierField,
-  subscribe: z.boolean().default(true),
+  newsletter: z.boolean().default(true),
   saveInfo: z.boolean().default(true),
   shipping: z.object({
     method: z.enum(["standard", "express", "free"]),
     address: addressSchema,
-    cost: z.number(),
+    cost: z.number().default(0),
   }),
   billing: z.discriminatedUnion("method", [
     z.object({

@@ -1,22 +1,5 @@
 import { apiRequest } from "@/config/axios";
-
-export interface FilteredProductsResponse {
-  products: { product: IProduct }[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface CalcShippingPayload {
-  items: {
-    categoryId: string;
-    price: number;
-    quantity: number;
-  }[];
-  country: string;
-  subtotal: number;
-  couponId?: string;
-}
+import { TCalcShippingSchema } from "@workspace/shared/schemas/shipping";
 
 export const getProducts = async (
   params?: TSearchParams
@@ -65,12 +48,9 @@ export const getShippingMethods = async (
   return response.data.shippingMethod;
 };
 
-export const calculateShipping = async ({
-  items,
-  country,
-}: CalcShippingPayload): Promise<number> => {
-  const response = await apiRequest("POST", `/shipping/calculate`, {
-    data: { items, country },
-  });
+export const calculateShipping = async (
+  data: TCalcShippingSchema
+): Promise<number> => {
+  const response = await apiRequest("POST", `/shipping/calculate`, { data });
   return response.data.shippingCost;
 };

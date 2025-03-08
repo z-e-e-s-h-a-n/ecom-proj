@@ -5,7 +5,7 @@ import logger from "@/config/logger";
 const connectDB = async () => {
   try {
     await mongoose.connect(envConfig.db.uri);
-    logger.info("MongoDB connected");
+    logger.info("MongoDB connected", { raw: true });
   } catch (error) {
     logger.error("Failed to connect to MongoDB:", { error });
     process.exit(1);

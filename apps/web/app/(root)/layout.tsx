@@ -1,7 +1,7 @@
 "use client";
 
-import Footer from "@/components/constant/Footer";
-import Header from "@/components/constant/Header";
+import Footer from "@/components/layout/Footer";
+import Header from "@/components/layout/Header";
 import useAuth from "@/hooks/useAuth";
 import { useCurrency } from "@/hooks/useCurrency";
 import { syncUserStorage } from "@/lib/actions/user";

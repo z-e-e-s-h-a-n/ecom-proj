@@ -1,84 +1,73 @@
-import { TShippingMethod, TShippingMethodPricing } from "@/models/shipping";
-
-let evaluate: any;
-(async () => {
-  const mathjs = await import("mathjs");
-  evaluate = mathjs.evaluate;
-})();
-
-interface CalculationContext {
-  qty: number;
-  cost: number;
-}
-
-const parseFeeFormula = (
-  formula: string,
-  context: CalculationContext
-): number => {
-  const feeRegex =
-    /\[fee percent="(\d+)"(?: min_fee="(\d+)")?(?: max_fee="(\d+)")?\]/;
-  const feeMatch = formula.match(feeRegex);
-
-  if (!feeMatch) return 0;
-
-  const [, percentStr, minFeeStr, maxFeeStr] = feeMatch;
-  const percent = percentStr ? parseFloat(percentStr) : 0;
-  const minFee = minFeeStr ? parseFloat(minFeeStr) : 0;
-  const maxFee = maxFeeStr ? parseFloat(maxFeeStr) : Infinity;
-
-  const fee = (percent / 100) * context.cost;
-  return Math.max(minFee, Math.min(fee, maxFee));
-};
-
-export const evaluateCost = (
-  formula: string,
-  context: CalculationContext
-): number => {
-  if (formula.includes("[fee")) return parseFeeFormula(formula, context);
-
-  const expression = formula
-    .replace(/\[qty\]/g, context.qty.toString())
-    .replace(/\[cost\]/g, context.cost.toString());
-
-  try {
-    return evaluate(expression);
-  } catch (error) {
-    console.error("Formula evaluation error:", error);
-    throw new Error(`Failed to evaluate formula: ${formula}`);
-  }
-};
+import {
+  TCalcShippingSchema,
+  TShippingMethodSchema,
+} from "@workspace/shared/schemas/shipping";
 
 export const calcShippingCost = (
-  pricing: TShippingMethodPricing,
-  context: CalculationContext
+  method: TShippingMethodSchema,
+  item: TCalcShippingSchema["items"][number]
 ): number => {
-  if (!pricing) return 0;
+  const { weight, dimensions, quantity } = item;
 
-  const { type, value } = pricing;
-  return type === "formula" ? evaluateCost(value, context) : parseFloat(value);
+  const convert = (value: number, unit: string, factor: number) =>
+    unit === "in" || unit === "g" ? value * factor : value;
+
+  const weightInKg = Number(
+    (convert(weight.value, weight.unit, 1 / 1000) * quantity).toFixed(2)
+  );
+
+  const lengthInCm = convert(dimensions.length, dimensions.unit, 2.54);
+  const widthInCm = convert(dimensions.width, dimensions.unit, 2.54);
+  const heightInCm = convert(dimensions.height, dimensions.unit, 2.54);
+
+  const volume = Number(
+    (lengthInCm * widthInCm * heightInCm * quantity).toFixed(2)
+  );
+
+  const pricing = method.rates.find(
+    ({ weight: w, volume: v }) =>
+      weightInKg >= w.min &&
+      weightInKg <= w.max &&
+      volume >= v.min &&
+      volume <= v.max
+  );
+
+  return pricing?.price ?? 0;
 };
 
 export const meetsFreeShipping = (
-  method: TShippingMethod,
-  context: { subtotal: number; couponId?: string }
-) => {
-  const { requirements } = method;
+  method: TShippingMethodSchema,
+  item: TCalcShippingSchema["items"][number]
+): boolean => {
+  const { freeShipping } = method;
 
-  if (!requirements || requirements?.type === "none") return true;
+  if (!freeShipping || !freeShipping.isActive) return false;
 
-  const conditions = {
-    minAmount: context.subtotal >= (requirements.minAmount || 0),
-    hasCoupon: context.couponId === requirements.couponId?.toString(),
-  };
-
-  switch (requirements.type) {
-    case "minAmount":
-      return conditions.minAmount;
-    case "coupon":
-      return conditions.hasCoupon;
-    case "either":
-      return conditions.minAmount || conditions.hasCoupon;
-    default:
+  // Check period
+  if (freeShipping.duration) {
+    const now = new Date();
+    if (now < freeShipping.duration.start || now > freeShipping.duration.end)
       return false;
   }
+
+  // Check criteria
+  if (
+    freeShipping.condition.type === "min" &&
+    item.price < freeShipping.condition.threshold
+  )
+    return false;
+
+  // Check applicability
+  if (freeShipping.scope === "specific") {
+    const isApplicableToProducts = freeShipping.products?.some(
+      (id) => id.toString() === item.productId
+    );
+    const isApplicableToCategories = freeShipping.categories?.some(
+      (id) => id.toString() === item.categoryId
+    );
+
+    if (!isApplicableToProducts && !isApplicableToCategories) return false;
+  }
+
+  return true;
 };

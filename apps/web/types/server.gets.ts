@@ -1,9 +1,12 @@
+import { TShippingSchema } from "@workspace/shared/schemas/product";
+
 // --- Types ---
 declare global {
   interface IUser {
     _id: string;
     firstName: string;
     lastName?: string;
+    name: string;
     email?: string;
     phone?: string;
     role: UserRole;
@@ -60,15 +63,6 @@ declare global {
     updatedAt: Date;
   }
 
-  export interface IShipping {
-    distanceUnit: "cm" | "in";
-    massUnit: "kg" | "lb" | "g";
-    weight: number;
-    length: number;
-    width: number;
-    height: number;
-  }
-
   export interface IVariant {
     _id: string;
     pricing: {
@@ -80,7 +74,7 @@ declare global {
     stock: number;
     images: string[];
     attributes: Record<string, string>;
-    shipping: IShipping;
+    shipping: TShippingSchema;
     isActive: boolean;
     isDefault: boolean;
   }
@@ -89,7 +83,7 @@ declare global {
     _id: string;
     name: string;
     slug: string;
-    description?: string;
+    desc?: string;
     image?: string;
     parent?: string;
   }
@@ -120,7 +114,7 @@ declare global {
 
   export interface IProduct {
     _id: string;
-    name: string;
+    title: string;
     slug: string;
     highlights?: string[];
     description: string;
@@ -164,7 +158,7 @@ declare global {
   }
 
   export interface IShippingMethod {
-    zone: string;
+    name: string;
     enabled: boolean;
     description?: string;
     countries: string[];

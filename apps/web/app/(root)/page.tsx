@@ -1,10 +1,10 @@
 "use client";
-import HeroSection from "@/components/showcase/HeroSection";
-import CategorySection from "@/components/showcase/CategorySection";
-import ProductSection from "@/components/showcase/ProductSection";
+import HeroSection from "@/components/section/HeroSection";
+import CategorySection from "@/components/section/CategorySection";
+import ProductSection from "@/components/section/ProductSection";
 import { Separator } from "@workspace/ui/components/separator";
 import { bannerCardsList } from "@/constants/product";
-import BannerCardSection from "@/components/showcase/BannerCardSection";
+import BannerCardSection from "@/components/section/BannerCardSection";
 import useStorage from "@/hooks/useStorage";
 
 function Home() {
@@ -25,7 +25,9 @@ function Home() {
             endDate: "2025-01-03T00:00:00",
           },
         }}
-        footerProps={{ linkButtonProps: { href: "/products" } }}
+        footerProps={{
+          buttonProps: { href: "/products" },
+        }}
       />
       <Separator />
       <CategorySection
@@ -42,7 +44,7 @@ function Home() {
         headerProps={{
           title: "Best Selling Products",
           subtitle: { text: "This Month" },
-          linkButtonProps: { href: "/products", variant: "outline" },
+          buttonProps: { href: "/products", variant: "outline" },
         }}
       />
       <ProductSection
@@ -52,7 +54,7 @@ function Home() {
           title: "Explore Our Products",
           subtitle: { text: "Our Products" },
         }}
-        footerProps={{ linkButtonProps: { href: "/products" } }}
+        footerProps={{ buttonProps: { href: "/products" } }}
       />
     </>
   );

@@ -1,11 +1,11 @@
 // Shop.tsx
 "use client";
 import React, { useState } from "react";
-import FilterSidebar from "@/components/constant/FilterSidebar";
+import FilterSidebar from "@/components/layout/FilterSidebar";
 import { Grid2x2 } from "lucide-react";
-import Sort from "@/components/constant/Sort";
-import PageNav from "@/components/constant/PageNav";
-import ProductCard from "@/components/showcase/ProductCard";
+import Sort from "@/components/block/Sort";
+import PageNav from "@/components/block/PageNav";
+import ProductCard from "@/components/block/ProductCard";
 import { useProducts } from "@/hooks/useStorage";
 import SearchBar from "@/components/form/SearchBar";
 
@@ -26,8 +26,8 @@ function Shop() {
       <div className="flex gap-8">
         <FilterSidebar filters={queryParams} onChange={updateQueryParams} />
         <div className="flex-1 space-y-6">
-          <div className="flex-justify-between gap-4">
-            <div className="flex-items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Grid2x2 className="size-5" />
               <span>
                 Showing {(page - 1) * limit + 1}-{Math.min(page * limit, total)}{" "}

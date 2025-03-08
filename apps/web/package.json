@@ -13,12 +13,13 @@
     "@hookform/resolvers": "^4.1.2",
     "@tanstack/react-query": "^5.66.9",
     "@workspace/ui": "workspace:*",
+    "@workspace/shared": "workspace:*",
     "axios": "^1.7.9",
     "cookies-next": "^5.1.0",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
     "lucide-react": "0.475.0",
-    "next": "^15.1.7",
+    "next": "^15.2.0",
     "next-themes": "^0.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -28,15 +29,15 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-     "@types/lodash": "^4.17.15",
+    "@types/lodash": "^4.17.15",
     "@types/node": "^22.13.5",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
-     "prettier": "^3.5.2",
-    "prettier-plugin-tailwindcss": "^0.6.11",
     "postcss": "^8",
+    "prettier": "^3.5.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.7.3"
   }

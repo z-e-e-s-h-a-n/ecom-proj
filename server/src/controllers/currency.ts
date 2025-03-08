@@ -7,7 +7,7 @@ import {
   handleError,
 } from "@/lib/utils/helper";
 import { validateRequest } from "@/config/zod";
-import { currencySchema } from "@/schemas/currency";
+import { currencySchema } from "@workspace/shared/schemas/currency";
 
 export const getCurrencies = async (_req: Request, res: Response) => {
   try {

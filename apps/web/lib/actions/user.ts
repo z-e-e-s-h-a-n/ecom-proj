@@ -1,5 +1,7 @@
 import { apiRequest } from "@/config/axios";
 import { getLocalStorage } from "../utils";
+import { TOrderSchema } from "@workspace/shared/schemas/order";
+import { TAddressSchema } from "@workspace/shared/schemas/address";
 
 export const getCurrentUser = async (): Promise<TCurrentUser> => {
   try {
@@ -47,7 +49,7 @@ export const updateUserWishlist = async ({
   }
 };
 
-export const placeUserOrder = async (data: PlaceOrderPayload) => {
+export const placeUserOrder = async (data: TOrderSchema) => {
   return await apiRequest("POST", "/users/orders", { data });
 };
 
@@ -80,7 +82,7 @@ export const syncUserStorage = async (currentUser: TCurrentUser) => {
 };
 
 export const AddUserAddress = async (
-  data: AddAddressPayload
+  data: TAddressSchema
 ): Promise<IAddress> => {
   const response = await apiRequest("POST", "/users/address", { data });
   if (!response.success) throw new Error(response.message);

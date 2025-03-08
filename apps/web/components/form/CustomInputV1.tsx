@@ -25,7 +25,7 @@ function CustomInput({
         <FormItem className="w-full">
           <div
             className={cn("grid gap-2", className, {
-              "flex-items-center flex-row-reverse gap-2": type === "checkbox",
+              "flex items-center flex-row-reverse gap-2": type === "checkbox",
             })}
           >
             {label && (

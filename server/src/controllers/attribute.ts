@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import AttributeModel from "@/models/attribute";
 import { handleError, sendResponse } from "@/lib/utils/helper";
 import { validateRequest } from "@/config/zod";
-import { attributeSchema } from "@/schemas/attribute";
+import { attributeSchema } from "@workspace/shared/schemas/attribute";
 
 export const createAttribute = async (req: Request, res: Response) => {
   try {

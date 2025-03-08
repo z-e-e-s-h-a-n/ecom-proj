@@ -2,6 +2,19 @@ import { Schema, model } from "mongoose";
 import crypto from "crypto";
 import { InferMongooseSchema } from "@/types/global";
 
+const shippingSchema = new Schema({
+  weight: {
+    unit: { type: String, enum: ["kg", "g"], default: "g" },
+    value: { type: Number, required: true },
+  },
+  dimensions: {
+    unit: { type: String, enum: ["cm", "in"], default: "cm" },
+    length: { type: Number, required: true },
+    width: { type: Number, required: true },
+    height: { type: Number, required: true },
+  },
+});
+
 const variationSchema = new Schema({
   sku: { type: String, unique: true },
   pricing: [
@@ -22,21 +35,14 @@ const variationSchema = new Schema({
     of: String,
     get: (val: any) => (val ? Object.fromEntries(val) : {}),
   },
-  shipping: {
-    massUnit: { type: String, enum: ["kg", "lb", "g"], require: true },
-    distanceUnit: { type: String, enum: ["cm", "in"], require: true },
-    weight: { type: Number, require: true },
-    length: { type: Number, require: true },
-    width: { type: Number, require: true },
-    height: { type: Number, require: true },
-  },
+  shipping: shippingSchema,
   isActive: { type: Boolean, default: true },
   isDefault: { type: Boolean, default: false },
 });
 
 const productSchema = new Schema(
   {
-    name: { type: String, required: true },
+    title: { type: String, required: true },
     slug: { type: String, unique: true },
     highlights: { type: String },
     description: { type: String, required: true },
@@ -83,14 +89,14 @@ const productSchema = new Schema(
 );
 
 productSchema.pre<TProductSchema>("save", async function (next) {
-  if (this.name && !this.slug) {
-    this.slug = this.name.toLowerCase().replace(/\s+/g, "-");
+  if (this.title && !this.slug) {
+    this.slug = this.title.toLowerCase().replace(/\s+/g, "-");
   }
 
   let defaultVariant = false;
 
   this.variations.forEach((variant) => {
-    const skuPrefix = this.name.substring(0, 3).toUpperCase();
+    const skuPrefix = this.title.substring(0, 3).toUpperCase();
     const uniqueSuffix = crypto.randomBytes(4).toString("hex");
 
     if (!variant.sku) {
@@ -108,7 +114,7 @@ productSchema.pre<TProductSchema>("save", async function (next) {
   next();
 });
 
-productSchema.index({ name: 1 });
+productSchema.index({ title: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ isActive: 1 });
 

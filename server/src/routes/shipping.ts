@@ -5,14 +5,20 @@ const shippingRouter: Router = Router();
 
 // CRUD Routes
 shippingRouter
-  .route("/method")
-  .post(controller.createShippingZone)
+  .route("/zone")
+  .post(controller.addShippingZone)
   .get(controller.getShippingZone);
 
 shippingRouter
-  .route("/method/:zoneId")
+  .route("/zone/:zoneId")
   .put(controller.updateShippingZone)
   .delete(controller.deleteShippingZone);
+
+shippingRouter.post("/zone/:zoneId/method", controller.addShippingMethod);
+shippingRouter
+  .route("/zone/:zoneId/method/:methodId")
+  .put(controller.updateShippingMethod)
+  .delete(controller.deleteShippingMethod);
 
 // Calculate shipping cost
 shippingRouter.post("/calculate", controller.calculateShipping);

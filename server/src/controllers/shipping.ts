@@ -2,14 +2,25 @@ import { Request, Response } from "express";
 import ShippingZoneModel from "@/models/shipping";
 import { handleError, sendResponse } from "@/lib/utils/helper";
 import { validateRequest } from "@/config/zod";
-import { calcShippingSchema, shippingZoneSchema } from "@/schemas/shipping";
+import {
+  calcShippingSchema,
+  shippingMethodSchema,
+  shippingZoneSchema,
+} from "@workspace/shared/schemas/shipping";
 import { calcShippingCost, meetsFreeShipping } from "@/config/shipping";
 
-export const createShippingZone = async (req: Request, res: Response) => {
+const findShippingZone = async (country: string) => {
+  return await ShippingZoneModel.findOne({
+    $or: [{ countries: country }, { isDefault: true }],
+    isActive: true,
+  });
+};
+
+export const addShippingZone = async (req: Request, res: Response) => {
   try {
     const shippingData = validateRequest(shippingZoneSchema, req.body);
-
     const shippingZone = await ShippingZoneModel.create(shippingData);
+
     sendResponse(res, 201, "Shipping Zone created successfully", {
       shippingZone,
     });
@@ -18,18 +29,33 @@ export const createShippingZone = async (req: Request, res: Response) => {
   }
 };
 
+export const addShippingMethod = async (req: Request, res: Response) => {
+  try {
+    const { zoneId } = req.params;
+    const shippingMethod = validateRequest(shippingMethodSchema, req.body);
+
+    const shippingZone = await ShippingZoneModel.findById(zoneId);
+    if (!shippingZone) return sendResponse(res, 404, "Shipping Zone not found");
+
+    await ShippingZoneModel.findByIdAndUpdate(
+      zoneId,
+      { $push: { methods: shippingMethod } },
+      { new: true }
+    );
+
+    sendResponse(res, 200, "Shipping method added successfully", {
+      shippingZone,
+    });
+  } catch (error) {
+    handleError(res, "Error adding shipping method", error);
+  }
+};
+
 export const getShippingZone = async (req: Request, res: Response) => {
   try {
-    const { country } = req.body;
-
-    const shippingZone = await ShippingZoneModel.findOne({
-      $or: [{ countries: country }, { isDefault: true }],
-      isActive: true,
-    });
-
+    const shippingZone = await findShippingZone(req.body.country);
     if (!shippingZone) return sendResponse(res, 404, "No shipping zone found");
-
-    sendResponse(res, 200, "shipping zone fetched successfully", {
+    sendResponse(res, 200, "Shipping zone fetched successfully", {
       shippingZone,
     });
   } catch (error) {
@@ -39,7 +65,7 @@ export const getShippingZone = async (req: Request, res: Response) => {
 
 export const updateShippingZone = async (req: Request, res: Response) => {
   try {
-    const zoneId = req.params.zoneId;
+    const { zoneId } = req.params;
     if (!zoneId) return sendResponse(res, 400, "zoneId is required");
     const shippingData = validateRequest(shippingZoneSchema, req.body);
 
@@ -50,8 +76,7 @@ export const updateShippingZone = async (req: Request, res: Response) => {
     );
 
     if (!shippingZone) return sendResponse(res, 404, "Shipping Zone not found");
-
-    sendResponse(res, 200, "shipping zone updated successfully", {
+    sendResponse(res, 200, "Shipping zone updated successfully", {
       shippingZone,
     });
   } catch (error) {
@@ -59,58 +84,79 @@ export const updateShippingZone = async (req: Request, res: Response) => {
   }
 };
 
+export const updateShippingMethod = async (req: Request, res: Response) => {
+  try {
+    const { zoneId, methodId } = req.params;
+    const updatedMethodData = validateRequest(shippingMethodSchema, req.body);
+
+    const updatedShippingZone = await ShippingZoneModel.findOneAndUpdate(
+      { _id: zoneId, "shippingMethods._id": methodId },
+      { $set: { "shippingMethods.$": updatedMethodData } },
+      { new: true }
+    );
+
+    if (!updatedShippingZone)
+      return sendResponse(res, 404, "Shipping Zone or Method not found");
+
+    sendResponse(res, 200, "Shipping method updated successfully", {
+      shippingZone: updatedShippingZone,
+    });
+  } catch (error) {
+    handleError(res, "Error updating shipping method", error);
+  }
+};
+
 export const deleteShippingZone = async (req: Request, res: Response) => {
   try {
-    const zoneId = req.params.zoneId;
-    if (!zoneId) return sendResponse(res, 400, "zoneId is required");
-
-    const shippingZone = await ShippingZoneModel.findByIdAndDelete(zoneId);
-
+    const shippingZone = await ShippingZoneModel.findByIdAndDelete(
+      req.params.zoneId
+    );
     if (!shippingZone) return sendResponse(res, 404, "Shipping zone not found");
-
     sendResponse(res, 200, "Shipping zone deleted successfully");
   } catch (error) {
     handleError(res, "Error deleting shipping zone", error);
   }
 };
 
-export const calculateShipping = async (req: Request, res: Response) => {
+export const deleteShippingMethod = async (req: Request, res: Response) => {
   try {
-    const { items, country, subtotal, couponId } = validateRequest(
-      calcShippingSchema,
-      req.body
+    const { zoneId, methodId } = req.params;
+
+    const updatedShippingZone = await ShippingZoneModel.findByIdAndUpdate(
+      zoneId,
+      { $pull: { shippingMethods: { _id: methodId } } },
+      { new: true }
     );
 
-    const shippingZone = await ShippingZoneModel.findOne({
-      $or: [{ countries: country }, { isDefault: true }],
-      isActive: true,
-    });
+    if (!updatedShippingZone)
+      return sendResponse(res, 404, "Shipping Zone not found");
 
+    sendResponse(res, 200, "Shipping method deleted successfully", {
+      shippingZone: updatedShippingZone,
+    });
+  } catch (error) {
+    handleError(res, "Error deleting shipping method", error);
+  }
+};
+
+export const calculateShipping = async (req: Request, res: Response) => {
+  try {
+    const { items, country } = validateRequest(calcShippingSchema, req.body);
+
+    const shippingZone = await findShippingZone(country);
     if (!shippingZone)
       return sendResponse(res, 404, "No shipping zones available");
 
+    const shippingMethod = shippingZone.methods.find(
+      (method) => method.type === "standard"
+    );
+
+    if (!shippingMethod)
+      return sendResponse(res, 404, "Standard shipping method not found");
+
     const shippingCost = items.reduce((total: number, item) => {
-      const method = shippingZone.shippingMethods.find((method) =>
-        method.categoryOverrides.includes(item.categoryId as any)
-      );
-
-      if (!method) return total;
-
-      const pricing =
-        method.categoryOverrides.find(
-          (override) => override.category === item.categoryId
-        )?.pricing || method.pricing;
-
-      if (
-        method.type === "freeShipping" &&
-        meetsFreeShipping(method, { subtotal, couponId })
-      )
-        return total;
-
-      return (
-        total +
-        calcShippingCost(pricing, { qty: item.quantity, cost: subtotal })
-      );
+      if (meetsFreeShipping(shippingMethod, item)) return total;
+      return total + calcShippingCost(shippingMethod, item);
     }, 0);
 
     sendResponse(res, 200, "Shipping cost calculated successfully", {

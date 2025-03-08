@@ -1,4 +1,4 @@
-import { ButtonProps } from "@workspace/ui/components/button";
+import { LinkButtonProps } from "@/components/block/LinkButton";
 import React from "react";
 
 declare global {
@@ -14,27 +14,7 @@ declare global {
     children?: React.ReactNode;
   }
 
-  type SVGIconProps = React.SVGProps<SVGSVGElement>;
-
-  interface CSSCustomProperties extends React.CSSProperties {
-    [key: string]: string | number | undefined;
-  }
-
-  interface BadgeProps {
-    count: number | string;
-    className?: string;
-    children?: React.ReactNode;
-  }
-
-  interface LogoProps extends SVGIconProps {
-    variant?: "full" | "mini";
-  }
-
-  interface LinkButtonProps extends ButtonProps {
-    text?: string;
-    href: string;
-    children?: React.ReactNode;
-  }
+  type IconProps = React.SVGProps<SVGSVGElement>;
 
   interface CountdownTimerProps {
     startDate: string;
@@ -60,14 +40,13 @@ declare global {
       showBefore?: boolean;
     };
     countdown?: CountdownData;
-    linkButtonProps?: LinkButtonProps;
+    buttonProps?: LinkButtonProps;
     useCarousel?: boolean;
   }
 
   interface SectionFooterProps {
     className?: string;
-    linkButtonProps: LinkButtonProps;
-    useCarousel?: boolean;
+    buttonProps: LinkButtonProps;
   }
 
   interface ProductSectionProps extends ShowcaseSectionProps {

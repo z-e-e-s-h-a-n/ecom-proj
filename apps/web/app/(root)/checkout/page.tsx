@@ -13,24 +13,30 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@workspace/ui/components/dialog";
-import CartTable from "@/components/showcase/CartTable";
+import CartTable from "@/components/section/CartTable";
 
 import CustomInput from "@/components/form/CustomInputV2";
 import { Form, FormMessage } from "@workspace/ui/components/form";
 import RadioInput from "@/components/form/RadioInputV2";
 import CouponForm from "@/components/form/CouponForm";
-import OrderDetails from "@/components/showcase/OrderDetails";
+import OrderDetails from "@/components/section/OrderDetails";
 import useCheckout from "@/hooks/useCheckout";
 import useAuth from "@/hooks/useAuth";
 import PaymentForm from "@/components/form/PaymentForm";
-import { useCurrency } from "@/hooks/useCurrency";
 
 function Checkout({ searchParams }: PageProps) {
   const cartSource = (React.use(searchParams)?.cartSource as string) || "";
   const { currentUser } = useAuth();
   const { formatProductPrice } = usePricing();
-  const { currencyInfo } = useCurrency();
-  const { form, onSubmit, items, order, subtotal } = useCheckout(cartSource);
+  const {
+    form,
+    onSubmit,
+    items,
+    order,
+    fmtSubtotal,
+    fmtShippingCost,
+    fmtGrandTotal,
+  } = useCheckout(cartSource);
 
   const setEditCart = (value: boolean) => {
     form.setValue("editCart", value);
@@ -40,7 +46,6 @@ function Checkout({ searchParams }: PageProps) {
     form.setValue("coupon", value);
   };
 
-  const shippingCost = form.watch("shipping.cost");
   const editCart = form.watch("editCart");
   const { isLoading, errorMessage } = form.watch("response") || {};
 
@@ -77,14 +82,12 @@ function Checkout({ searchParams }: PageProps) {
   const shippingMethodOptions = useMemo(
     () => [
       {
-        label: shippingCost ? "Standard Shipping" : "Free Shipping",
-        option: shippingCost ? "standard" : "free",
-        labelContent: shippingCost
-          ? `${currencyInfo?.symbol}${shippingCost}`
-          : undefined,
+        label: fmtShippingCost ? "Standard Shipping" : "Free Shipping",
+        option: fmtShippingCost ? "standard" : "free",
+        labelContent: fmtShippingCost ? fmtShippingCost : undefined,
       },
     ],
-    [shippingCost, currencyInfo]
+    [fmtShippingCost]
   );
 
   if (!items?.length && !order) return <div>Items not found in your cart.</div>;
@@ -116,7 +119,7 @@ function Checkout({ searchParams }: PageProps) {
                     disabled={!!currentUser && !!currentUser.phone}
                   />
                   <CustomInput
-                    name="subscribe"
+                    name="newsletter"
                     type="checkbox"
                     label="Email me with news and offers"
                     control={form.control}
@@ -192,7 +195,7 @@ function Checkout({ searchParams }: PageProps) {
             <ul className="flex flex-col gap-4 max-h-[220px] py-2 overflow-y-auto no-scrollbar">
               {items.map(({ productId: product, quantity, variantId }) => {
                 const variant = getVariant(product, variantId);
-                const { price, symbol } = formatProductPrice(variant.pricing);
+                const { fmtPrice } = formatProductPrice(variant.pricing);
 
                 return (
                   <li
@@ -205,7 +208,7 @@ function Checkout({ searchParams }: PageProps) {
                     <div className="relative before:size-[22px] before:absolute before:-top-2 before:-right-2 before:bg-primary before:flex-center before:text-white before:rounded-full before:text-xs before:content-[var(--quantity)]">
                       <Image
                         src={variant.images[0]!}
-                        alt={product.name}
+                        alt={product.title}
                         width={64}
                         height={64}
                         className="aspect-square size-16 rounded-md"
@@ -216,16 +219,13 @@ function Checkout({ searchParams }: PageProps) {
                         <Link
                           href={`/products/${product._id}?variant=${variant._id}`}
                         >
-                          {product.name}
+                          {product.title}
                         </Link>
                         <span className="text-sm">
                           {Object.values(variant.attributes).join(", ")}
                         </span>
                       </div>
-                      <span>
-                        {symbol}
-                        {price}
-                      </span>
+                      <span> {fmtPrice} </span>
                     </div>
                   </li>
                 );
@@ -238,27 +238,17 @@ function Checkout({ searchParams }: PageProps) {
               <ul className="space-y-2">
                 <li className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>
-                    {currencyInfo?.symbol}
-                    {subtotal}
-                  </span>
+                  <span>{fmtSubtotal}</span>
                 </li>
                 <li className="flex justify-between">
                   <span>Shipping</span>
-                  <span>
-                    {shippingCost
-                      ? `${currencyInfo?.symbol}${shippingCost}`
-                      : "Free"}
-                  </span>
+                  <span>{fmtShippingCost ?? "Free"}</span>
                 </li>
               </ul>
               <Separator />
               <div className="h4 subtitle-1 flex justify-between">
                 <span>Total</span>
-                <span>
-                  {currencyInfo?.symbol}
-                  {subtotal}
-                </span>
+                <span>{fmtGrandTotal}</span>
               </div>
             </div>
           </div>

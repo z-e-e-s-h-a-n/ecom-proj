@@ -7,14 +7,12 @@ import Link from "next/link";
 import usePricing from "@/hooks/usePricing";
 import { Separator } from "@workspace/ui/components/separator";
 import { Card } from "@workspace/ui/components/card";
-import { useCurrency } from "@/hooks/useCurrency";
-import CartTable from "@/components/showcase/CartTable";
+import CartTable from "@/components/section/CartTable";
 
 const Cart = () => {
   const { cart } = useCart();
-  const { calcCartSubtotal } = usePricing();
-  const { currencyInfo } = useCurrency();
-  const subtotal = calcCartSubtotal(cart).toFixed(2);
+  const { getCartSubtotal } = usePricing();
+  const { fmtSubtotal } = getCartSubtotal(cart);
 
   if (!cart.length) return <div>Items not found in your cart.</div>;
 
@@ -35,10 +33,7 @@ const Cart = () => {
             <ul className="space-y-2">
               <li className="flex justify-between">
                 <span>Subtotal</span>
-                <span>
-                  {currencyInfo?.symbol}
-                  {subtotal}
-                </span>
+                <span>{fmtSubtotal}</span>
               </li>
               <li className="flex justify-between">
                 <span>Shipping</span>
@@ -48,10 +43,7 @@ const Cart = () => {
             <Separator />
             <div className="h4 subtitle-1 flex justify-between">
               <span>Total</span>
-              <span>
-                {currencyInfo?.symbol}
-                {subtotal}
-              </span>
+              <span>{fmtSubtotal}</span>
             </div>
             <Button>
               <Link href="/checkout">PROCEED TO CHECKOUT</Link>

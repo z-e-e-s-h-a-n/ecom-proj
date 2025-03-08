@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import ReviewModel from "@/models/review";
 import { handleError, sendResponse } from "@/lib/utils/helper";
-import { reviewSchema } from "@/schemas/review";
+import { reviewSchema } from "@workspace/shared/schemas/review";
 import { validateRequest } from "@/config/zod";
 
 // Add Review For a product

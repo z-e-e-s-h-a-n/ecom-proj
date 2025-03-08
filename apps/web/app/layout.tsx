@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "@workspace/ui/globals.css";
 import Provider from "@/providers";
-import { Toaster as SonnerToaster } from "@workspace/ui/components/sonner";
-import { Toaster } from "@workspace/ui/components/toaster";
+import { Toaster } from "@workspace/ui/components/sonner";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,7 +22,6 @@ function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
       <body className={`${poppins.variable} antialiased`}>
         <Provider>{children}</Provider>
         <Toaster />
-        <SonnerToaster />
       </body>
     </html>
   );

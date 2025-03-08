@@ -20,7 +20,7 @@ function VariantInput({
 
         return (
           <div key={name} className="flex flex-col gap-2">
-            <label className="font-medium flex-items-center gap-2">
+            <label className="font-medium flex items-center gap-2">
               {name}:
               <span className="text-sm text-muted-foreground font-normal">
                 {selectedAttributes[name]}

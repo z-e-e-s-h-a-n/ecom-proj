@@ -1,16 +1,13 @@
 import { InferMongooseSchema } from "@/types/global";
 import { Schema, model } from "mongoose";
 
-const categorySchema = new Schema(
-  {
-    name: { type: String, required: true, unique: true },
-    slug: { type: String, required: true, unique: true },
-    desc: { type: String },
-    image: { type: String },
-    parent: { type: Schema.Types.ObjectId, ref: "Category" },
-  },
-  { timestamps: true }
-);
+const categorySchema = new Schema({
+  name: { type: String, required: true, unique: true },
+  slug: { type: String, unique: true },
+  desc: { type: String },
+  image: { type: String },
+  parent: { type: Schema.Types.ObjectId, ref: "Category" },
+});
 
 categorySchema.pre("save", function (next) {
   if (this.name && !this.slug) {

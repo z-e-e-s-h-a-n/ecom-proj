@@ -131,24 +131,6 @@
   .flex-center {
     @apply flex items-center justify-center;
   }
-  .flex-items-center {
-    @apply flex items-center;
-  }
-  .flex-items-end {
-    @apply flex items-end;
-  }
-  .flex-justify-center {
-    @apply flex justify-center;
-  }
-  .flex-justify-between {
-    @apply flex justify-between;
-  }
-  .flex-justify-end {
-    @apply flex justify-end;
-  }
-  .flex-center-between {
-    @apply flex-items-center justify-between;
-  }
 
   /* =====  SHADCN OVERRIDES */
   .shad-no-focus {
@@ -172,10 +154,10 @@
   /* OTP Modal */
 
   .shad-otp {
-    @apply flex-justify-between w-full gap-1 sm:gap-2 !important;
+    @apply flex justify-between w-full gap-1 sm:gap-2 !important;
   }
   .shad-otp-slot {
-    @apply flex-justify-center shadow-light text-primary/30 size-12 gap-5 rounded-xl border-2 text-[40px] font-medium ring-primary md:size-16 !important;
+    @apply flex justify-center shadow-light text-primary/30 size-12 gap-5 rounded-xl border-2 text-[40px] font-medium ring-primary md:size-16 !important;
   }
   .otp-close-button {
     @apply absolute -right-1 -top-7 cursor-pointer sm:-right-2 sm:-top-4 !important;

@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import BreadcrumbNav from "@/components/constant/BreadcrumbNav";
-import ProductSection from "@/components/showcase/ProductSection";
+import BreadcrumbNav from "@/components/block/BreadcrumbNav";
+import ProductSection from "@/components/section/ProductSection";
 import { useProducts } from "@/hooks/useStorage";
-import ProductDetails from "@/components/showcase/ProductDetails";
+import ProductDetails from "@/components/section/ProductDetails";
 import { getVariant } from "@/lib/utils";
 import useProduct from "@/hooks/useProduct";
 

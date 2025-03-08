@@ -3,13 +3,13 @@ import { Schema, model } from "mongoose";
 
 const couponSchema = new Schema(
   {
-    code: { type: String, required: true, unique: true },
+    coupon: { type: String, required: true, unique: true },
     type: {
       type: String,
-      enum: ["Percentage", "Fixed"],
+      enum: ["percentage", "fixed"],
       required: true,
     },
-    value: { type: Number, required: true },
+    discount: { type: Number, required: true },
     expires: { type: Date, required: true },
     usageLimit: { type: Number },
     usedCount: { type: Number, default: 0 },

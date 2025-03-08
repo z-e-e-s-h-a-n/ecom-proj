@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import SpecificationModel from "@/models/specification";
 import { handleError, sendResponse } from "@/lib/utils/helper";
-import { specificationSchema } from "@/schemas/specification";
+import { specificationSchema } from "@workspace/shared/schemas/specification";
 import { validateRequest } from "@/config/zod";
 
 // Create Specification

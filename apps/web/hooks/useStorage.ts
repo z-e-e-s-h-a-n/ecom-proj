@@ -8,17 +8,16 @@ import { getLocalStorage, updateLocalStorage } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useAuth from "@/hooks/useAuth";
 import {
-  FilteredProductsResponse,
   getAttributes,
   getCategories,
   getProducts,
 } from "@/lib/actions/product";
-import { useToast } from "@workspace/ui/hooks/use-toast";
+
+import { toast } from "sonner";
 
 export const useCart = () => {
   const queryClient = useQueryClient();
   const { currentUser } = useAuth();
-  const { toast } = useToast();
 
   const updateCartLocal = (updatedCart: ICartItem[]) => {
     updateLocalStorage("cart", updatedCart);
@@ -82,10 +81,12 @@ export const useCart = () => {
     }
 
     if (toasts)
-      toast({
-        title: `Product ${action === "add" ? "added to" : "removed from"} cart successfully`,
-        description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your cart.`,
-      });
+      toast.success(
+        `Product ${action === "add" ? "added to" : "removed from"} cart successfully`,
+        {
+          description: `${product.title} has been ${action === "add" ? "added to" : "removed from"} your cart.`,
+        }
+      );
   };
 
   const isInCart = (product: IProduct, variantId: string) =>
@@ -114,7 +115,6 @@ export const useCart = () => {
 export const useWishlist = () => {
   const queryClient = useQueryClient();
   const { currentUser } = useAuth();
-  const { toast } = useToast();
 
   const updateWishlistLocal = (updatedWishlist: IWishlistItem[]) => {
     updateLocalStorage("wishlist", updatedWishlist);
@@ -174,10 +174,12 @@ export const useWishlist = () => {
       syncStorage({ action, items });
     }
     if (toasts)
-      toast({
-        title: `Product ${action === "add" ? "added to" : "removed from"} wishlist successfully`,
-        description: `${product.name} has been ${action === "add" ? "added to" : "removed from"} your wishlist.`,
-      });
+      toast.success(
+        `Product ${action === "add" ? "added to" : "removed from"} wishlist successfully`,
+        {
+          description: `${product.title} has been ${action === "add" ? "added to" : "removed from"} your wishlist.`,
+        }
+      );
   };
 
   const isInWishlist = (product: IProduct, variantId: string) =>

@@ -19,7 +19,6 @@ import {
 import { Button } from "@workspace/ui/components/button";
 import { requestOtp, validateOtp } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
-import { useToast } from "@workspace/ui/hooks/use-toast";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -32,6 +31,7 @@ import {
   FormItem,
   FormMessage,
 } from "@workspace/ui/components/form";
+import { toast } from "sonner";
 
 interface IOtpInputProps {
   identifier: string;
@@ -49,7 +49,6 @@ function OtpInput({
   setIsOpen,
 }: IOtpInputProps) {
   const router = useRouter();
-  const { toastHandler } = useToast();
 
   const form = useForm<TOtpFormSchema>({
     resolver: zodResolver(otpFormSchema),
@@ -65,14 +64,14 @@ function OtpInput({
       const response = await validateOtp({ identifier, secret, purpose });
       if (!response?.success) throw new Error(response.message);
       if (response.data.secret) {
-        toastHandler({ message: response.message });
+        toast({ description: response.message });
         redirectUrl = `?secret=${response.data.secret}&identifier=${identifier}&purpose=${purpose}&redirectUrl=${redirectUrl ?? ""}`;
-      } else toastHandler({ message: "Email verified successfully." });
+      } else toast({ description: "Email verified successfully." });
       setIsOpen(false);
       if (redirectUrl) router.push(redirectUrl);
     } catch (error: any) {
       form.setValue("response.errorMessage", error.message);
-      toastHandler({ message: error.message, variant: "destructive" });
+      toast({ description: error.message, variant: "destructive" });
     } finally {
       form.setValue("response.isLoading", false);
     }
@@ -83,10 +82,10 @@ function OtpInput({
       form.setValue("sendingOtp", true);
       const response = await requestOtp({ identifier, purpose });
       if (!response.success) throw new Error(response.message);
-      toastHandler({ message: "OTP sent successfully" });
+      toast({ description: "OTP sent successfully" });
     } catch (error: any) {
       form.setValue("response.errorMessage", error.message);
-      toastHandler({ message: error.message, variant: "destructive" });
+      toast({ description: error.message, variant: "destructive" });
     } finally {
       form.setValue("sendingOtp", false);
     }

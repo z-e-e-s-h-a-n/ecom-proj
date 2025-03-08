@@ -13,7 +13,7 @@ import {
   resetPasswordSchema,
   signupSchema,
   validateOtpSchema,
-} from "@/schemas/auth";
+} from "@workspace/shared/schemas/auth";
 
 export const signup = async (req: Request, res: Response) => {
   try {

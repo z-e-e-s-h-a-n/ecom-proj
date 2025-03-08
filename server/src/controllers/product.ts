@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import ProductModel from "@/models/product";
 import { handleError, sendResponse } from "@/lib/utils/helper";
 import { validateRequest } from "@/config/zod";
-import { productSchema } from "@/schemas/product";
+import { productSchema } from "@workspace/shared/schemas/product";
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
@@ -77,7 +77,7 @@ export const getProducts = async (req: Request, res: Response) => {
     // Search query
     if (searchQuery) {
       const regex = new RegExp(searchQuery as string, "i");
-      query.name = { $regex: regex };
+      query.title = { $regex: regex };
     }
 
     // Attribute filters

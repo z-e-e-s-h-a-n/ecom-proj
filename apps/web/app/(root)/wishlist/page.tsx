@@ -1,5 +1,5 @@
 "use client";
-import ProductSection from "@/components/showcase/ProductSection";
+import ProductSection from "@/components/section/ProductSection";
 import useStorage from "@/hooks/useStorage";
 import { getVariant } from "@/lib/utils";
 import React from "react";
@@ -32,10 +32,10 @@ function Wishlist() {
             text: `Wishlist (${wishlistProducts.length})`,
             showBefore: false,
           },
-          linkButtonProps: {
+          buttonProps: {
             href: "/products",
             variant: "outline",
-            text: "Move All To Bag",
+            children: "Move All To Bag",
           },
         }}
       />
@@ -43,7 +43,7 @@ function Wishlist() {
         items={justForYouProducts}
         headerProps={{
           subtitle: { text: `Just For You` },
-          linkButtonProps: {
+          buttonProps: {
             href: "/products",
             variant: "outline",
           },

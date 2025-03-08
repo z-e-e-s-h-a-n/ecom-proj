@@ -1,16 +1,18 @@
 import { Request, Response } from "express";
 import CategoryModel from "@/models/category";
 import { handleError, sendResponse } from "@/lib/utils/helper";
-import { categorySchema } from "@/schemas/category";
+import { categorySchema } from "@workspace/shared/schemas/category";
 import { validateRequest } from "@/config/zod";
 
 // create or Update Categories
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const attribute = validateRequest(categorySchema, req.body);
-    await CategoryModel.create(attribute);
+    const categoryData = validateRequest(categorySchema, req.body);
+    const category = await CategoryModel.create(categoryData);
 
-    sendResponse(res, 201, "Categories created successfully");
+    sendResponse(res, 201, "Categories created successfully", {
+      category,
+    });
   } catch (error) {
     handleError(res, "Error creating categories: ", error);
   }

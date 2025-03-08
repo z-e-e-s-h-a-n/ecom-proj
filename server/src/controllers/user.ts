@@ -6,11 +6,14 @@ import { handleError, sendResponse } from "@/lib/utils/helper";
 import { formatUserResponse } from "@/lib/utils/helper";
 import { Request, Response } from "express";
 import AddressModel from "@/models/address";
-import { addressSchema } from "@/schemas/address";
+import { addressSchema } from "@workspace/shared/schemas/address";
 import { validateRequest } from "@/config/zod";
-import { cartItemSchema, cartSchema } from "@/schemas/cart";
-import { wishlistItemSchema, wishlistSchema } from "@/schemas/wishlist";
-import { orderSchema } from "@/schemas/order";
+import { cartItemSchema, cartSchema } from "@workspace/shared/schemas/cart";
+import {
+  wishlistItemSchema,
+  wishlistSchema,
+} from "@workspace/shared/schemas/wishlist";
+import { orderSchema } from "@workspace/shared/schemas/order";
 
 export const getUser = async (req: Request, res: Response) => {
   try {
@@ -311,7 +314,7 @@ export const addAddress = async (req: Request, res: Response) => {
             addressData,
             { new: true, upsert: true }
           )
-        : await AddressModel.create(addressData);
+        : await AddressModel.create({ userId, ...addressData });
 
     sendResponse(res, 200, "Address saved successfully", { address });
   } catch (error) {

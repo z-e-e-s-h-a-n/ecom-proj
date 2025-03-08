@@ -21,6 +21,7 @@ const userSchema = new Schema(
         return bcrypt.compare(password, this.password);
       },
     },
+    timestamps: true,
   }
 );
 

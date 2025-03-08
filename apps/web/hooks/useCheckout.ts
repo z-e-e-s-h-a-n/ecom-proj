@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useToast } from "@workspace/ui/hooks/use-toast";
+import { useEffect, useMemo, useState } from "react";
 import useStorage from "@/hooks/useStorage";
 import {
   getLocalStorage,
@@ -19,17 +18,17 @@ import { AddUserAddress, placeUserOrder } from "@/lib/actions/user";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { debounce } from "lodash";
+import { toast } from "sonner";
 
 const useCheckout = (cartSource: string) => {
   const router = useRouter();
-  const { toastHandler } = useToast();
   const { cart, updateCart } = useStorage();
   const { currentUser } = useAuth();
-  const { formatProductPrice, calcCartSubtotal } = usePricing();
+  const { formatProductPrice, getCartSubtotal, formatCurrency } = usePricing();
   const { currencyInfo } = useCurrency();
   const [order, setOrder] = useState<IOrder | undefined>(undefined);
 
-  const subtotal = calcCartSubtotal(cart);
+  const { subtotal, fmtSubtotal } = getCartSubtotal(cart);
   const PENDING_ORDER_KEY = "pendingOrder";
 
   const pendingOrder = getLocalStorage<TCheckoutFormSchema | null>(
@@ -44,45 +43,56 @@ const useCheckout = (cartSource: string) => {
 
   const formattedOrderItems = useMemo(
     () =>
-      items.map(({ productId, quantity, variantId }) => ({
-        productId: productId._id,
-        variantId,
-        quantity,
-        price: formatProductPrice(getVariant(productId, variantId).pricing)
-          .price,
-      })),
-    []
+      items.map(({ productId, quantity, variantId }) => {
+        const { pricing } = getVariant(productId, variantId);
+
+        return {
+          productId: productId._id,
+          variantId,
+          quantity,
+          price: formatProductPrice(pricing).price,
+        };
+      }),
+    [currencyInfo, items]
   );
 
   const formattedShippingItems = useMemo(
     () =>
-      items.map(({ productId, quantity, variantId }) => ({
-        categoryId: productId.category._id,
-        quantity,
-        price: formatProductPrice(getVariant(productId, variantId).pricing)
-          .price,
-      })),
-    []
+      items.map(({ productId, quantity, variantId }) => {
+        const { pricing, shipping } = getVariant(productId, variantId);
+
+        return {
+          productId: productId._id,
+          categoryId: productId.category._id,
+          quantity,
+          price: formatProductPrice(pricing).price,
+          ...shipping,
+        };
+      }),
+    [currencyInfo, items]
   );
 
   const form = useForm<TCheckoutFormSchema>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: pendingOrder ?? {
+      newsletter: true,
       saveInfo: true,
+      shipping: { cost: 0 },
       billing: { method: "same" },
       payment: { method: "card" },
     },
   });
+
+  const shippingCost = form.watch("shipping.cost");
+  const grandTotal = subtotal + shippingCost;
 
   const onSubmit = async (values: TCheckoutFormSchema) => {
     try {
       form.setValue("response.isLoading", true);
       if (!currentUser) {
         updateLocalStorage<TCheckoutFormSchema>(PENDING_ORDER_KEY, values);
-        toastHandler({
-          title: "Details Saved",
-          message: "Please login to place your order.",
-          variant: "destructive",
+        toast.info("Details Saved", {
+          description: "Please login to place your order.",
         });
         setTimeout(() => router.push("/sign-in?redirectUrl=/checkout"), 3000);
       } else {
@@ -119,7 +129,7 @@ const useCheckout = (cartSource: string) => {
         });
 
         if (!response.success) throw new Error("Failed to place order");
-        toastHandler({ message: "Order placed successfully." });
+        toast.success("Success", { description: "Order placed successfully." });
         removeLocalStorage(PENDING_ORDER_KEY);
         setOrder(response.data.order);
         items.forEach(({ productId, variantId }) =>
@@ -128,7 +138,7 @@ const useCheckout = (cartSource: string) => {
       }
     } catch (error: any) {
       removeLocalStorage(PENDING_ORDER_KEY);
-      toastHandler({ message: error?.message, variant: "destructive" });
+      toast.error("Success", { description: error?.message });
     } finally {
       form.setValue("response.isLoading", false);
     }
@@ -140,7 +150,6 @@ const useCheckout = (cartSource: string) => {
       calculateShipping({
         items: formattedShippingItems,
         country: currencyInfo.countries[0]!,
-        subtotal,
       }).then((shipping) => {
         if (shipping) {
           form.setValue("shipping.cost", shipping);
@@ -151,9 +160,17 @@ const useCheckout = (cartSource: string) => {
 
     debouncedShipping();
     return () => debouncedShipping.cancel();
-  }, [formattedShippingItems.length, currencyInfo]);
+  }, [formattedShippingItems, currencyInfo]);
 
-  return { form, order, onSubmit, items, subtotal };
+  return {
+    form,
+    order,
+    onSubmit,
+    items,
+    fmtSubtotal,
+    fmtShippingCost: formatCurrency(shippingCost),
+    fmtGrandTotal: formatCurrency(grandTotal),
+  };
 };
 
 export default useCheckout;

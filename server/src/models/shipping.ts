@@ -1,58 +1,51 @@
-import { InferMongooseSchema } from "@/types/global";
-import { Schema, model, Types } from "mongoose";
+import { TShippingZoneSchema } from "@workspace/shared/schemas/shipping";
+import { Schema, model } from "mongoose";
 
-const pricingSchema = new Schema({
-  type: {
-    type: String,
-    enum: ["fixed", "formula"],
-    default: "fixed",
+const shippingRateSchema = new Schema({
+  weight: {
+    min: { type: Number, required: true },
+    max: { type: Number, required: true },
   },
-  value: { type: String, required: true },
+  volume: {
+    min: { type: Number, required: true },
+    max: { type: Number, required: true },
+  },
+  price: { type: Number, required: true },
 });
 
-const categoryOverrideSchema = new Schema({
-  category: { type: Types.ObjectId, ref: "Category", required: true },
-  pricing: pricingSchema,
-});
-
-const requirementsSchema = new Schema({
-  type: {
-    type: String,
-    enum: ["none", "minAmount", "coupon", "either"],
-    default: "none",
+const freeShippingSchema = new Schema({
+  isActive: { type: Boolean, default: true },
+  duration: {
+    start: { type: Date },
+    end: { type: Date },
   },
-  minAmount: Number,
-  couponId: { type: Types.ObjectId, ref: "Coupon" },
+  condition: {
+    type: { type: String, enum: ["none", "min"], required: true },
+    threshold: { type: Number, required: true },
+  },
+  scope: { type: String, enum: ["all", "specific"], required: true },
+  products: [{ type: String }],
+  categories: [{ type: String }],
 });
 
 const shippingMethodSchema = new Schema({
   name: { type: String, required: true },
-  type: {
-    type: String,
-    enum: ["flatRate", "freeShipping"],
-    required: true,
-  },
-  pricing: pricingSchema,
-  categoryOverrides: [categoryOverrideSchema],
-  requirements: requirementsSchema,
+  type: { type: String, enum: ["standard", "express"], required: true },
+  rates: [shippingRateSchema],
+  freeShipping: freeShippingSchema,
 });
 
-const shippingZoneSchema = new Schema(
-  {
-    zoneName: { type: String, required: true },
-    description: { type: String },
-    countries: [{ type: String, required: true }],
-    isDefault: { type: Boolean, default: false },
-    isActive: { type: Boolean, default: true },
-    shippingMethods: [shippingMethodSchema],
-  },
-  { timestamps: true }
-);
+const shippingZoneSchema = new Schema({
+  name: { type: String, required: true },
+  description: { type: String },
+  countries: [{ type: String, required: true }],
+  isDefault: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: true },
+  methods: [shippingMethodSchema],
+});
 
-export type TShippingZoneSchema = InferMongooseSchema<
-  typeof shippingZoneSchema
->;
-export type TShippingMethod = InferMongooseSchema<typeof shippingMethodSchema>;
-export type TShippingMethodPricing = TShippingMethod["pricing"];
-const ShippingZoneModel = model("ShippingZone", shippingZoneSchema);
+const ShippingZoneModel = model<TShippingZoneSchema>(
+  "ShippingZone",
+  shippingZoneSchema
+);
 export default ShippingZoneModel;

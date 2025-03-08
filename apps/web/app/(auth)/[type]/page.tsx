@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import React, { useEffect, useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useToast } from "@workspace/ui/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@workspace/ui/components/button";
 import { Form, FormMessage } from "@workspace/ui/components/form";
 import {
@@ -64,7 +64,6 @@ const getSchema = (type: string) => {
 const AuthForm = ({ params, searchParams }: PageProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { toastHandler } = useToast();
   const [isOtpModelOpen, setIsOtpModelOpen] = useState(false);
 
   const type = React.use(params)?.type as AuthFormType;
@@ -143,10 +142,10 @@ const AuthForm = ({ params, searchParams }: PageProps) => {
           setIsOtpModelOpen(true);
         }
       }
-      toastHandler({ message: response!.message });
+      toast.success("Success", { description: response!.message });
     } catch (error: any) {
       form.setValue("response.errorMessage", error.message);
-      toastHandler({ message: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     } finally {
       form.setValue("response.isLoading", false);
     }
