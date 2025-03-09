@@ -2,8 +2,6 @@
   "extends": "@workspace/typescript-config/react-library.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "outDir": "dist",
-    "rootDir": ".",
     "paths": {
       "@workspace/ui/*": ["./src/*"]
     }
