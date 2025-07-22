@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  customer
+  support
+  marketer
+  accountant
+  inventory
+  contentEditor
+}
+
+enum OtpPurpose {
+  signup
+  login
+  resetPassword
+  verifyEmail
+  verifyPhone
+  mfa
+}
+
+enum AuditAction {
+  login
+  logout
+  updateProfile
+  changePassword
+}
+
+model User {
+  id              String   @id @default(ulid())
+  email           String?  @unique
+  phone           String?  @unique
+  username        String?  @unique
+  password        String?
+  firstName       String
+  lastName        String?
+  isEmailVerified Boolean  @default(false)
+  isPhoneVerified Boolean  @default(false)
+  isMfaEnabled    Boolean  @default(false)
+  isDeleted       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  otps          Otp[]
+  auditLogs     AuditLog[]
+  Membership    Membership[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([username])
+}
+
+model Membership {
+  id     String   @id @default(ulid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
+  role   UserRole @default(customer)
+
+  @@unique([userId, role])
+}
+
+model RefreshToken {
+  id          String   @id @default(ulid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  ip          String
+  userAgent   String
+  deviceId    String? // Optional device/session tracking
+  lastUsed    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  blacklisted Boolean  @default(false)
+
+  @@index([userId])
+  @@index([deviceId])
+}
+
+model Otp {
+  id        String     @id @default(ulid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  purpose   OtpPurpose
+  secret    String
+  attempts  Int        @default(0)
+  expireAt  DateTime   @default(dbgenerated("now() + interval '10 minutes'"))
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  otpUsed   Boolean    @default(false)
+
+  @@unique([userId, purpose])
+  @@index([userId])
+  @@index([expireAt])
+  @@index([purpose])
+}
+
+model AuditLog {
+  id        String      @id @default(ulid())
+  userId    String?
+  action    AuditAction
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
