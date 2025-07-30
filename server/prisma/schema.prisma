@@ -1,0 +1,663 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URI")
+}
+
+//
+// ENUMS
+//
+
+// Auth Enums
+enum UserRole {
+  admin
+  customer
+}
+
+enum OtpPurpose {
+  setPassword
+  resetPassword
+  changeEmail
+  changePhone
+  verifyEmail
+  verifyPhone
+  enable2FA
+  disable2FA
+  mfa
+}
+
+enum OtpType {
+  otp
+  token
+}
+
+enum MfaMethod {
+  email
+  sms
+  oauth
+}
+
+// Ecommerce Enums
+enum ProductStatus {
+  draft
+  active
+  archived
+}
+
+enum InventoryStatus {
+  inStock
+  lowStock
+  outOfStock
+  preOrder
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  completed
+  failed
+  refunded
+  cancelled
+}
+
+enum PaymentMethod {
+  card
+  paypal
+  stripe
+  bankTransfer
+  cashOnDelivery
+}
+
+enum ShippingMethodType {
+  standard
+  express
+  overnight
+  pickup
+  international
+}
+
+enum AddressType {
+  billing
+  shipping
+}
+
+enum AddressLabel {
+  home
+  work
+  other
+}
+
+enum Carrier {
+  fedex
+  ups
+  dhl
+  tcs
+  leopards
+  mnp
+  other
+}
+
+enum CouponType {
+  percentage
+  fixedAmount
+  freeShipping
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+enum NotificationType {
+  orderConfirmation
+  orderShipped
+  orderDelivered
+  paymentReceived
+  lowStock
+  backInStock
+  priceDrop
+  newProduct
+  reviewRequest
+  abandonedCart
+}
+
+enum AttributeScope {
+  product
+  variant
+}
+
+enum EngagementType {
+  cart
+  wishlist
+}
+
+//
+// MODELS
+//
+
+// Auth Models
+model User {
+  id          String  @id @default(ulid())
+  username    String? @unique
+  password    String?
+  firstName   String
+  lastName    String?
+  displayName String?
+  imageUrl    String?
+
+  // Contact Info
+  email           String? @unique
+  phone           String? @unique
+  isEmailVerified Boolean @default(false)
+  isPhoneVerified Boolean @default(false)
+
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Auth Relations
+  refreshTokens RefreshToken[]
+  otps          Otp[]
+  auditLogs     AuditLog[]
+  roles         RoleAssignment[]
+  security      SecuritySetting?
+
+  // Ecommerce Relations
+  addresses         Address[]
+  orders            Order[]
+  reviews           Review[]
+  notifications     Notification[]
+  coupons           UserCoupon[]
+  ProductEngagement ProductEngagement[]
+}
+
+model RoleAssignment {
+  id     String   @id @default(ulid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
+  role   UserRole
+
+  @@unique([userId, role])
+}
+
+model SecuritySetting {
+  id     String @id @default(ulid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  preferredMfa  MfaMethod?
+  backupCodes   String[]   @default([])
+  recoveryEmail String?
+  recoveryPhone String?
+  has2FAEnabled Boolean    @default(false)
+  loginAlerts   Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id          String   @id @default(ulid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  ip          String
+  userAgent   String
+  lastUsed    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  blacklisted Boolean  @default(false)
+
+  @@index([userId])
+}
+
+model Otp {
+  id        String     @id @default(ulid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  purpose   OtpPurpose
+  type      OtpType    @default(otp)
+  secret    String
+  expiresAt DateTime
+  isUsed    Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id        String   @id @default(ulid())
+  userId    String?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Ecommerce Models
+model Category {
+  id          String     @id @default(ulid())
+  title       String
+  handle      String     @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  products Product[]
+
+  @@index([parentId])
+  @@index([handle])
+}
+
+model Product {
+  id          String   @id @default(ulid())
+  title       String
+  handle      String   @unique
+  highlights  String?
+  description String?
+  images      String[]
+  videoUrl    String?
+
+  status ProductStatus @default(draft)
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants     ProductVariant[]
+  attributes   Attribute[]
+  reviews      Review[]
+  orderItems   OrderItem[]
+  interactions ProductEngagement[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([handle])
+}
+
+model ProductVariant {
+  id        String  @id @default(ulid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  name    String
+  sku     String?  @unique
+  barcode String?
+  images  String[]
+
+  basePrice Decimal
+  salePrice Decimal?
+  costPrice Decimal?
+
+  stock             Int             @default(0)
+  reserved          Int             @default(0)
+  available         Int             @default(0)
+  inventoryStatus   InventoryStatus @default(inStock)
+  lowStockThreshold Int             @default(5)
+  maxOrder          Int?
+
+  weight     Decimal?
+  dimensions Json?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attributes        Attribute[]
+  orderItems        OrderItem[]
+  ProductEngagement ProductEngagement[]
+
+  @@index([productId])
+  @@index([sku])
+}
+
+model Attribute {
+  id        String         @id @default(ulid())
+  scope     AttributeScope
+  productId String?
+  variantId String?
+  name      String
+  value     String
+
+  product Product?        @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@unique([productId, name, value])
+  @@unique([variantId, name, value])
+  @@index([productId])
+  @@index([variantId])
+}
+
+model Address {
+  id     String @id @default(ulid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  firstName String
+  lastName  String
+  street    String
+  city      String
+  state     String
+  zip       String
+  country   String
+  phone     String?
+
+  isDefault Boolean      @default(false)
+  type      AddressType  @default(shipping)
+  label     AddressLabel @default(home)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  billingOrders  Order[] @relation("BillingAddress")
+  shippingOrders Order[] @relation("ShippingAddress")
+
+  @@index([userId])
+}
+
+model Order {
+  id     String @id @default(ulid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  status OrderStatus @default(pending)
+
+  subtotal       Decimal
+  taxAmount      Decimal @default(0)
+  shippingAmount Decimal @default(0)
+  discountAmount Decimal @default(0)
+  total          Decimal
+
+  currency String @default("USD")
+
+  shippingMethodId String?
+  shippingMethod   ShippingMethod? @relation(fields: [shippingMethodId], references: [id])
+
+  billingAddressId  String
+  billingAddress    Address @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddressId String
+  shippingAddress   Address @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+
+  customerNotes String?
+  internalNotes String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  confirmedAt DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+
+  items     OrderItem[]
+  payments  Payment[]
+  shipments Shipment[]
+  refunds   Refund[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String          @id @default(ulid())
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+  name       String
+  sku        String?
+  quantity   Int
+  unitPrice  Decimal
+  totalPrice Decimal
+  attributes Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id      String @id @default(ulid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  amount   Decimal
+  currency String        @default("USD")
+  method   PaymentMethod
+  status   PaymentStatus @default(pending)
+
+  transactionId String?
+  gateway       String?
+  gatewayData   Json?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime?
+
+  refunds Refund[]
+
+  @@index([orderId])
+  @@index([status])
+  @@index([transactionId])
+}
+
+model Refund {
+  id        String  @id @default(ulid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id])
+
+  amount Decimal
+  reason String
+  notes  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([paymentId])
+}
+
+model ShippingMethod {
+  id            String             @id @default(ulid())
+  name          String
+  description   String?
+  type          ShippingMethodType
+  price         Decimal
+  freeThreshold Decimal?
+  isActive      Boolean            @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders   Order[]
+  Settings Settings[]
+
+  @@index([type])
+}
+
+model Shipment {
+  id      String @id @default(ulid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  trackingNumber String?
+  carrier        Carrier?
+  trackingUrl    String?
+
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([trackingNumber])
+}
+
+model ProductEngagement {
+  id        String          @id @default(ulid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  type      EngagementType
+  quantity  Int             @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId, variantId, type])
+  @@index([userId])
+}
+
+model Review {
+  id        String  @id @default(ulid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  rating  Int
+  title   String?
+  comment String?
+  status  ReviewStatus @default(pending)
+  images  String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([rating])
+  @@index([status])
+}
+
+model Coupon {
+  id              String     @id @default(ulid())
+  code            String     @unique
+  name            String
+  description     String?
+  type            CouponType
+  value           Decimal
+  minimumOrder    Decimal?
+  maximumDiscount Decimal?
+  usageLimit      Int?
+  usedCount       Int        @default(0)
+  perUserLimit    Int?       @default(1)
+  startsAt        DateTime?
+  expiresAt       DateTime?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  userCoupons UserCoupon[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model UserCoupon {
+  id       String    @id @default(ulid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id])
+  couponId String
+  coupon   Coupon    @relation(fields: [couponId], references: [id])
+  usedAt   DateTime?
+
+  @@unique([userId, couponId])
+  @@index([userId])
+  @@index([couponId])
+}
+
+model Notification {
+  id     String @id @default(ulid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  type    NotificationType
+  title   String
+  message String
+  data    Json?
+
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model Settings {
+  id String @id @default(ulid())
+
+  storeName        String
+  storeDescription String?
+  storeLogo        String?
+  storeEmail       String?
+  storePhone       String?
+
+  defaultCurrency String  @default("USD")
+  taxRate         Decimal @default(0)
+
+  freeShippingThreshold   Decimal?
+  defaultShippingMethodId String?
+  defaultShippingMethod   ShippingMethod? @relation(fields: [defaultShippingMethodId], references: [id])
+
+  lowStockThreshold   Int @default(5)
+  outOfStockThreshold Int @default(0)
+
+  autoApproveReviews Boolean @default(false)
+
+  emailNotifications Boolean @default(true)
+  smsNotifications   Boolean @default(false)
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([id])
+}
