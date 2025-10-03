@@ -1,0 +1,1043 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URI")
+}
+
+//
+// ENUMS
+//
+
+enum UserRole {
+  admin
+  customer
+}
+
+enum OtpPurpose {
+  setPassword
+  resetPassword
+  changeEmail
+  changePhone
+  verifyEmail
+  verifyPhone
+  enable2FA
+  disable2FA
+  mfa
+}
+
+enum OtpType {
+  otp
+  token
+}
+
+enum MfaMethod {
+  email
+  sms
+  oauth
+}
+
+enum ProductStatus {
+  draft
+  active
+  archived
+}
+
+enum InventoryStatus {
+  inStock
+  lowStock
+  outOfStock
+  preOrder
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  completed
+  failed
+  refunded
+  cancelled
+}
+
+enum RefundStatus {
+  requested
+  approved
+  rejected
+  processed
+}
+
+enum ShipmentStatus {
+  pending
+  processing
+  readyToShip
+  shipped
+  inTransit
+  delivered
+  failed
+  cancelled
+}
+
+enum PaymentMethod {
+  card
+  paypal
+  stripe
+  bankTransfer
+  cashOnDelivery
+}
+
+enum ShippingMethodType {
+  standard
+  express
+  overnight
+  pickup
+  international
+}
+
+enum AddressType {
+  billing
+  shipping
+}
+
+enum AddressLabel {
+  home
+  work
+  other
+}
+
+enum CouponType {
+  percentage
+  fixedAmount
+  freeShipping
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+enum NotificationType {
+  email
+  sms
+  inApp
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+  read
+}
+
+enum AttributeType {
+  color
+  select
+  radio
+  image
+  text
+}
+
+enum EngagementType {
+  cart
+  wishlist
+}
+
+enum WeightUnit {
+  g
+  kg
+}
+
+enum DimensionUnit {
+  cm
+  inch
+}
+
+enum LoyaltyTransactionType {
+  earn
+  redeem
+}
+
+enum LoyaltyAction {
+  order
+  review
+  referral
+  signup
+  firstPurchase
+}
+
+enum AuditAction {
+  // Auth & Security
+  userSignup
+  userLogin
+  userPasswordReset
+  userPasswordChange
+  mfaEnabled
+  mfaDisabled
+
+  // User Management
+  userProfileUpdated
+  roleAssigned
+  roleRevoked
+
+  // Orders
+  orderCreated
+  orderCancelled
+  orderShipped
+  orderDelivered
+  orderRefunded
+
+  // Payments
+  paymentCompleted
+  paymentFailed
+  paymentRefunded
+
+  // Products & Catalog
+  productCreated
+  productUpdated
+  productDeleted
+  categoryCreated
+  categoryUpdated
+  categoryDeleted
+
+  // Reviews
+  reviewSubmitted
+  reviewApproved
+  reviewRejected
+
+  // Coupons
+  couponCreated
+  couponUpdated
+  couponDeleted
+  couponApplied
+
+  // Loyalty
+  loyaltyPointsEarned
+  loyaltyPointsRedeemed
+
+  // Notifications
+  notificationSent
+
+  // Settings
+  settingUpdated
+}
+
+enum AuditSeverity {
+  info
+  warning
+  critical
+}
+
+//
+// AUTH MODELS
+//
+
+model User {
+  id          String  @id @default(ulid())
+  username    String? @unique
+  password    String?
+  firstName   String
+  lastName    String?
+  displayName String
+  imageUrl    String?
+
+  // Contact
+  email           String? @unique
+  phone           String? @unique
+  isEmailVerified Boolean @default(false)
+  isPhoneVerified Boolean @default(false)
+  loyaltyPoints   Int     @default(0)
+
+  // Status
+  lastLoginAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Referral
+  referralCode String  @unique
+  referredById String?
+  referredBy   User?   @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals    User[]  @relation("UserReferrals")
+
+  // Relations
+  refreshTokens   RefreshToken[]
+  otps            Otp[]
+  auditLogs       AuditLog[]
+  roles           RoleAssignment[]
+  securitySetting SecuritySetting?
+
+  addresses                Address[]
+  orders                   Order[]
+  reviews                  Review[]
+  notifications            Notification[]
+  coupons                  UserCoupon[]
+  productEngagements       ProductEngagement[]
+  backupCodes              BackupCode[]
+  loyaltyPointTransactions LoyaltyPointTransaction[]
+  userPreferences          UserPreference[]
+  refunds                  Refund[]
+  cards                    Card[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([username])
+  @@index([referredById])
+  @@index([email, isEmailVerified])
+  @@index([phone, isPhoneVerified])
+}
+
+model RoleAssignment {
+  id     String   @id @default(ulid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
+  role   UserRole
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  revokedAt DateTime?
+
+  @@unique([userId, role])
+}
+
+model SecuritySetting {
+  id     String @id @default(ulid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  preferredMfa  MfaMethod?
+  recoveryEmail String?
+  recoveryPhone String?
+  has2FAEnabled Boolean    @default(false)
+  loginAlerts   Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([has2FAEnabled])
+}
+
+model BackupCode {
+  id        String    @id @default(ulid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  code      String    @unique
+  isUsed    Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+
+  @@index([userId, isUsed])
+}
+
+model RefreshToken {
+  id          String   @id @default(ulid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  ip          String
+  userAgent   String
+  lastUsed    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  blacklisted Boolean  @default(false)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, expiresAt])
+}
+
+model Otp {
+  id        String     @id @default(ulid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  purpose   OtpPurpose
+  type      OtpType    @default(otp)
+  secret    String
+  expiresAt DateTime
+  isUsed    Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id         String        @id @default(ulid())
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id])
+  action     AuditAction
+  severity   AuditSeverity @default(info)
+  entityType String?
+  entityId   String?
+  ip         String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime      @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@index([severity])
+}
+
+//
+// ECOMMERCE MODELS
+//
+
+model Currency {
+  currency     String  @id @db.VarChar(3)
+  name         String
+  symbol       String
+  exchangeRate Float
+  isDefault    Boolean @default(false)
+  decimalSep   String  @default(".")
+  thousandSep  String  @default(",")
+  regionCode   String  @db.VarChar(2)
+
+  orders   Order[]
+  payments Payment[]
+
+  @@index([currency])
+  @@index([isDefault])
+  @@index([regionCode])
+}
+
+model Category {
+  id          String     @id @default(ulid())
+  title       String
+  slug        String     @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  products Product[]
+
+  attributes     AttributeDefinition[]     @relation("CategoryAttributes")
+  specifications SpecificationDefinition[] @relation("CategorySpecifications")
+  taxRates       TaxRate[]                 @relation("CategoryTaxRates")
+
+  @@unique([parentId, title])
+  @@index([parentId])
+}
+
+model Product {
+  id          String   @id @default(ulid())
+  title       String
+  slug        String   @unique
+  highlights  String?
+  description String?
+  images      String[]
+  videoUrl    String?
+
+  status ProductStatus @default(draft)
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  variants       ProductVariant[]
+  reviews        Review[]
+  orderItems     OrderItem[]
+  interactions   ProductEngagement[]
+  specifications Specification[]
+  attributes     ProductAttribute[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([slug])
+  @@index([categoryId, status])
+  @@index([deletedAt])
+}
+
+model ProductVariant {
+  id        String  @id @default(ulid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  name    String
+  sku     String   @unique
+  barcode String?
+  images  String[]
+
+  basePrice Decimal
+  salePrice Decimal?
+  costPrice Decimal?
+
+  stock             Int             @default(0)
+  reserved          Int             @default(0)
+  inventoryStatus   InventoryStatus @default(inStock)
+  lowStockThreshold Int             @default(5)
+  maxOrder          Int?
+
+  weight     VariantWeight?
+  dimensions VariantDimensions?
+
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  orderItems         OrderItem[]
+  productEngagements ProductEngagement[]
+  attributes         VariantAttribute[]
+  reviews            Review[]
+
+  @@index([productId])
+  @@index([sku])
+  @@index([productId, isActive])
+  @@index([productId, inventoryStatus])
+}
+
+model VariantWeight {
+  id        String         @id @default(ulid())
+  variantId String         @unique
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  value Decimal
+  unit  WeightUnit @default(kg)
+}
+
+model VariantDimensions {
+  id        String         @id @default(ulid())
+  variantId String         @unique
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  length Decimal
+  width  Decimal
+  height Decimal
+  unit   DimensionUnit @default(cm)
+}
+
+model AttributeDefinition {
+  id         String        @id @default(ulid())
+  name       String
+  type       AttributeType
+  options    String[]
+  isRequired Boolean       @default(false)
+  isDefault  Boolean       @default(false)
+  categories Category[]    @relation("CategoryAttributes")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  productAttributes ProductAttribute[]
+
+  @@unique([name, type])
+}
+
+model ProductAttribute {
+  id           String              @id @default(ulid())
+  productId    String
+  product      Product             @relation(fields: [productId], references: [id])
+  definitionId String
+  definition   AttributeDefinition @relation(fields: [definitionId], references: [id])
+  options      String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, definitionId])
+  @@index([productId])
+}
+
+model VariantAttribute {
+  id        String         @id @default(ulid())
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  name  String
+  value String
+
+  @@unique([variantId, name])
+  @@index([variantId])
+}
+
+model SpecificationDefinition {
+  id         String     @id @default(ulid())
+  name       String
+  options    String[]
+  isRequired Boolean    @default(false)
+  isDefault  Boolean    @default(false)
+  categories Category[] @relation("CategorySpecifications")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([name])
+}
+
+model Specification {
+  id        String  @id @default(ulid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  name  String
+  value String
+
+  @@unique([productId, name])
+  @@index([productId])
+}
+
+model Address {
+  id     String @id @default(ulid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  firstName String
+  lastName  String
+  street    String
+  city      String
+  state     String
+  zip       String
+  country   String
+  phone     String?
+
+  isDefault Boolean      @default(false)
+  type      AddressType  @default(shipping)
+  label     AddressLabel @default(home)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  billingOrders  Order[] @relation("BillingAddress")
+  shippingOrders Order[] @relation("ShippingAddress")
+
+  @@unique([userId, type, isDefault], map: "unique_default_address")
+  @@index([userId])
+  @@index([isDefault])
+  @@index([userId, type])
+}
+
+model Order {
+  id     String @id @default(ulid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status OrderStatus @default(pending)
+
+  subtotal       Decimal
+  taxAmount      Decimal @default(0)
+  shippingAmount Decimal @default(0)
+  discountAmount Decimal @default(0)
+  total          Decimal
+
+  currencyCode String
+  Currency     Currency @relation(fields: [currencyCode], references: [currency])
+
+  shippingAddressId String
+  shippingAddress   Address  @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String?
+  billingAddress    Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])
+
+  taxRateId String
+  taxRate   TaxRate @relation(fields: [taxRateId], references: [id])
+
+  customerNotes String?
+  internalNotes String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  confirmedAt DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+
+  items     OrderItem[]
+  payments  Payment[]
+  shipments Shipment[]
+  refunds   Refund[]
+  coupons   UserCoupon[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([createdAt, status])
+  @@index([userId, status])
+}
+
+model OrderItem {
+  id        String         @id @default(ulid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product        @relation(fields: [productId], references: [id])
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  name       String
+  sku        String
+  quantity   Int
+  unitPrice  Decimal
+  totalPrice Decimal
+
+  createdAt DateTime @default(now())
+
+  @@unique([orderId, productId, variantId])
+  @@unique([variantId, sku])
+  @@index([orderId])
+  @@index([productId])
+  @@index([productId, variantId])
+}
+
+model Payment {
+  id      String @id @default(ulid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  amount       Decimal
+  currencyCode String
+  Currency     Currency      @relation(fields: [currencyCode], references: [currency])
+  method       PaymentMethod
+  status       PaymentStatus @default(pending)
+
+  transactionId String?
+  gateway       String?
+  gatewayData   Json?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  processedAt DateTime?
+
+  refunds Refund[]
+
+  @@index([orderId])
+  @@index([status])
+  @@index([transactionId])
+  @@index([status, createdAt])
+}
+
+model Refund {
+  id            String  @id @default(ulid())
+  orderId       String
+  order         Order   @relation(fields: [orderId], references: [id])
+  paymentId     String
+  payment       Payment @relation(fields: [paymentId], references: [id])
+  processedById String?
+  processedBy   User?   @relation(fields: [processedById], references: [id])
+
+  status RefundStatus
+  amount Decimal
+  reason String
+  notes  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([paymentId])
+}
+
+model Shipment {
+  id      String @id @default(ulid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  provider       String
+  service        String
+  rateId         String
+  trackingNumber String
+  trackingUrl    String
+  labelUrl       String
+  meta           Json
+
+  status ShipmentStatus @default(pending)
+
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([orderId])
+  @@index([trackingNumber])
+  @@index([provider, trackingNumber])
+}
+
+model TaxRate {
+  id                String  @id @default(ulid())
+  country           String
+  region            String?
+  name              String
+  rate              Decimal
+  description       String?
+  isActive          Boolean @default(true)
+  appliesToShipping Boolean @default(false)
+
+  categories Category[] @relation("CategoryTaxRates")
+  order      Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([country, region])
+}
+
+model ProductEngagement {
+  id              String         @id @default(ulid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  productId       String
+  product         Product        @relation(fields: [productId], references: [id])
+  variantId       String
+  variant         ProductVariant @relation(fields: [variantId], references: [id])
+  type            EngagementType
+  quantity        Int            @default(1)
+  priceAtAddition Decimal
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId, variantId, type])
+  @@index([userId])
+  @@index([productId])
+  @@index([variantId])
+  @@index([type])
+  @@index([productId, variantId])
+  @@index([userId, productId, variantId])
+}
+
+model Review {
+  id        String         @id @default(ulid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  productId String
+  product   Product        @relation(fields: [productId], references: [id])
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  rating  Int
+  title   String?
+  comment String?
+  status  ReviewStatus @default(pending)
+  images  String[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@index([rating])
+  @@index([status])
+  @@index([productId, status])
+  @@index([userId, productId])
+  @@index([userId, productId, rating])
+}
+
+model Coupon {
+  id           String     @id @default(ulid())
+  code         String     @unique
+  name         String
+  description  String?
+  type         CouponType
+  value        Decimal
+  startDate    DateTime
+  endDate      DateTime
+  usageLimit   Int
+  usedCount    Int        @default(0)
+  perUserLimit Int        @default(1)
+  minPurchase  Decimal?
+  isActive     Boolean    @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  users UserCoupon[]
+
+  @@index([code, endDate])
+}
+
+model UserCoupon {
+  id       String    @id @default(ulid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id])
+  couponId String
+  coupon   Coupon    @relation(fields: [couponId], references: [id])
+  orderId  String?
+  order    Order?    @relation(fields: [orderId], references: [id])
+  usedAt   DateTime?
+
+  @@unique([userId, couponId])
+}
+
+model Notification {
+  id         String             @id @default(cuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id])
+  type       NotificationType
+  title      String?
+  message    String?
+  purpose    String
+  entityType String?
+  entityId   String?
+  meta       Json?
+  status     NotificationStatus @default(pending)
+  sentAt     DateTime?
+  readAt     DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([userId, entityType, entityId])
+  @@index([userId, readAt])
+}
+
+model LoyaltyRule {
+  id             String        @id @default(ulid())
+  action         LoyaltyAction
+  points         Int
+  ratio          Decimal?
+  minOrderAmount Decimal?
+  maxPoints      Int?
+  expiresInDays  Int?
+  isActive       Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([action])
+  @@index([isActive])
+}
+
+model LoyaltyPointTransaction {
+  id          String                 @id @default(ulid())
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id])
+  points      Int
+  type        LoyaltyTransactionType
+  action      LoyaltyAction
+  note        String?
+  referenceId String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  expiresAt   DateTime?
+
+  @@index([userId])
+  @@index([type])
+  @@index([action])
+  @@index([userId, type])
+}
+
+model Card {
+  id     String @id @default(ulid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  name            String
+  expiry          String
+  encryptedNumber String
+  encryptedCvv    String
+
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isDefault])
+  @@index([userId, isDefault])
+}
+
+model UserPreference {
+  id     String @id @default(ulid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // UI & Experience
+  themeMode   String? @default("system") // light, dark, system
+  compactMode Boolean @default(false)
+
+  // Communication
+  newsletter        Boolean @default(true)
+  smsNotifications  Boolean @default(false)
+  pushNotifications Boolean @default(false)
+
+  // Privacy / Security
+  dataSharingConsent Boolean @default(true)
+
+  // Personalization
+  languageRegion String?
+  currency       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+  @@index([userId])
+}
+
+model Setting {
+  id String @id @default(ulid())
+
+  // Store Info
+  storeName        String
+  storeDescription String?
+  storeLogo        String?
+  storeEmail       String?
+  storePhone       String?
+  facebookUrl      String?
+  instagramUrl     String?
+  tiktokUrl        String?
+  twitterUrl       String?
+
+  // Shipping / Inventory
+  freeShippingThreshold Decimal?
+  lowStockThreshold     Int      @default(5)
+
+  // Reviews & Notifications
+  autoApproveReviews Boolean @default(false)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+
+  // Optional feature toggles
+  loyaltyEnabled    Boolean @default(false)
+  loyaltyPointValue Decimal @default(0.01)
+  couponsEnabled    Boolean @default(true)
+  wishlistEnabled   Boolean @default(true)
+
+  // Audit Log Retention (in days)
+  auditRetentionDays Int @default(365)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
