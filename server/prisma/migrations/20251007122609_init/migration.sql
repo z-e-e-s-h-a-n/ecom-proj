@@ -2,13 +2,13 @@
 CREATE TYPE "UserRole" AS ENUM ('admin', 'customer');
 
 -- CreateEnum
-CREATE TYPE "OtpPurpose" AS ENUM ('setPassword', 'resetPassword', 'changeEmail', 'changePhone', 'verifyEmail', 'verifyPhone', 'enable2FA', 'disable2FA', 'mfa');
+CREATE TYPE "OtpPurpose" AS ENUM ('setPassword', 'resetPassword', 'changeIdentifierRequest', 'confirmChangeIdentifier', 'verifyIdentifier', 'enableMfa', 'disableMfa', 'verifyMfa');
 
 -- CreateEnum
 CREATE TYPE "OtpType" AS ENUM ('otp', 'token');
 
 -- CreateEnum
-CREATE TYPE "MfaMethod" AS ENUM ('email', 'sms', 'oauth');
+CREATE TYPE "MfaMethod" AS ENUM ('email', 'sms', 'authApp');
 
 -- CreateEnum
 CREATE TYPE "ProductStatus" AS ENUM ('draft', 'active', 'archived');
@@ -119,7 +119,7 @@ CREATE TABLE "SecuritySetting" (
     "preferredMfa" "MfaMethod",
     "recoveryEmail" TEXT,
     "recoveryPhone" TEXT,
-    "has2FAEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "isMfaEnabled" BOOLEAN NOT NULL DEFAULT false,
     "loginAlerts" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -179,8 +179,6 @@ CREATE TABLE "AuditLog" (
     "severity" "AuditSeverity" NOT NULL DEFAULT 'info',
     "entityType" TEXT,
     "entityId" TEXT,
-    "ip" TEXT,
-    "userAgent" TEXT,
     "metadata" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -453,7 +451,7 @@ CREATE TABLE "Shipment" (
     "trackingNumber" TEXT NOT NULL,
     "trackingUrl" TEXT NOT NULL,
     "labelUrl" TEXT NOT NULL,
-    "meta" JSONB NOT NULL,
+    "metadata" JSONB NOT NULL,
     "status" "ShipmentStatus" NOT NULL DEFAULT 'pending',
     "shippedAt" TIMESTAMP(3),
     "deliveredAt" TIMESTAMP(3),
@@ -549,14 +547,12 @@ CREATE TABLE "UserCoupon" (
 -- CreateTable
 CREATE TABLE "Notification" (
     "id" TEXT NOT NULL,
-    "userId" TEXT,
+    "userId" TEXT NOT NULL,
     "type" "NotificationType" NOT NULL,
     "title" TEXT,
     "message" TEXT,
     "purpose" TEXT NOT NULL,
-    "entityType" TEXT,
-    "entityId" TEXT,
-    "meta" JSONB,
+    "metadata" JSONB,
     "status" "NotificationStatus" NOT NULL DEFAULT 'pending',
     "sentAt" TIMESTAMP(3),
     "readAt" TIMESTAMP(3),
@@ -724,7 +720,7 @@ CREATE UNIQUE INDEX "SecuritySetting_userId_key" ON "SecuritySetting"("userId");
 CREATE INDEX "SecuritySetting_userId_idx" ON "SecuritySetting"("userId");
 
 -- CreateIndex
-CREATE INDEX "SecuritySetting_has2FAEnabled_idx" ON "SecuritySetting"("has2FAEnabled");
+CREATE INDEX "SecuritySetting_isMfaEnabled_idx" ON "SecuritySetting"("isMfaEnabled");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BackupCode_code_key" ON "BackupCode"("code");
@@ -979,9 +975,6 @@ CREATE UNIQUE INDEX "UserCoupon_userId_couponId_key" ON "UserCoupon"("userId", "
 CREATE INDEX "Notification_userId_idx" ON "Notification"("userId");
 
 -- CreateIndex
-CREATE INDEX "Notification_userId_entityType_entityId_idx" ON "Notification"("userId", "entityType", "entityId");
-
--- CreateIndex
 CREATE INDEX "Notification_userId_readAt_idx" ON "Notification"("userId", "readAt");
 
 -- CreateIndex
@@ -1147,7 +1140,7 @@ ALTER TABLE "UserCoupon" ADD CONSTRAINT "UserCoupon_couponId_fkey" FOREIGN KEY (
 ALTER TABLE "UserCoupon" ADD CONSTRAINT "UserCoupon_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "LoyaltyPointTransaction" ADD CONSTRAINT "LoyaltyPointTransaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1175,6 +1168,3 @@ ALTER TABLE "_CategoryAttributes" ADD CONSTRAINT "_CategoryAttributes_A_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "_CategoryAttributes" ADD CONSTRAINT "_CategoryAttributes_B_fkey" FOREIGN KEY ("B") REFERENCES "Category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddCheck
-ALTER TABLE "Review" ADD CONSTRAINT rating_check CHECK (rating BETWEEN 1 AND 5);

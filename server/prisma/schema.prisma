@@ -21,13 +21,14 @@ enum UserRole {
 enum OtpPurpose {
   setPassword
   resetPassword
-  changeEmail
-  changePhone
-  verifyEmail
-  verifyPhone
-  enable2FA
-  disable2FA
-  mfa
+  verifyIdentifier
+  changeIdentifierReq
+  changeIdentifier
+  enableMfaReq
+  enableMfa
+  disableMfaReq
+  disableMfa
+  verifyMfa
 }
 
 enum OtpType {
@@ -38,7 +39,7 @@ enum OtpType {
 enum MfaMethod {
   email
   sms
-  oauth
+  authApp
 }
 
 enum ProductStatus {
@@ -322,14 +323,14 @@ model SecuritySetting {
   preferredMfa  MfaMethod?
   recoveryEmail String?
   recoveryPhone String?
-  has2FAEnabled Boolean    @default(false)
+  isMfaEnabled  Boolean    @default(false)
   loginAlerts   Boolean    @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([has2FAEnabled])
+  @@index([isMfaEnabled])
 }
 
 model BackupCode {
@@ -387,8 +388,6 @@ model AuditLog {
   severity   AuditSeverity @default(info)
   entityType String?
   entityId   String?
-  ip         String?
-  userAgent  String?
   metadata   Json?
   createdAt  DateTime      @default(now())
 
@@ -773,7 +772,7 @@ model Shipment {
   trackingNumber String
   trackingUrl    String
   labelUrl       String
-  meta           Json
+  metadata       Json
 
   status ShipmentStatus @default(pending)
 
@@ -899,24 +898,21 @@ model UserCoupon {
 }
 
 model Notification {
-  id         String             @id @default(cuid())
-  userId     String
-  user       User               @relation(fields: [userId], references: [id])
-  type       NotificationType
-  title      String?
-  message    String?
-  purpose    String
-  entityType String?
-  entityId   String?
-  meta       Json?
-  status     NotificationStatus @default(pending)
-  sentAt     DateTime?
-  readAt     DateTime?
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String?
+  message   String?
+  purpose   String
+  metadata  Json?
+  status    NotificationStatus @default(pending)
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 
   @@index([userId])
-  @@index([userId, entityType, entityId])
   @@index([userId, readAt])
 }
 
