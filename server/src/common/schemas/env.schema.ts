@@ -7,9 +7,13 @@ export const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  APP_PORT: z.coerce.number().default(5000),
+  APP_PORT: z.coerce.number(),
   APP_ENDPOINT: z.string(),
-  CORS_ORIGIN: z.string(),
+  CLIENT_ENDPOINT: z.string(),
+  ADMIN_ENDPOINT: z.string(),
+  CORS_ORIGIN: z
+    .string()
+    .transform((val) => val.split(",").map((origin) => origin.trim())),
 
   // ==============================
   // Database

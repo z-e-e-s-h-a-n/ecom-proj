@@ -1,5 +1,5 @@
-import { OtpPurpose } from "@prisma/client";
+import { OrderStatus, OtpPurpose } from "@prisma/client";
 
 declare global {
-  export type NotificationPurpose = "signup" | "orderConfirmation" | OtpPurpose;
+  type NotificationPurpose = "signin" | "signup" | `orderStatus` | OtpPurpose;
 }

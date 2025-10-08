@@ -1,3 +1,5 @@
+import { LoggerService } from "@/modules/logger/logger.service";
+import type { Request, Response } from "express";
 import {
   Catch,
   HttpException,
@@ -5,12 +7,17 @@ import {
   type ExceptionFilter,
   type ArgumentsHost,
 } from "@nestjs/common";
+import { InjectLogger } from "@/decorators/logger.decorator";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  @InjectLogger()
+  private readonly logger!: LoggerService;
+
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse();
+    const req = ctx.getRequest<Request>();
+    const res = ctx.getResponse<Response>();
 
     const status =
       exception instanceof HttpException
@@ -23,12 +30,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const res = exception.getResponse();
 
       if (
-        typeof res === "object" &&
         res &&
+        typeof res === "object" &&
         "message" in res &&
         Array.isArray((res as any).message)
       ) {
-        // Nest's ValidationPipe puts field errors in res.message
         message = (res as any).message;
       } else if (typeof res === "string") {
         message = res;
@@ -38,7 +44,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
     // if (response.headersSent) return;
 
-    response.status(status).json({
+    this.logger.error(`❌ Exception caught`, {
+      message: exception.message,
+      stack: exception.stack,
+      status,
+      path: req.url,
+      method: req.method,
+    });
+
+    res.status(status).json({
       status,
       data: null,
       message,

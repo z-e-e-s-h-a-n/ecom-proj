@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
+import { CleanupService } from "./cleanup.service";
 
 @Module({
-  providers: [],
+  providers: [CleanupService],
 })
 export class SchedulerModule {}

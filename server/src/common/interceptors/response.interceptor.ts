@@ -18,14 +18,14 @@ export class ResponseInterceptor implements NestInterceptor {
         }
 
         const statusCode = response.statusCode;
-        const data = res?.data ?? {};
-        const message = res?.message ?? "Success";
+        const { data = null, message = "Success", ...meta } = res || {};
 
         return {
           status: statusCode,
-          data,
-          message,
           success: statusCode >= 200 && statusCode < 300,
+          message,
+          data,
+          ...(Object.keys(meta).length ? { meta } : {}),
         };
       })
     );
