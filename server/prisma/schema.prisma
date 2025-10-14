@@ -18,6 +18,7 @@ enum UserRole {
   customer
 }
 
+// TODO Remove Duplicate Purposes Req 
 enum OtpPurpose {
   setPassword
   resetPassword
@@ -39,6 +40,7 @@ enum OtpType {
 enum MfaMethod {
   email
   sms
+  whatsapp
   authApp
 }
 
@@ -100,7 +102,7 @@ enum PaymentMethod {
   cashOnDelivery
 }
 
-enum ShippingMethodType {
+enum ShippingMethod {
   standard
   express
   overnight
@@ -134,6 +136,7 @@ enum ReviewStatus {
 enum NotificationType {
   email
   sms
+  whatsapp
   inApp
 }
 
@@ -155,6 +158,14 @@ enum AttributeType {
 enum EngagementType {
   cart
   wishlist
+  compare
+  viewed
+}
+
+enum ThemeType {
+  dark
+  light
+  system
 }
 
 enum WeightUnit {
@@ -305,7 +316,7 @@ model User {
 model RoleAssignment {
   id     String   @id @default(ulid())
   userId String
-  user   User     @relation(fields: [userId], references: [id])
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   role   UserRole
 
   createdAt DateTime  @default(now())
@@ -318,7 +329,7 @@ model RoleAssignment {
 model SecuritySetting {
   id     String @id @default(ulid())
   userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   preferredMfa  MfaMethod?
   recoveryEmail String?
@@ -336,7 +347,7 @@ model SecuritySetting {
 model BackupCode {
   id        String    @id @default(ulid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   code      String    @unique
   isUsed    Boolean   @default(false)
   usedAt    DateTime?
@@ -350,7 +361,7 @@ model RefreshToken {
   id          String   @id @default(ulid())
   token       String   @unique
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   ip          String
   userAgent   String
   lastUsed    DateTime @default(now())
@@ -367,7 +378,7 @@ model RefreshToken {
 model Otp {
   id        String     @id @default(ulid())
   userId    String
-  user      User       @relation(fields: [userId], references: [id])
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   purpose   OtpPurpose
   type      OtpType    @default(otp)
   secret    String
@@ -402,21 +413,25 @@ model AuditLog {
 //
 
 model Currency {
-  currency     String  @id @db.VarChar(3)
+  id           String  @id @default(ulid())
+  code         String  @db.VarChar(3)
   name         String
   symbol       String
   exchangeRate Float
   isDefault    Boolean @default(false)
   decimalSep   String  @default(".")
   thousandSep  String  @default(",")
-  regionCode   String  @db.VarChar(2)
+  country      String  @db.VarChar(2)
 
   orders   Order[]
   payments Payment[]
+  variants VariantPricing[]
 
-  @@index([currency])
+  @@unique([code])
+  @@unique([country])
+  @@index([code])
   @@index([isDefault])
-  @@index([regionCode])
+  @@index([country])
 }
 
 model Category {
@@ -426,7 +441,7 @@ model Category {
   description String?
   imageUrl    String?
   parentId    String?
-  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children    Category[] @relation("CategoryHierarchy")
   isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
@@ -459,7 +474,7 @@ model Product {
   metaKeywords    String?
 
   categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: NoAction)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -469,7 +484,7 @@ model Product {
   reviews        Review[]
   orderItems     OrderItem[]
   interactions   ProductEngagement[]
-  specifications Specification[]
+  specifications ProductSpecification[]
   attributes     ProductAttribute[]
 
   @@index([categoryId])
@@ -482,27 +497,22 @@ model Product {
 model ProductVariant {
   id        String  @id @default(ulid())
   productId String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  name    String
   sku     String   @unique
   barcode String?
   images  String[]
 
-  basePrice Decimal
-  salePrice Decimal?
-  costPrice Decimal?
-
-  stock             Int             @default(0)
-  reserved          Int             @default(0)
-  inventoryStatus   InventoryStatus @default(inStock)
-  lowStockThreshold Int             @default(5)
-  maxOrder          Int?
+  stock           Int             @default(0)
+  reserved        Int             @default(0)
+  inventoryStatus InventoryStatus @default(inStock)
 
   weight     VariantWeight?
   dimensions VariantDimensions?
+  pricing    VariantPricing[]
 
   isActive  Boolean   @default(true)
+  isDefault Boolean   @default(false)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -521,7 +531,7 @@ model ProductVariant {
 model VariantWeight {
   id        String         @id @default(ulid())
   variantId String         @unique
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   value Decimal
   unit  WeightUnit @default(kg)
@@ -530,12 +540,25 @@ model VariantWeight {
 model VariantDimensions {
   id        String         @id @default(ulid())
   variantId String         @unique
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   length Decimal
   width  Decimal
   height Decimal
   unit   DimensionUnit @default(cm)
+}
+
+model VariantPricing {
+  id        String         @id @default(ulid())
+  variantId String         @unique
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  currencyId String
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: NoAction)
+
+  basePrice Decimal
+  salePrice Decimal?
+  costPrice Decimal
 }
 
 model AttributeDefinition {
@@ -559,7 +582,7 @@ model AttributeDefinition {
 model ProductAttribute {
   id           String              @id @default(ulid())
   productId    String
-  product      Product             @relation(fields: [productId], references: [id])
+  product      Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
   definitionId String
   definition   AttributeDefinition @relation(fields: [definitionId], references: [id])
   options      String[]
@@ -574,7 +597,7 @@ model ProductAttribute {
 model VariantAttribute {
   id        String         @id @default(ulid())
   variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   name  String
   value String
@@ -598,10 +621,10 @@ model SpecificationDefinition {
   @@unique([name])
 }
 
-model Specification {
+model ProductSpecification {
   id        String  @id @default(ulid())
   productId String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   name  String
   value String
@@ -613,16 +636,16 @@ model Specification {
 model Address {
   id     String @id @default(ulid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   firstName String
-  lastName  String
+  lastName  String?
   street    String
   city      String
   state     String
-  zip       String
+  zip       String?
   country   String
-  phone     String?
+  phone     String
 
   isDefault Boolean      @default(false)
   type      AddressType  @default(shipping)
@@ -644,7 +667,7 @@ model Address {
 model Order {
   id     String @id @default(ulid())
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: NoAction)
 
   status OrderStatus @default(pending)
 
@@ -654,13 +677,13 @@ model Order {
   discountAmount Decimal @default(0)
   total          Decimal
 
-  currencyCode String
-  Currency     Currency @relation(fields: [currencyCode], references: [currency])
+  currencyId String
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: NoAction)
 
   shippingAddressId String
-  shippingAddress   Address  @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingAddress   Address  @relation("ShippingAddress", fields: [shippingAddressId], references: [id], onDelete: Restrict)
   billingAddressId  String?
-  billingAddress    Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  billingAddress    Address? @relation("BillingAddress", fields: [billingAddressId], references: [id], onDelete: Restrict)
 
   taxRateId String
   taxRate   TaxRate @relation(fields: [taxRateId], references: [id])
@@ -674,6 +697,7 @@ model Order {
   shippedAt   DateTime?
   deliveredAt DateTime?
   cancelledAt DateTime?
+  deleteAt    DateTime?
 
   items     OrderItem[]
   payments  Payment[]
@@ -694,9 +718,9 @@ model OrderItem {
   orderId   String
   order     Order          @relation(fields: [orderId], references: [id])
   productId String
-  product   Product        @relation(fields: [productId], references: [id])
+  product   Product        @relation(fields: [productId], references: [id], onDelete: NoAction)
   variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: NoAction)
 
   name       String
   sku        String
@@ -718,11 +742,11 @@ model Payment {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id])
 
-  amount       Decimal
-  currencyCode String
-  Currency     Currency      @relation(fields: [currencyCode], references: [currency])
-  method       PaymentMethod
-  status       PaymentStatus @default(pending)
+  amount     Decimal
+  currencyId String
+  currency   Currency      @relation(fields: [currencyId], references: [id], onDelete: NoAction)
+  method     PaymentMethod
+  status     PaymentStatus @default(pending)
 
   transactionId String?
   gateway       String?
@@ -809,36 +833,33 @@ model TaxRate {
 }
 
 model ProductEngagement {
-  id              String         @id @default(ulid())
+  id              String         @id @default(cuid())
   userId          String
-  user            User           @relation(fields: [userId], references: [id])
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId       String
-  product         Product        @relation(fields: [productId], references: [id])
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   variantId       String
-  variant         ProductVariant @relation(fields: [variantId], references: [id])
+  variant         ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   type            EngagementType
-  quantity        Int            @default(1)
-  priceAtAddition Decimal
+  quantity        Int?
+  priceAtAddition Decimal?
+  metadata        Json?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, productId, variantId, type])
-  @@index([userId])
-  @@index([productId])
-  @@index([variantId])
   @@index([type])
-  @@index([productId, variantId])
-  @@index([userId, productId, variantId])
 }
 
 model Review {
   id        String         @id @default(ulid())
-  userId    String
-  user      User           @relation(fields: [userId], references: [id])
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   productId String
-  product   Product        @relation(fields: [productId], references: [id])
+  product   Product        @relation(fields: [productId], references: [id], onDelete: NoAction)
   variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: NoAction)
 
   rating  Int
   title   String?
@@ -850,7 +871,7 @@ model Review {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@unique([userId, productId])
+  @@unique([userId, productId, variantId])
   @@index([userId])
   @@index([productId])
   @@index([rating])
@@ -887,11 +908,11 @@ model Coupon {
 model UserCoupon {
   id       String    @id @default(ulid())
   userId   String
-  user     User      @relation(fields: [userId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   couponId String
-  coupon   Coupon    @relation(fields: [couponId], references: [id])
+  coupon   Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
   orderId  String?
-  order    Order?    @relation(fields: [orderId], references: [id])
+  order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
   usedAt   DateTime?
 
   @@unique([userId, couponId])
@@ -900,7 +921,7 @@ model UserCoupon {
 model Notification {
   id        String             @id @default(cuid())
   userId    String
-  user      User               @relation(fields: [userId], references: [id])
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
   title     String?
   message   String?
@@ -936,7 +957,7 @@ model LoyaltyRule {
 model LoyaltyPointTransaction {
   id          String                 @id @default(ulid())
   userId      String
-  user        User                   @relation(fields: [userId], references: [id])
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   points      Int
   type        LoyaltyTransactionType
   action      LoyaltyAction
@@ -955,7 +976,7 @@ model LoyaltyPointTransaction {
 model Card {
   id     String @id @default(ulid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   name            String
   expiry          String
@@ -974,11 +995,11 @@ model Card {
 model UserPreference {
   id     String @id @default(ulid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // UI & Experience
-  themeMode   String? @default("system") // light, dark, system
-  compactMode Boolean @default(false)
+  themeMode   ThemeType @default(system)
+  compactMode Boolean   @default(false)
 
   // Communication
   newsletter        Boolean @default(true)
