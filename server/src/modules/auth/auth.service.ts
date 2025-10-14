@@ -145,6 +145,11 @@ export class AuthService {
       roles: roles,
     });
 
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
     await this.notifyService.sendNotification({
       userId: user.id,
       purpose: "signin",

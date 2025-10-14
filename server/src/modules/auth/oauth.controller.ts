@@ -3,10 +3,14 @@ import { AuthGuard } from "@nestjs/passport";
 import { Public } from "@/decorators/public.decorator";
 import type { Request, Response } from "express";
 import { TokenService } from "@/modules/token/token.service";
+import { PrismaService } from "@/modules/prisma/prisma.service";
 
 @Controller("oauth")
 export class OAuthController {
-  constructor(private readonly tokenService: TokenService) {}
+  constructor(
+    private readonly tokenService: TokenService,
+    private readonly prisma: PrismaService
+  ) {}
 
   @Public()
   @Get("google")
@@ -22,6 +26,11 @@ export class OAuthController {
   ) {
     const user = req.user!;
     await this.tokenService.createAuthSession(req, res, user);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
     return res.redirect("/");
   }
 
@@ -39,6 +48,11 @@ export class OAuthController {
   ) {
     const user = req.user!;
     await this.tokenService.createAuthSession(req, res, user);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
     return res.redirect("/");
   }
 }

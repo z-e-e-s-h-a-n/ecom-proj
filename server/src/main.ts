@@ -22,8 +22,8 @@ async function bootstrap() {
   const nodeEnv = env.get("NODE_ENV");
 
   app.use(cookieParser());
-  app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(app.get(ResponseInterceptor));
+  app.useGlobalFilters(app.get(AllExceptionsFilter));
   app.useGlobalPipes(GlobalValidationPipe);
   await app.listen(port);
 

@@ -133,13 +133,6 @@ export class OAuthService implements OnModuleInit {
       });
     }
 
-    await this.notifyService.sendNotification({
-      userId: user.id,
-      purpose: "signin",
-      to: user.email!,
-      metadata: { user },
-    });
-
     return {
       id: user.id,
       roles: user.roles.map((r) => r.role),

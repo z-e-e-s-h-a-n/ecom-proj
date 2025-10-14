@@ -2,9 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { expiryDate } from "@/lib/utils/general.util";
 import { PrismaService } from "@/modules/prisma/prisma.service";
-import type { Request, Response, CookieOptions } from "express";
 import { UserRole } from "@prisma/client";
 import { EnvService } from "@/modules/env/env.service";
+import type { Request, Response } from "express";
+import { CookieService } from "@/lib/actions/cookie.action";
 
 export interface TokenPayload {
   sub: string;
@@ -22,7 +23,8 @@ export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly env: EnvService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly cookieService: CookieService
   ) {}
 
   async generateTokens(req: Request, payload: TokenPayload) {
@@ -110,9 +112,15 @@ export class TokenService {
     const accessExp = expiryDate(this.env.get("ACCESS_TOKEN_EXP"), true);
     const refreshExp = expiryDate(this.env.get("REFRESH_TOKEN_EXP"), true);
 
-    this.setCookie(res, "accessToken", accessToken, { expires: accessExp });
-    this.setCookie(res, "refreshToken", refreshToken, { expires: refreshExp });
-    this.setCookie(res, "tokenId", tokenId, { expires: refreshExp });
+    this.cookieService.setCookie(res, "accessToken", accessToken, {
+      expires: accessExp,
+    });
+    this.cookieService.setCookie(res, "refreshToken", refreshToken, {
+      expires: refreshExp,
+    });
+    this.cookieService.setCookie(res, "tokenId", tokenId, {
+      expires: refreshExp,
+    });
   }
 
   clearAuthCookies(res: Response): void {
@@ -120,19 +128,4 @@ export class TokenService {
     res.clearCookie("refreshToken");
     res.clearCookie("tokenId");
   }
-
-  private setCookie = (
-    res: Response,
-    key: string,
-    value: string,
-    options?: CookieOptions
-  ) => {
-    res.cookie(key, value, {
-      httpOnly: true,
-      secure: this.env.get("NODE_ENV") === "production",
-      sameSite: "strict",
-      path: "/",
-      ...options,
-    });
-  };
 }
