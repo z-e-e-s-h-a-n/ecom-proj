@@ -16,18 +16,21 @@ datasource db {
 enum UserRole {
   admin
   customer
+  productManager
+  inventoryManager
+  orderManager
+  shippingManager
+  supportAgent
+  marketingManager
+  financeManager
 }
 
-// TODO Remove Duplicate Purposes Req 
 enum OtpPurpose {
   setPassword
   resetPassword
   verifyIdentifier
-  changeIdentifierReq
   changeIdentifier
-  enableMfaReq
   enableMfa
-  disableMfaReq
   disableMfa
   verifyMfa
 }
@@ -83,6 +86,27 @@ enum RefundStatus {
   processed
 }
 
+enum ReturnExchangeType {
+  return
+  exchange
+}
+
+enum ReturnExchangeStatus {
+  pending
+  approved
+  rejected
+  awaiting_return
+  in_transit
+  received
+  refunded
+  exchanged
+}
+
+enum ReturnShippingResponsibility {
+  customer
+  seller
+}
+
 enum ShipmentStatus {
   pending
   processing
@@ -92,14 +116,6 @@ enum ShipmentStatus {
   delivered
   failed
   cancelled
-}
-
-enum PaymentMethod {
-  card
-  paypal
-  stripe
-  bankTransfer
-  cashOnDelivery
 }
 
 enum ShippingMethod {
@@ -125,6 +141,12 @@ enum CouponType {
   percentage
   fixedAmount
   freeShipping
+}
+
+enum MediaType {
+  image
+  video
+  pdf
 }
 
 enum ReviewStatus {
@@ -212,6 +234,11 @@ enum AuditAction {
   orderDelivered
   orderRefunded
 
+  // Shipment
+  shipmentCreated
+  shipmentUpdated
+  shipmentCancelled
+
   // Payments
   paymentCompleted
   paymentFailed
@@ -280,7 +307,7 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  // Referral
+  // Referral  // todo IMPLEMENT Referrals Logic
   referralCode String  @unique
   referredById String?
   referredBy   User?   @relation("UserReferrals", fields: [referredById], references: [id])
@@ -303,7 +330,9 @@ model User {
   loyaltyPointTransactions LoyaltyPointTransaction[]
   userPreferences          UserPreference[]
   refunds                  Refund[]
-  cards                    Card[]
+
+  initiatedReturnExchanges ReturnExchange[] @relation("ReturnExchangeInitiatedBy")
+  approvedReturnExchanges  ReturnExchange[] @relation("ReturnExchangeApprovedBy")
 
   @@index([email])
   @@index([phone])
@@ -349,12 +378,11 @@ model BackupCode {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   code      String    @unique
-  isUsed    Boolean   @default(false)
   usedAt    DateTime?
   createdAt DateTime  @default(now())
   expiresAt DateTime
 
-  @@index([userId, isUsed])
+  @@index([userId, usedAt])
 }
 
 model RefreshToken {
@@ -383,7 +411,7 @@ model Otp {
   type      OtpType    @default(otp)
   secret    String
   expiresAt DateTime
-  isUsed    Boolean    @default(false)
+  usedAt    DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -397,7 +425,7 @@ model AuditLog {
   user       User?         @relation(fields: [userId], references: [id])
   action     AuditAction
   severity   AuditSeverity @default(info)
-  entityType String?
+  entityType String? // TODO AuditEntity make logic in types/prisma only can be a model name
   entityId   String?
   metadata   Json?
   createdAt  DateTime      @default(now())
@@ -406,6 +434,24 @@ model AuditLog {
   @@index([createdAt])
   @@index([action])
   @@index([severity])
+}
+
+model Media {
+  id        String    @id @default(ulid())
+  type      MediaType
+  url       String
+  altText   String?
+  caption   String?
+  width     Int?
+  height    Int?
+  size      Int? // in bytes
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  // products Product[] @relation("ProductMedia")
+  // variants ProductVariant[] @relation("VariantMedia")
+  // categories Category[] @relation("CategoryMedia")
 }
 
 //
@@ -417,15 +463,17 @@ model Currency {
   code         String  @db.VarChar(3)
   name         String
   symbol       String
-  exchangeRate Float
+  exchangeRate Decimal @db.Decimal(10, 2)
   isDefault    Boolean @default(false)
   decimalSep   String  @default(".")
   thousandSep  String  @default(",")
   country      String  @db.VarChar(2)
 
-  orders   Order[]
-  payments Payment[]
-  variants VariantPricing[]
+  orders        Order[]
+  payments      Payment[]
+  variants      VariantPricing[]
+  shippingRates ShippingRate[]
+  taxRates      TaxRate[]
 
   @@unique([code])
   @@unique([country])
@@ -521,6 +569,7 @@ model ProductVariant {
   productEngagements ProductEngagement[]
   attributes         VariantAttribute[]
   reviews            Review[]
+  returnExchanges    ReturnExchangeVariant[]
 
   @@index([productId])
   @@index([sku])
@@ -533,7 +582,7 @@ model VariantWeight {
   variantId String         @unique
   variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  value Decimal
+  value Decimal    @db.Decimal(10, 2)
   unit  WeightUnit @default(kg)
 }
 
@@ -542,23 +591,25 @@ model VariantDimensions {
   variantId String         @unique
   variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  length Decimal
-  width  Decimal
-  height Decimal
+  length Decimal       @db.Decimal(10, 2)
+  width  Decimal       @db.Decimal(10, 2)
+  height Decimal       @db.Decimal(10, 2)
   unit   DimensionUnit @default(cm)
 }
 
 model VariantPricing {
   id        String         @id @default(ulid())
-  variantId String         @unique
+  variantId String
   variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   currencyId String
   currency   Currency @relation(fields: [currencyId], references: [id], onDelete: NoAction)
 
-  basePrice Decimal
-  salePrice Decimal?
-  costPrice Decimal
+  basePrice Decimal  @db.Decimal(10, 2)
+  salePrice Decimal? @db.Decimal(10, 2)
+  costPrice Decimal  @db.Decimal(10, 2)
+
+  @@unique([variantId, currencyId])
 }
 
 model AttributeDefinition {
@@ -658,7 +709,6 @@ model Address {
   billingOrders  Order[] @relation("BillingAddress")
   shippingOrders Order[] @relation("ShippingAddress")
 
-  @@unique([userId, type, isDefault], map: "unique_default_address")
   @@index([userId])
   @@index([isDefault])
   @@index([userId, type])
@@ -671,11 +721,11 @@ model Order {
 
   status OrderStatus @default(pending)
 
-  subtotal       Decimal
-  taxAmount      Decimal @default(0)
-  shippingAmount Decimal @default(0)
-  discountAmount Decimal @default(0)
-  total          Decimal
+  subtotal       Decimal @db.Decimal(10, 2)
+  taxAmount      Decimal @default(0) @db.Decimal(10, 2)
+  shippingAmount Decimal @default(0) @db.Decimal(10, 2) // Todo add Shipment Details
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  total          Decimal @db.Decimal(10, 2)
 
   currencyId String
   currency   Currency @relation(fields: [currencyId], references: [id], onDelete: NoAction)
@@ -688,6 +738,9 @@ model Order {
   taxRateId String
   taxRate   TaxRate @relation(fields: [taxRateId], references: [id])
 
+  userCouponId String?
+  userCoupon   UserCoupon? @relation(fields: [userCouponId], references: [id])
+
   customerNotes String?
   internalNotes String?
 
@@ -697,13 +750,13 @@ model Order {
   shippedAt   DateTime?
   deliveredAt DateTime?
   cancelledAt DateTime?
-  deleteAt    DateTime?
+  deletedAt   DateTime?
 
-  items     OrderItem[]
-  payments  Payment[]
-  shipments Shipment[]
-  refunds   Refund[]
-  coupons   UserCoupon[]
+  items           OrderItem[]
+  payments        Payment[]
+  shipments       Shipment[]
+  refunds         Refund[]
+  returnExchanges ReturnExchange[]
 
   @@index([userId])
   @@index([status])
@@ -725,10 +778,12 @@ model OrderItem {
   name       String
   sku        String
   quantity   Int
-  unitPrice  Decimal
-  totalPrice Decimal
+  unitPrice  Decimal @db.Decimal(10, 2)
+  totalPrice Decimal @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
+
+  returnExchanges ReturnExchangeItem[]
 
   @@unique([orderId, productId, variantId])
   @@unique([variantId, sku])
@@ -737,32 +792,45 @@ model OrderItem {
   @@index([productId, variantId])
 }
 
+model PaymentMethod {
+  id          String   @id @default(ulid())
+  name        String
+  code        String   @unique
+  description String?
+  imageUrl    String?
+  meta        Json?
+  countries   String[]
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false)
+
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Payment {
-  id      String @id @default(ulid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  amount     Decimal
-  currencyId String
-  currency   Currency      @relation(fields: [currencyId], references: [id], onDelete: NoAction)
-  method     PaymentMethod
-  status     PaymentStatus @default(pending)
-
+  id            String        @id @default(ulid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id])
+  methodId      String
+  method        PaymentMethod @relation(fields: [methodId], references: [id])
+  amount        Decimal       @db.Decimal(10, 2)
+  currencyId    String
+  currency      Currency      @relation(fields: [currencyId], references: [id])
+  status        PaymentStatus @default(pending)
   transactionId String?
   gateway       String?
   gatewayData   Json?
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  processedAt DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
 
   refunds Refund[]
 
   @@index([orderId])
   @@index([status])
   @@index([transactionId])
-  @@index([status, createdAt])
 }
 
 model Refund {
@@ -775,24 +843,83 @@ model Refund {
   processedBy   User?   @relation(fields: [processedById], references: [id])
 
   status RefundStatus
-  amount Decimal
+  amount Decimal      @db.Decimal(10, 2)
   reason String
   notes  String?
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  returnExchanges ReturnExchange[]
 
   @@index([orderId])
   @@index([paymentId])
 }
 
+model ReturnExchangeItem {
+  id               String         @id @default(cuid())
+  returnExchangeId String
+  orderItemId      String
+  quantity         Int            @default(1)
+  returnExchange   ReturnExchange @relation(fields: [returnExchangeId], references: [id])
+  orderItem        OrderItem      @relation(fields: [orderItemId], references: [id])
+}
+
+model ReturnExchangeVariant {
+  id               String         @id @default(cuid())
+  returnExchangeId String
+  variantId        String
+  quantity         Int            @default(1)
+  returnExchange   ReturnExchange @relation(fields: [returnExchangeId], references: [id])
+  variant          ProductVariant @relation(fields: [variantId], references: [id])
+}
+
+model ReturnExchange {
+  id String @id @default(ulid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  orderItems       ReturnExchangeItem[]
+  exchangeVariants ReturnExchangeVariant[]
+
+  type                   ReturnExchangeType
+  reason                 String?
+  status                 ReturnExchangeStatus         @default(pending)
+  shippingResponsibility ReturnShippingResponsibility @default(customer)
+
+  priceDifference Decimal @default(0) @db.Decimal(10, 2)
+  refundId        String?
+  refund          Refund? @relation(fields: [refundId], references: [id], onDelete: SetNull)
+
+  initiatedById String
+  initiatedBy   User   @relation("ReturnExchangeInitiatedBy", fields: [initiatedById], references: [id], onDelete: Cascade)
+
+  approvedById String?
+  approvedBy   User?   @relation("ReturnExchangeApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([refundId])
+  @@index([status])
+}
+
 model Shipment {
   id      String @id @default(ulid())
-  orderId String @unique
+  orderId String
   order   Order  @relation(fields: [orderId], references: [id])
 
-  provider       String
-  service        String
-  rateId         String
+  provider String
+  service  String
+  method   ShippingMethod @default(standard)
+
+  rateId       String
+  shippingRate ShippingRate? @relation(fields: [rateId], references: [id])
+
   trackingNumber String
   trackingUrl    String
   labelUrl       String
@@ -813,15 +940,55 @@ model Shipment {
   @@index([provider, trackingNumber])
 }
 
+model ShippingRate {
+  id       String         @id @default(cuid())
+  provider String
+  service  String
+  method   ShippingMethod @default(standard)
+
+  originCity      String?
+  destinationCity String
+
+  minWeight Decimal @db.Decimal(10, 2)
+  maxWeight Decimal @db.Decimal(10, 2)
+
+  minVolume Decimal @db.Decimal(10, 2)
+  maxVolume Decimal @db.Decimal(10, 2)
+
+  baseRate     Decimal @db.Decimal(10, 2)
+  perKgRate    Decimal @db.Decimal(10, 2)
+  deliveryTime String
+
+  currencyId String
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: NoAction)
+
+  isActive  Boolean @default(true)
+  isDefault Boolean @default(false)
+
+  shipments Shipment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([provider])
+  @@index([destinationCity])
+  @@index([isActive])
+  @@index([method])
+}
+
 model TaxRate {
   id                String  @id @default(ulid())
   country           String
   region            String?
   name              String
-  rate              Decimal
+  rate              Decimal @db.Decimal(10, 2)
   description       String?
   isActive          Boolean @default(true)
+  isDefault         Boolean @default(false)
   appliesToShipping Boolean @default(false)
+
+  currencyId String
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: NoAction)
 
   categories Category[] @relation("CategoryTaxRates")
   order      Order[]
@@ -829,7 +996,8 @@ model TaxRate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([country, region])
+  @@unique([country, region])
+  @@index([country])
 }
 
 model ProductEngagement {
@@ -842,7 +1010,7 @@ model ProductEngagement {
   variant         ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   type            EngagementType
   quantity        Int?
-  priceAtAddition Decimal?
+  priceAtAddition Decimal?       @db.Decimal(10, 2)
   metadata        Json?
 
   createdAt DateTime @default(now())
@@ -887,35 +1055,37 @@ model Coupon {
   name         String
   description  String?
   type         CouponType
-  value        Decimal
+  value        Decimal    @db.Decimal(10, 2)
   startDate    DateTime
   endDate      DateTime
   usageLimit   Int
   usedCount    Int        @default(0)
   perUserLimit Int        @default(1)
-  minPurchase  Decimal?
+  minPurchase  Decimal?   @db.Decimal(10, 2)
   isActive     Boolean    @default(true)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  users UserCoupon[]
+  userCoupons UserCoupon[]
 
   @@index([code, endDate])
 }
 
 model UserCoupon {
-  id       String    @id @default(ulid())
+  id       String @id @default(ulid())
   userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   couponId String
-  coupon   Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  orderId  String?
-  order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  usedAt   DateTime?
+  coupon   Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, couponId])
+  usedAt    DateTime?
+  isApplied Boolean   @default(false)
+
+  orders Order[]
+
+  @@index([userId, couponId])
 }
 
 model Notification {
@@ -941,8 +1111,8 @@ model LoyaltyRule {
   id             String        @id @default(ulid())
   action         LoyaltyAction
   points         Int
-  ratio          Decimal?
-  minOrderAmount Decimal?
+  ratio          Decimal?      @db.Decimal(10, 2)
+  minOrderAmount Decimal?      @db.Decimal(10, 2)
   maxPoints      Int?
   expiresInDays  Int?
   isActive       Boolean       @default(true)
@@ -971,25 +1141,6 @@ model LoyaltyPointTransaction {
   @@index([type])
   @@index([action])
   @@index([userId, type])
-}
-
-model Card {
-  id     String @id @default(ulid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  name            String
-  expiry          String
-  encryptedNumber String
-  encryptedCvv    String
-
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([isDefault])
-  @@index([userId, isDefault])
 }
 
 model UserPreference {
@@ -1035,7 +1186,7 @@ model Setting {
   twitterUrl       String?
 
   // Shipping / Inventory
-  freeShippingThreshold Decimal?
+  freeShippingThreshold Decimal? @db.Decimal(10, 2)
   lowStockThreshold     Int      @default(5)
 
   // Reviews & Notifications
@@ -1048,7 +1199,7 @@ model Setting {
 
   // Optional feature toggles
   loyaltyEnabled    Boolean @default(false)
-  loyaltyPointValue Decimal @default(0.01)
+  loyaltyPointValue Decimal @default(0.01) @db.Decimal(10, 2)
   couponsEnabled    Boolean @default(true)
   wishlistEnabled   Boolean @default(true)
 

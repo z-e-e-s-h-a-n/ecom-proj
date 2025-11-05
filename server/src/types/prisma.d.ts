@@ -45,7 +45,42 @@ declare module "@prisma/client" {
       ): Prisma.PrismaPromise<Prisma.BatchPayload>;
     }
 
-    // --- Product (repeat for other models if needed) ---
+    // --- Otp ---
+    interface OtpDelegate<
+      ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+    > {
+      // Query methods: add includeDeleted
+      findMany<T extends Prisma.OtpFindManyArgs<ExtArgs>>(
+        args?: T & { includeDeleted?: boolean }
+      ): Prisma.PrismaPromise<Array<Prisma.$OtpPayload<ExtArgs>["object"]>>;
+
+      findFirst<T extends Prisma.OtpFindFirstArgs<ExtArgs>>(
+        args?: T & { includeDeleted?: boolean }
+      ): Prisma.PrismaPromise<Prisma.$OtpPayload<ExtArgs>["object"] | null>;
+
+      findUnique<T extends Prisma.OtpFindUniqueArgs<ExtArgs>>(
+        args?: T & { includeDeleted?: boolean }
+      ): Prisma.PrismaPromise<Prisma.$OtpPayload<ExtArgs>["object"] | null>;
+
+      count<T extends Prisma.OtpCountArgs<ExtArgs>>(
+        args?: T & { includeDeleted?: boolean }
+      ): Prisma.PrismaPromise<number>;
+
+      aggregate<T extends Prisma.OtpAggregateArgs<ExtArgs>>(
+        args?: T & { includeDeleted?: boolean }
+      ): Prisma.PrismaPromise<any>;
+
+      // Delete methods: add force
+      delete<T extends Prisma.OtpDeleteArgs<ExtArgs>>(
+        args: T & { force?: boolean }
+      ): Prisma.PrismaPromise<Prisma.$OtpPayload<ExtArgs>["object"]>;
+
+      deleteMany<T extends Prisma.OtpDeleteManyArgs<ExtArgs>>(
+        args?: T & { force?: boolean }
+      ): Prisma.PrismaPromise<Prisma.BatchPayload>;
+    }
+
+    // --- Product ---
     interface ProductDelegate<
       ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
     > {
