@@ -219,7 +219,7 @@ export class AuthService {
       return { message: `${dto.purpose} OTP sent.` };
     }
 
-    if (dto.purpose === "changeIdentifierReq") {
+    if (dto.purpose === "changeIdentifier") {
       await this.otpService.sendOtp({
         userId: user.id,
         identifier: value,
@@ -229,12 +229,12 @@ export class AuthService {
       return { message: `Change ${key} Otp Send` };
     }
 
-    if (dto.purpose.includes("MfaReq")) {
-      if (dto.purpose === "enableMfaReq") {
+    if (dto.purpose.includes("Mfa")) {
+      if (dto.purpose === "enableMfa") {
         if (user.securitySetting?.isMfaEnabled) {
           throw new BadRequestException("MFA is already enabled.");
         }
-      } else if (dto.purpose === "disableMfaReq") {
+      } else if (dto.purpose === "disableMfa") {
         if (!user.securitySetting?.isMfaEnabled) {
           throw new BadRequestException("MFA is already disabled.");
         }
@@ -271,6 +271,7 @@ export class AuthService {
             ? { isEmailVerified: true }
             : { isPhoneVerified: true },
       });
+
       return { message: `${key} verified successfully.` };
     }
 
@@ -289,7 +290,7 @@ export class AuthService {
       };
     }
 
-    if (dto.purpose === "changeIdentifierReq") {
+    if (dto.purpose === "changeIdentifier") {
       const otp = await this.otpService.sendOtp({
         userId: user.id,
         identifier: value,
@@ -306,12 +307,13 @@ export class AuthService {
     }
 
     if (dto.purpose.includes("Mfa")) {
-      if (dto.purpose === "enableMfaReq") {
+      //TODO add logic enable mfa
+      if (dto.purpose === "enableMfa") {
         await this.prisma.securitySetting.update({
           where: { userId: user.id },
           data: { isMfaEnabled: true }, // TODO add mfa method details
         });
-      } else if (dto.purpose === "disableMfaReq") {
+      } else if (dto.purpose === "disableMfa") {
         await this.prisma.securitySetting.update({
           where: { userId: user.id },
           data: { isMfaEnabled: false },
@@ -329,6 +331,14 @@ export class AuthService {
           data: { id: user.id, roles: roles },
         };
       }
+
+      await this.notifyService.sendNotification({
+        userId: user.id,
+        to: dto.identifier,
+        purpose: dto.purpose,
+        metadata: { user },
+      });
+
       return { message: `${dto.purpose} Successfully` };
     }
 
@@ -354,6 +364,13 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
+    });
+
+    await this.notifyService.sendNotification({
+      userId: user.id,
+      to: dto.identifier,
+      purpose: dto.purpose,
+      metadata: { user },
     });
 
     this.logger.log(`🔑 Password reset successful`, { userId: user.id });
@@ -424,6 +441,17 @@ export class AuthService {
     await this.prisma.refreshToken.updateMany({
       where: { userId: user.id },
       data: { blacklisted: true },
+    });
+
+    await this.notifyService.sendNotification({
+      userId: user.id,
+      to: dto.newIdentifier,
+      purpose: dto.purpose,
+      metadata: {
+        user,
+        identifier: dto.identifier,
+        newIdentifier: dto.newIdentifier,
+      },
     });
 
     this.logger.log("✅ Identifier changed successfully", { userId: user.id });
