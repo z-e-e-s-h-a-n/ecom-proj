@@ -1,6 +1,7 @@
 import { OrderStatus } from "@prisma/client";
 import { Type } from "class-transformer";
 import {
+  ArrayMinSize,
   IsArray,
   IsDecimal,
   IsEnum,
@@ -72,7 +73,7 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
-  billingAddressId!: string;
+  billingAddressId?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -80,13 +81,22 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
-  customerNotes!: string;
+  userCouponId?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  paymentMethodId!: string;
 
   @IsOptional()
   @IsString()
-  internalNotes!: string;
+  customerNotes?: string;
+
+  @IsOptional()
+  @IsString()
+  internalNotes?: string;
 
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items!: OrderItemDto[];

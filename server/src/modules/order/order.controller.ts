@@ -1,8 +1,17 @@
-import { Body, Controller, Delete, Get, Post, Put, Req } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Req,
+} from "@nestjs/common";
 import { OrderService } from "./order.service";
 import { Roles } from "@/common/decorators/roles.decorator";
 import type { Request } from "express";
-import type { CreateOrderDto } from "@/common/dto/order.dto";
+import type { CreateOrderDto, RDOrderDto } from "@/common/dto/order.dto";
 
 @Controller("orders")
 export class OrderController {
@@ -24,11 +33,16 @@ export class OrderController {
     this.orderService.getAllOrders();
   }
 
+  @Get("/:orderId")
+  async getOrder(@Param() dto: RDOrderDto) {
+    this.orderService.getOrder(dto);
+  }
+
   @Roles("admin")
-  @Put()
+  @Put("/:orderId")
   async updateOrder() {}
 
   @Roles("admin")
-  @Delete()
+  @Delete("/:orderId")
   async deleteOrder() {}
 }

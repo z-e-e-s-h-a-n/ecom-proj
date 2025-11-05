@@ -23,6 +23,13 @@ import { AllExceptionsFilter } from "@/common/filters/exceptions.filter";
 import { ResponseInterceptor } from "@/common/interceptors/response.interceptor";
 import { CurrencyModule } from "@/modules/currency/currency.module";
 import { ProductEngagementModule } from "@/modules/engagement/engagement.module";
+import { PaymentModule } from "./modules/payment/payment.module";
+import { TaxRateModule } from "./modules/tax-rate/tax-rate.module";
+import { CouponModule } from "./modules/coupon/coupon.module";
+import { LoyaltyModule } from "./modules/loyalty/loyalty.module";
+import { SettingModule } from "./modules/setting/setting.module";
+import { UserModule } from "./modules/user/user.module";
+import { ShippingModule } from "./modules/shipping/shipping.module";
 
 @Module({
   imports: [
@@ -47,6 +54,13 @@ import { ProductEngagementModule } from "@/modules/engagement/engagement.module"
     ProductModule,
     CurrencyModule,
     ProductEngagementModule,
+    PaymentModule,
+    TaxRateModule,
+    CouponModule,
+    LoyaltyModule,
+    SettingModule,
+    UserModule,
+    ShippingModule,
   ],
 
   providers: [
